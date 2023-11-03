@@ -1,7 +1,7 @@
 # kg-lab-ws23-task3
 Knowledge Graph Lab 💡 - winter semester 2023 - task 3
 
-![RWTH Logo](https://github.com/olafbombach/kg-lab-ws23-task3/images/RWTH_Logo.png)
+![RWTH Logo](images/RWTH_Logo.png)
 
 This repository embodies an approach of identifying event series for scientific events such as conferences and workshops. The unstructured event data is queried from [dblp](https://dblp.org/) and assigned to the correct event series using the code provided here. After correctly assigning the event series, the property of event series is added to the KG of Wikidata.
 
