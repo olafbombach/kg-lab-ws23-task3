@@ -10,8 +10,21 @@ This repository embodies an approach of identifying event series for scientific 
 ![Python Version](https://img.shields.io/badge/Python-3.9%2B-brightgreen)
 
 ## Use Case Scenario
-tbd.
+Situation:
 
+The proceedings of the publication service CEUR-WS (CEUR Workshop Proceedings) already have entries in Wikidata, but the relation between individual proceedings is insufficient specified or missing.
+
+Action:
+<ul>
+<li>Collect missing information from dblp and ceur-spt.
+<li>Identify event series using Large Language Models.
+<li>Validate the resulting event series.
+<li>Update the Knowledge Graph.
+</ul>
+
+Expected Result:
+
+Proceedings of the same event series are interconnected in a way such that the user is able to access the whole event series.
 ## Current status of the project:
 <ul> 
     <li> Assessment of current KG status ❌ </li>
