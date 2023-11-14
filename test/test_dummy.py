@@ -1,4 +1,4 @@
-﻿from dummy import Dummy
+﻿from source/dummy import Dummy
 
 def test_addition():
     y=Dummy.add(3,8)
