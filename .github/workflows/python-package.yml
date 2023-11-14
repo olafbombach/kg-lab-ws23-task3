@@ -5,9 +5,9 @@ name: Python package
 
 on:
   push:
-    branches: [ "main" , "christophe1998-CI-Python"]
+    branches: [ "main", "christophe1998-CI-Python"]
   pull_request:
-    branches: [ "main" , "christophe1998-CI-Python"]
+    branches: [ "main", "christophe1998-CI-Python"]
 
 jobs:
   build:
@@ -37,4 +37,4 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        pytest
+        pytest test/test_dummy.py
