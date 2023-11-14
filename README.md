@@ -9,6 +9,22 @@ This repository embodies an approach of identifying event series for scientific 
 [![GitHub issues](https://img.shields.io/github/issues/olafbombach/kg-lab-ws23-task3.svg)](https://github.com/olafbombach/kg-lab-ws23-task3/issues)
 ![Python Version](https://img.shields.io/badge/Python-3.9%2B-brightgreen)
 
+## Use Case Scenario
+Situation:
+
+The proceedings of the publication service CEUR-WS (CEUR Workshop Proceedings) already have entries in Wikidata, but the relation between individual proceedings is insufficient specified or missing.
+
+Action:
+<ul>
+<li>Collect missing information from dblp and ceur-spt.
+<li>Identify event series using Large Language Models.
+<li>Validate the resulting event series.
+<li>Update the Knowledge Graph.
+</ul>
+
+Expected Result:
+
+Proceedings of the same event series are interconnected in a way such that the user is able to access the whole event series.
 ## Current status of the project:
 <ul> 
     <li> Assessment of current KG status ❌ </li>
@@ -20,6 +36,12 @@ This repository embodies an approach of identifying event series for scientific 
     <li> Establishment of an automated method ❌ </li>
     <li> Validation of the method ❌ </li>
 </ul>
+
+## Deadlines
+
+- 2024-01-19: Midterm coordination
+- 2024-03-22: Project result delivery
+- 2024-03-29: Final presentation
 
 ## How to install the repository in your workspace:
 ```bash
