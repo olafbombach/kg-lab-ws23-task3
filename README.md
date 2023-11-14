@@ -9,6 +9,7 @@ This repository embodies an approach of identifying event series for scientific 
 [![GitHub issues](https://img.shields.io/github/issues/olafbombach/kg-lab-ws23-task3.svg)](https://github.com/olafbombach/kg-lab-ws23-task3/issues)
 [![GitHub issues](https://img.shields.io/github/issues-closed/olafbombach/kg-lab-ws23-task3.svg)](https://github.com/olafbombach/kg-lab-ws23-task3/issues/?q=is%3Aissue+is%3Aclosed)
 ![Python Version](https://img.shields.io/badge/Python-3.9%2B-brightgreen)
+[![Python package](https://github.com/olafbombach/kg-lab-ws23-task3/actions/workflows/python-package.yml/badge.svg)](https://github.com/olafbombach/kg-lab-ws23-task3/actions/workflows/python-package.yml)
 
 ## Use Case Scenario
 Situation:
