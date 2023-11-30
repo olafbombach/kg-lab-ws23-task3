@@ -1,4 +1,5 @@
-﻿from source.dummy import Dummy
+from source.dummy import Dummy
+from wikidataquery import WikidataQuery
 
 def test_addition():
     y=Dummy.add(3,8)
@@ -7,3 +8,6 @@ def test_addition():
 def test_square_nat():
     y = Dummy.square_nat(37)
     assert(y == 37*37)
+
+def test_query():
+    assert(WikidataQuery.queryExample() != "")
