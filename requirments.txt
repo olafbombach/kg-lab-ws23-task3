@@ -1,2 +1,2 @@
-Sparqlwrapper   (pip install sparqlwrapper)
-panda  (pip install panda)
+sparqlwrapper
+pandas
