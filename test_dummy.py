@@ -10,4 +10,4 @@ def test_square_nat():
     assert(y == 37*37)
 
 def test_query():
-    assert(True)
+    assert(WikidataQuery.queryExample() != "")
