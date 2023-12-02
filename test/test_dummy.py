@@ -1,5 +1,5 @@
-﻿from dummy import Dummy
-from wikidataquery import WikidataQuery
+from source.dummy import Dummy
+from source.wikidataquery import WikidataQuery
 
 def test_addition():
     y=Dummy.add(3,8)
