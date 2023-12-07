@@ -1,6 +1,7 @@
 import pandas
 import json
 import requests
+import os
 
 #static CORE DB API class
 #build similarly to the documentation examples
