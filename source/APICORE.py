@@ -7,13 +7,11 @@ import requests
 class APICORE(object):
     
      #static class parameters (API Key from apikey.txt and endpoints is the V3 CORE API)
-     api_key = ""
+     api_key = process.env.API_KEY
      api_endpoint = ""
      #initialize API_Key to access DB
      @classmethod
-     def init(cls): 
-          with open ("apikey.txt", "r") as apikey_file:
-            cls.api_key = apikey_file.readlines()[0].strip()
+     def init(cls):
             cls.api_endpoint = "https://api.core.ac.uk/v3/"
      
      @classmethod
