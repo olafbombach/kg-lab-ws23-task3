@@ -7,7 +7,7 @@ import requests
 class APICORE(object):
     
      #static class parameters (API Key from apikey.txt and endpoints is the V3 CORE API)
-     api_key = process.env.API_KEY
+     api_key = os.environ['CORE_API_KEY']
      api_endpoint = ""
      #initialize API_Key to access DB
      @classmethod
