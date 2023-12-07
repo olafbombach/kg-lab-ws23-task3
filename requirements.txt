@@ -1,3 +1,4 @@
 sparqlwrapper
 pandas
 crossrefapi
+requests
