@@ -2,3 +2,5 @@ sparqlwrapper
 pandas
 crossrefapi
 requests
+jupyter
+tqdm
