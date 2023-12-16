@@ -4,3 +4,4 @@ crossrefapi
 requests
 jupyter
 tqdm
+spacy
