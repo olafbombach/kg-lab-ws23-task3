@@ -5,9 +5,9 @@ name: Python package
 
 on:
   push:
-    branches: [ "main", "christophe1998-CI-Python"]
+    branches: [ "main", "christophe1998-CI-Python", "lukas_branch", "daniel_branch"]
   pull_request:
-    branches: [ "main", "christophe1998-CI-Python"]
+    branches: [ "main", "christophe1998-CI-Python", "lukas_branch", "daniel_branch"]
 
 jobs:
   build:
