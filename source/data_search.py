@@ -34,21 +34,21 @@ class SearchEngine:
             reads in data of the different sources and projects it as a dataframe
         """
         if self.dataset == 'Conference Corpus':
-            path = "datasets\.conferencecorpus\conf_corpus_data.csv"
+            path = "./datasets/.conferencecorpus/conf_corpus_data.csv"
             data = pd.read_csv(path, header=0, index_col=0)
             return data
 
         elif self.dataset == 'AIDA':
-            path = "..\datasets\AIDA\Venues_Dataset202205\data\conferenceFolderStruct"
+            path = "./datasets/AIDA/Venues_Dataset202205/data/conferenceFolderStruct"
             pass
 
         elif self.dataset == 'proceedings.com':
-            path = "..\datasets\proceedings.com\all-nov-23.xlsx"
+            path = "./datasets/proceedings.com/all-nov-23.xlsx"
             data = pd.read_excel(path, engine='openpyxl')
             return data
 
         elif self.dataset == 'Wikidata':
-            path = "..\\datasets\\wikidata\\wikidata_conf_data.csv"
+            path = "./datasets/wikidata/wikidata_conf_data.csv"
             data = pd.read_csv(path, header=0, index_col=0)
             return data
 
