@@ -6,3 +6,4 @@ jupyter
 tqdm
 spacy
 pylookupparser
+openpyxl
