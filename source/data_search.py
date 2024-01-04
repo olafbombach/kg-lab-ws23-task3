@@ -11,60 +11,112 @@ class Synonymator:
     def series_synonyms(self, text : str) -> list:
         pass
 
-
     def conf_synonyms(self, text : str) -> list:
         pass
 
 
-class SearchEngine:
+class SearchEngine(object):
     """
-        An operator that takes the previously created list as a search filter and then searches for these keywords in the specified dataset.
-        This might include a __init__ function where we declare which datasets is tackled...
+        An operator that takes a list as a search filter and then searches for these keywords in a specified dataset.
+        So for you can only specify the datasets Wikidata, Conference Corpus and proceedings.com
     """
-    def __init__(self, dataset : str):
+    def __init__(self, dataset_name: str, fastsearch: bool = False):
         """
-            initialize the SearchEngine. It takes the name of the dataset as an argument
+        Initialize the SearchEngine.
+        It takes the dataset_name and a boolean value that determines if we should use fastsearch.
+        Caution: fastsearch=True restricts the columns and thus could lead to false results.
         """
-        self.dataset = dataset
-        assert self.dataset in ['Conference Corpus', 'AIDA', 'proceedings.com', 'Wikidata'], "Please specify a dataset which is part of [\'Conference Corpus\', \'AIDA\', \'proceedings.com\', \'Wikidata\']"
+        assert dataset_name in ['Conference Corpus', 'AIDA', 'proceedings.com', 'Wikidata'], \
+            "Please specify a dataset which is part of " \
+            "[\'Conference Corpus\', \'AIDA\', \'proceedings.com\', \'Wikidata\']"
 
+        self.dataset_name = dataset_name
+        self.fastsearch = fastsearch
+        self.data = self._read_in_data()
+        self.columns_sel = self._get_columns_sel()
+        self.flag_mask = None  # this is interesting since it can visualize how good the result of the SearchEngine is
+        self.filtered_data = None  # this is the final outcome of the dataset search
 
-    def read_in_data(self) -> pd.DataFrame:
+    def _read_in_data(self) -> pd.DataFrame:
         """
-            reads in data of the different sources and projects it as a dataframe
+            This method reads in data of the different sources and projects it as into pandas.
+            (It is meant to be private method since it is called in the __init__ method.)
         """
-        if self.dataset == 'Conference Corpus':
-            path = "./datasets/.conferencecorpus/conf_corpus_data.csv"
+        if self.dataset_name == 'Conference Corpus':
+            path = "../datasets/.conferencecorpus/conf_corpus_data.csv"
             data = pd.read_csv(path, header=0, index_col=0)
-            return data
-
-        elif self.dataset == 'AIDA':
-            path = "./datasets/AIDA/Venues_Dataset202205/data/conferenceFolderStruct"
+        elif self.dataset_name == 'AIDA':
+            # path = "../datasets/AIDA/Venues_Dataset202205/data/conferenceFolderStruct"
             pass
-
-        elif self.dataset == 'proceedings.com':
-            path = "./datasets/proceedings.com/all-nov-23.xlsx"
+        elif self.dataset_name == 'proceedings.com':
+            path = "../datasets/proceedings.com/all-nov-23.xlsx"
             data = pd.read_excel(path, engine='openpyxl')
-            return data
-
-        elif self.dataset == 'Wikidata':
-            path = "./datasets/wikidata/wikidata_conf_data.csv"
+        elif self.dataset_name == 'Wikidata':
+            path = '../datasets/wikidata/wikidata_conf_data.csv'
             data = pd.read_csv(path, header=0, index_col=0)
-            return data
 
+        return data
 
-    def search_list(self, data : pd.DataFrame, keywords : list) -> pd.DataFrame:
+    def _get_columns_sel(self) -> list:
         """
-            1. converts all dataframe columns to type string in order to better search
-            2. searches for specific keywords in the specified dataframe using regex methods
+            This method determines the columns selection for the search.
+            It is dependent on the attribute fastsearch since this determines which columns to include.
+            (It is meant to be private method since it is called in the __init__ method.)
         """
-        for col in data.columns:
-            data[col] = data[col].astype(str)
+        if not self.fastsearch:
+            columns_sel = self.data.columns
+        else:
+            if self.dataset_name == 'Conference Corpus':
+                columns_sel = ['name', 'acronym', 'title', 'sponsor']
+            elif self.dataset_name == 'AIDA':
+                columns_sel = self.data.columns  # not specified yet
+            elif self.dataset_name == 'proceedings.com':
+                columns_sel = ['Publisher', 'Conference Title', 'Series', 'Subject1']
+            elif self.dataset_name == 'Wikidata':
+                columns_sel = self.data.columns
 
-        # this is a first easy approach.. we should include case distinction where we stop the search after a given number of rows (e.g.)
+        return columns_sel
+
+    def search_list(self, keywords: list) -> pd.DataFrame:
+        """
+            This method does the following:
+            1.  Converts all dataframe columns to type string in order to better search for values
+            2.  Searches for specific keywords in the specified dataframe using regex methods.
+                If a match could be found, the position in the dataframe is marked (flag_mask with bool-values).
+            3.  This is done for all strings of the keywords. The flag_mask is appended using logical_or.
+            4.  After all keywords a score is computed using _mask_eval()
+            5.  Filtering of all rows in which flag_mask is bigger than 0
+            6.  Sorting of all rows based on score-value
+        """
+
+        for col in self.columns_sel:
+            self.data[col] = self.data[col].astype(str)
+
+        # this is a first easy approach.. we should include case distinction
+        # where we stop the search after a given number of rows (e.g.)
+        flag_mask = None
         for string in keywords:
-            mask = np.column_stack([data[col].str.contains(string, na=False) for col in data.columns])
+            flag_mask = np.logical_or(flag_mask, np.column_stack([self.data[col].str.contains(string, na=False) for col in self.data.columns]))
+        self.flag_mask = flag_mask
 
-        filtered_data = data.loc[mask.any(axis=1)]
+        self.data = self._mask_eval()
+        self.filtered_data = self.data.loc[self.flag_mask.any(axis=1)]
+        self.filtered_data.sort_values(by='score', ascending=False, inplace=True)  # sort according to score
 
-        return filtered_data
+        return self.filtered_data
+
+    def _mask_eval(self) -> pd.DataFrame:
+        """
+            This method evaluates the quality of the found results with the SearchEngine.
+            It returns the number of hits that a row had when using the list of keywords specified.
+            The number of hits (score) is then added to the filtered dataframe.
+            It further sorts the dataframe according to the score
+            (It is meant to be private method since it is called in search_list originally.)
+        """
+        self.data = self.data.assign(score=np.sum(self.flag_mask, axis=1))
+        #self.data.sort_values(by='score', ascending=False, inplace=True)
+        return self.data
+
+
+se = SearchEngine(dataset_name='Wikidata', fastsearch=True)
+print(se.search_list(['QCMC', '2016', 'SIGIR']))
