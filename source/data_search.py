@@ -43,16 +43,16 @@ class SearchEngine(object):
             (It is meant to be private method since it is called in the __init__ method.)
         """
         if self.dataset_name == 'Conference Corpus':
-            path = "../datasets/.conferencecorpus/conf_corpus_data.csv"
+            path = "./datasets/.conferencecorpus/conf_corpus_data.csv"
             data = pd.read_csv(path, header=0, index_col=0)
         elif self.dataset_name == 'AIDA':
-            # path = "../datasets/AIDA/Venues_Dataset202205/data/conferenceFolderStruct"
+            # path = "./datasets/AIDA/Venues_Dataset202205/data/conferenceFolderStruct"
             pass
         elif self.dataset_name == 'proceedings.com':
-            path = "../datasets/proceedings.com/all-nov-23.xlsx"
+            path = "./datasets/proceedings.com/all-nov-23.xlsx"
             data = pd.read_excel(path, engine='openpyxl')
         elif self.dataset_name == 'Wikidata':
-            path = '../datasets/wikidata/wikidata_conf_data.csv'
+            path = './datasets/wikidata/wikidata_conf_data.csv'
             data = pd.read_csv(path, header=0, index_col=0)
 
         return data
