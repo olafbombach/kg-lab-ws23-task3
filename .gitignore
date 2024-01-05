@@ -1,3 +1,5 @@
+/.idea/*
+!/.idea/runConfigurations
+
 __pycache__
 venv
-.idea
