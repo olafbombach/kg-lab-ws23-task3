@@ -52,7 +52,7 @@ class SearchEngine(object):
             path = "./datasets/proceedings.com/all-nov-23.xlsx"
             data = pd.read_excel(path, engine='openpyxl')
         elif self.dataset_name == 'Wikidata':
-            path = './datasets/wikidata/wikidata_conf_data.csv'
+            path = '../datasets/wikidata/wikidata_conf_data.csv'
             data = pd.read_csv(path, header=0, index_col=0)
 
         return data
@@ -118,4 +118,4 @@ class SearchEngine(object):
 
 
 se = SearchEngine(dataset_name='Wikidata', fastsearch=True)
-print(se.search_list(['QCMC', '2016', 'SIGIR']))
+print(se.search_list(['QCMC', '2016']))

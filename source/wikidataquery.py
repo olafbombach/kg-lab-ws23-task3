@@ -45,6 +45,7 @@ class WikidataQuery(object):
                 }'''
         output = WikidataQuery.queryWikiData(text)
         result = output['results']['bindings'][0]['count']['value']
+
         return result
 
     @staticmethod
@@ -59,6 +60,7 @@ class WikidataQuery(object):
                 }'''
         output = WikidataQuery.queryWikiData(text)
         result = output['results']['bindings'][0]['count']['value']
+
         return result
 
     @staticmethod
@@ -151,11 +153,11 @@ class WikidataQuery(object):
 
         # creation of the dataframe from data_array
         dataframe = pd.DataFrame(data_array[1:, :], columns=data_array[0, :])
-
         # also write the csv-file in the datasets folder
         WikidataQuery._write_csv_to_datasets(dataframe, 'wikidata_conf_data')
 
         return dataframe
 
 
-print(WikidataQuery.create_wikidata_dataset().info())
+cre = WikidataQuery.create_wikidata_dataset()
+print(cre)
