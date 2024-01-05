@@ -43,16 +43,16 @@ class SearchEngine(object):
             (It is meant to be a private method since it is called in the __init__ method.)
         """
         if self.dataset_name == 'Conference Corpus':
-            path = "../datasets/.conferencecorpus/conf_corpus_data.csv"
+            path = "./datasets/.conferencecorpus/conf_corpus_data.csv"
             data = pd.read_csv(path, header=0, index_col=0)
         elif self.dataset_name == 'AIDA':
-            # path = "../datasets/AIDA/Venues_Dataset202205/data/conferenceFolderStruct"
+            # path = "./datasets/AIDA/Venues_Dataset202205/data/conferenceFolderStruct"
             pass
         elif self.dataset_name == 'proceedings.com':
-            path = "../datasets/proceedings.com/all-nov-23.xlsx"
+            path = "./datasets/proceedings.com/all-nov-23.xlsx"
             data = pd.read_excel(path, engine='openpyxl')
         elif self.dataset_name == 'Wikidata':
-            path = '../datasets/wikidata/wikidata_conf_data.csv'
+            path = './datasets/wikidata/wikidata_conf_data.csv'
             data = pd.read_csv(path, header=0, index_col=0)
 
         return data
@@ -86,7 +86,6 @@ class SearchEngine(object):
             (It is meant to be a private method since it is called in search_list originally.)
         """
         self.data = self.data.assign(score=np.sum(self.flag_mask, axis=1))
-        #self.data.sort_values(by='score', ascending=False, inplace=True)
         return self.data
 
     def search_list(self, keywords: list) -> pd.DataFrame:
@@ -118,5 +117,5 @@ class SearchEngine(object):
         return self.filtered_data
 
 
-se = SearchEngine(dataset_name='proceedings.com', fastsearch=True)
-print(se.search_list(['QCMC', 'SIGIR']))
+se = SearchEngine(dataset_name='Wikidata', fastsearch=True)
+print(se.search_list(['QCMC', '2016', 'SIGIR']))
