@@ -40,7 +40,7 @@ class SearchEngine(object):
     def _read_in_data(self) -> pd.DataFrame:
         """
             This method reads in data of the different sources and projects it as into pandas.
-            (It is meant to be private method since it is called in the __init__ method.)
+            (It is meant to be a private method since it is called in the __init__ method.)
         """
         if self.dataset_name == 'Conference Corpus':
             path = "../datasets/.conferencecorpus/conf_corpus_data.csv"
@@ -61,7 +61,7 @@ class SearchEngine(object):
         """
             This method determines the columns selection for the search.
             It is dependent on the attribute fastsearch since this determines which columns to include.
-            (It is meant to be private method since it is called in the __init__ method.)
+            (It is meant to be a private method since it is called in the __init__ method.)
         """
         if not self.fastsearch:
             columns_sel = self.data.columns
@@ -76,6 +76,18 @@ class SearchEngine(object):
                 columns_sel = self.data.columns
 
         return columns_sel
+
+    def _mask_eval(self) -> pd.DataFrame:
+        """
+            This method evaluates the quality of the found results with the SearchEngine.
+            It returns the number of hits that a row had when using the list of keywords specified.
+            The number of hits (score) is then added to the filtered dataframe.
+            It further sorts the dataframe according to the score
+            (It is meant to be a private method since it is called in search_list originally.)
+        """
+        self.data = self.data.assign(score=np.sum(self.flag_mask, axis=1))
+        #self.data.sort_values(by='score', ascending=False, inplace=True)
+        return self.data
 
     def search_list(self, keywords: list) -> pd.DataFrame:
         """
@@ -96,27 +108,15 @@ class SearchEngine(object):
         # where we stop the search after a given number of rows (e.g.)
         flag_mask = None
         for string in keywords:
-            flag_mask = np.logical_or(flag_mask, np.column_stack([self.data[col].str.contains(string, na=False) for col in self.data.columns]))
+            flag_mask = np.logical_or(flag_mask, np.column_stack([self.data[col].str.contains(string, na=False) for col in self.columns_sel]))
         self.flag_mask = flag_mask
 
-        self.data = self._mask_eval()
-        self.filtered_data = self.data.loc[self.flag_mask.any(axis=1)]
+        self.data = self._mask_eval()  # adds score as the last column
+        self.filtered_data = self.data.loc[self.data['score'] > 0].copy()
         self.filtered_data.sort_values(by='score', ascending=False, inplace=True)  # sort according to score
 
         return self.filtered_data
 
-    def _mask_eval(self) -> pd.DataFrame:
-        """
-            This method evaluates the quality of the found results with the SearchEngine.
-            It returns the number of hits that a row had when using the list of keywords specified.
-            The number of hits (score) is then added to the filtered dataframe.
-            It further sorts the dataframe according to the score
-            (It is meant to be private method since it is called in search_list originally.)
-        """
-        self.data = self.data.assign(score=np.sum(self.flag_mask, axis=1))
-        #self.data.sort_values(by='score', ascending=False, inplace=True)
-        return self.data
 
-
-se = SearchEngine(dataset_name='Wikidata', fastsearch=True)
-print(se.search_list(['QCMC', '2016', 'SIGIR']))
+se = SearchEngine(dataset_name='proceedings.com', fastsearch=True)
+print(se.search_list(['QCMC', 'SIGIR']))
