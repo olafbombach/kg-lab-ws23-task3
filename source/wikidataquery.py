@@ -153,7 +153,7 @@ class WikidataQuery(object):
         dataframe = pd.DataFrame(data_array[1:, :], columns=data_array[0, :])
 
         # also write the csv-file in the datasets folder
-        #WikidataQuery._write_csv_to_datasets(dataframe, 'wikidata_conf_data')
+        WikidataQuery._write_csv_to_datasets(dataframe, 'wikidata_conf_data')
 
         return dataframe
 
