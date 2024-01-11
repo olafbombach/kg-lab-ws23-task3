@@ -56,3 +56,6 @@ This task is part of the practical lab (KG Lab) presented by the Chair of Databa
 ## How to contribute to this project:
 Thank you for your interest in contributing to this project! We welcome all kinds of contributions, no matter how small or big they are. Whether it's adding new features, fixing bugs, improving documentation, or suggesting new ideas.
 In this regard, please follow our [Code of Conduct](.github/CONTRIBUTION.md)
+
+## Considered pipeline
+<img src="images/Pipeline_v1.png">
