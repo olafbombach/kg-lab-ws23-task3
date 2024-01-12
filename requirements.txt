@@ -8,3 +8,5 @@ spacy
 pylookupparser
 openpyxl
 numpy
+number_parser
+
