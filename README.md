@@ -58,4 +58,4 @@ Thank you for your interest in contributing to this project! We welcome all kind
 In this regard, please follow our [Code of Conduct](.github/CONTRIBUTION.md)
 
 ## Considered pipeline
-<img src="images/Pipeline_v1.png">
+<img src="images/Pipeline_v2.png">
