@@ -9,4 +9,4 @@ pylookupparser
 openpyxl
 numpy
 number_parser
-
+seaborn
