@@ -1,9 +1,5 @@
-import pandas as pd
-
-from data_search import SearchEngine
+from source.archive.data_search import SearchEngine
 import json
-import matplotlib.pyplot as plt
-import seaborn as sn
 
 
 class Evaluator:
@@ -46,16 +42,17 @@ class Evaluator:
 proceedings_eval = {7: 'top', 8: 'top', 11: 'top', 16: 'top', 18: 'top', 21: 'top', 29: 'fifth', 32: 'top', 34: 'top',
                     42: 'top', 43: 'top', 44: 'third', 49: 'top', 54: 'Not unique', 58: 'top', 63: 'second', 65: 'top',
                     70: 'top', 71: 'top', 73: 'top', 74: 'top', 77: 'top', 83: 'top', 91: 'top', 97: 'third', 98: 'top'}
-
+'''
 df = pd.DataFrame(data=proceedings_eval.values(), index=proceedings_eval.keys(), columns=['position in search'])
 df['position in search'] = pd.Categorical(df['position in search'], ['top', 'second', 'third', 'fifth', 'Not unique'])
-'''
+
 ev = Evaluator("output_tokenizer.json")
 ev.self_evaluation()
 print(ev.print_eval_dict())
-'''
+
 print(df)
 sn.histplot(data=df, x='position in search', color='r')
 plt.yticks(range(0, 25, 1))
 plt.savefig('../results/testset_v1_perf.png')
 plt.show()
+'''

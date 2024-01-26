@@ -50,7 +50,7 @@ class SearchEngine:
                 path = "./datasets/.conferencecorpus/conf_corpus_data.csv"
                 data = pd.read_csv(path, header=0, index_col=0)
             except FileNotFoundError:
-                path = "../datasets/.conferencecorpus/conf_corpus_data.csv"
+                path = "../../datasets/.conferencecorpus/conf_corpus_data.csv"
                 data = pd.read_csv(path, header=0, index_col=0)
         elif self._dataset_name == 'AIDA':
             # csv or xsl not defined yet
@@ -60,14 +60,14 @@ class SearchEngine:
                 path = "./datasets/proceedings.com/all-nov-23.xlsx"
                 data = pd.read_excel(path, engine='openpyxl')
             except FileNotFoundError:
-                path = "../datasets/proceedings.com/all-nov-23.xlsx"
+                path = "../../datasets/proceedings.com/all-nov-23.xlsx"
                 data = pd.read_excel(path, engine='openpyxl')
         elif self._dataset_name == 'Wikidata':
             try:
                 path = './datasets/wikidata/wikidata_conf_data.csv'
                 data = pd.read_csv(path, header=0, index_col=0)
             except FileNotFoundError:
-                path = '../datasets/wikidata/wikidata_conf_data.csv'
+                path = '../../datasets/wikidata/wikidata_conf_data.csv'
                 data = pd.read_csv(path, header=0, index_col=0)
 
         return data
@@ -165,11 +165,13 @@ class SearchEngine:
         return self._filtered_data
 
 
+'''
 input_query = {'25th': 40, 'twentyfifth': 40, '2017': 70,
                'Euromicro International Conference on Parallel, Distributed and Network-based Processing': 100,
                'PDP': 70, '6. March': 75, '8. March': 75, '06.03.': 75, '08.03': 75, 'St. Petersburg': 60, 'Russia': 60,
                'Euromicro': 50, 'Parallel, Distributed and Network-based Processing': 60}
 
 se = SearchEngine(dataset_name='proceedings.com', fastsearch=False)
-result = se.search_dict(input_query).loc[:, ['Conference Title', 'score']]
+result = se.search_dict(input_query)
 print(result)
+'''
