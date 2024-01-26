@@ -27,7 +27,7 @@ class ProceedingsEvent:
     """
     The instance class of a Proceedings.com event. In this all information can be stored during one process run. (tbc)
     """
-    input_info: Optional[pl.Series] = None
+    input_info: pl.Series = None
     keywords: TokenSet
 
 
