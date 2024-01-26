@@ -1,5 +1,5 @@
 import re
-
+import json
 import pandas as pd
 import numpy as np
 from timeit import default_timer as timer
@@ -165,8 +165,11 @@ class SearchEngine:
         return self._filtered_data
 
 
-input_query = {'25th': 2, 'twentyfifth': 2, '2017': 1, 'Euromicro International Conference on Parallel, Distributed and Network-based Processing': 4, 'PDP': 3, '6. March': 1, '8. March': 1, '06.03.': 1, '08.03': 1, 'St. Petersburg': 2, 'Russia': 2, 'Euromicro': 3, 'Parallel, Distributed and Network-based Processing': 3}
+input_query = {'25th': 40, 'twentyfifth': 40, '2017': 70,
+               'Euromicro International Conference on Parallel, Distributed and Network-based Processing': 100,
+               'PDP': 70, '6. March': 75, '8. March': 75, '06.03.': 75, '08.03': 75, 'St. Petersburg': 60, 'Russia': 60,
+               'Euromicro': 50, 'Parallel, Distributed and Network-based Processing': 60}
 
 se = SearchEngine(dataset_name='proceedings.com', fastsearch=False)
-print(se.search_list(input_query.keys()).loc[:,['Conference Title', 'score']])
-print(se.search_dict(input_query).loc[:,['Conference Title', 'score']])
+result = se.search_dict(input_query).loc[:, ['Conference Title', 'score']]
+print(result)
