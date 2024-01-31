@@ -10,5 +10,5 @@ openpyxl
 numpy
 number_parser
 seaborn
+polars
 xlrd
-
