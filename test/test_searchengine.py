@@ -1,11 +1,10 @@
-from source.archive.data_search import *
+from source.data_search_opt import SearchEngine
 
 def test_wikidata_searchengine():
     # test if there is something wrong with the dataset or the searchengine
 
     se = SearchEngine('Wikidata')
-    data = se.read_in_data()
-    output = se.search_list(data, ['The Eighth Joint Conference on Lexical and Computational Semantics']) # as an example
+    output = se.search_dict({'The Eighth Joint Conference on Lexical and Computational Semantics': 40})  # as an example
     assert output.shape[0] > 0
 
 
@@ -13,20 +12,13 @@ def test_conferencecorpus_searchengine():
     # test if there is something wrong with the dataset or the searchengine
 
     se = SearchEngine('Conference Corpus')
-    data = se.read_in_data()
-    output = se.search_list(data, ['International Conference on Construction and Real Estate Management 2017'])  # as an example
+    output = se.search_dict({'International Conference on Construction and Real Estate': 50})  # as an example
     assert output.shape[0] > 0
-
-
-def test_AIDA_searchengine():
-    # test if there is something wrong with the dataset or the searchengine
-    pass
 
 
 def test_proceedingscom_searchengine():
     # test if there is something wrong with the dataset or the searchengine
 
-    se = SearchEngine('proceedings.com')
-    data = se.read_in_data()
-    output = se.search_list(data, ['COCIA'])  # as an example
+    se = SearchEngine('proceedings.com', f_search=True)
+    output = se.search_dict({'COCIA': 40})  # as an example
     assert output.shape[0] > 0
