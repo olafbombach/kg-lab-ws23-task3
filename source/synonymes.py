@@ -7,14 +7,22 @@ from number_parser import parse
 import calendar
 
 
+#Open .csv files
+import pandas
+
+import json
+
+import openpyxl
+
+
 #static class containing functions to obtain equivalent expressions
 #gives the results as keys in a dictionary, that also contains a metric for the usefulness of the synonym in the value of the entry
 #Currently:
 #Without superfluous spaces, ordinals to mathform, ordinals to textform
 #Uses abbreviation (assumed to be the only expression in brackets or all uppercase)
 #Gives out the date of the paper
-#Gives out prefixes of the title (low scores)
-class Synonymes(object):
+#Gives out infixes of the title (low scores)
+class Tokenizer(object):
     
    
 
@@ -50,6 +58,14 @@ class Synonymes(object):
 
     #Helpermethods
 
+    #checks if a string represents a decimal
+    def is_decimal(string):
+      try:
+        int(string)
+        return True
+      except ValueError:
+        return False
+
     #Transforms a number (int) to an ordinal number. No testing of it is in the correct range
     def number_to_ordinal_number(n: int):
       if 11 <= (n % 100) <= 13:
@@ -71,7 +87,7 @@ class Synonymes(object):
           
           
         #Add the base string score:4
-        results[input_s] = 4
+        results[input_s] = 100
         
         #Remove useless empty spaces (use that string as the baseline for all further transformations) score:3
         string = (" ").join(input_s.split(" "))
@@ -81,7 +97,7 @@ class Synonymes(object):
         #Text format (Convert ordinals to text), using the dictionary above score:3
         string_text = string
         for key, value in cls.list_of_math_numbers.items():
-           string_text = string_text.replace(key, value)
+           string_text = string_text.replace(" "+key, " "+value)
         
         if(not string_text == input_s):
            results[string_text] = 3
@@ -114,13 +130,14 @@ class Synonymes(object):
            for i in range(0,len(word)):
               if(word[i].islower()):
                  uppercase = False
-           if(uppercase):
-              if(word[0].isdigit()):
-                  #year, date ,etc.
-                  results[word] = 1
-              else:
-                  #abbreviation (uppercase word)
-                  results[word] = 3
+           if(len(word) > 0):
+              if(uppercase):
+                 if(word[0].isdigit()):
+                     #year, date ,etc.
+                     results[word] = 1
+                 else:
+                     #abbreviation (uppercase word)
+                     results[word] = 3
        
 
         #Abbreviation, this time in brackets (for example (ICIMTech) is not fully uppercase) score:3
@@ -156,9 +173,9 @@ class Synonymes(object):
              words = string.split(" ")
              for word in words:
                 #day
-                if(len(word) >= 2 and word[0].isdigit and word[1].isdigit() and (len(word) == 2 or word[2] == "-")):
+                if(len(word) >= 2 and Tokenizer.is_decimal(word[0]) and Tokenizer.is_decimal(word[1]) and (len(word) == 2 or word[2] == "-")):
                    day = int(word[0:2])
-                if(len(word) == 4 and word[0].isdigit and word[1].isdigit() and word[2].isdigit() and word[3].isdigit()):
+                if(len(word) == 4 and Tokenizer.is_decimal(word[0]) and Tokenizer.is_decimal(word[1]) and Tokenizer.is_decimal(word[2]) and Tokenizer.is_decimal(word[3])):
                    year = int(word)
              if(not (day == 0 or year == 0)):
                 day = str(day)
@@ -174,7 +191,7 @@ class Synonymes(object):
                    results[day+":"+month+":"+year] = 2
       
 
-        #Prefixes score:1
+        #Infixes score:1
 
         for i in range(1,len(words)+1):
            index = 0
@@ -185,9 +202,36 @@ class Synonymes(object):
         
         #Discard unnecessary Information (end substring at year or end substring at/after Abbreviation)
         return results
+    
 
-        
+    #Creates token from the index-th entry in the given pandas dataframe, structured as the .proceedings excel sheet
+    @classmethod
+    def tokenizeProceedings(cls,file,index):
+       
+       cols = ['Publisher', 'Conference Title','Book Title','Series','Description','Mtg Year','Editor','ISBN','Pages','Format','POD Publisher','Publ Year','Subject1','Subject2','Subject3','Subject4','List','Price']
+       if(index>len(file)):
+          raise IndexError("Index must be an integer in the range 0 to "+str(len(file)-1))
+      
+       #print(file)
+       indexCol = file.loc[index]
+       results = Tokenizer.synonymes(indexCol['Conference Title'])
+       if(str(indexCol['Mtg Year'])[0].isdigit()):
+           results[str(indexCol['Mtg Year'])[0:4]] = 4
+          
+       if(not str(indexCol['Publisher']) == "nan"):
+          results[str(indexCol['Publisher'])] = 2
+       
+       return results
+
+    #Dummy for the main class. Loops over all the entries in the database given by path
+    @classmethod
+    def initializer(cls,path):
+       file = pandas.read_excel(path, engine = 'openpyxl')
+       results = []
+       for i in range(0,len(file)-1):
+          results.append(Tokenizer.tokenizeProceedings(file,i))
         
 
+       return results
 
 
