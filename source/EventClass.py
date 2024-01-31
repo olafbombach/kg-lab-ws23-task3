@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, List, Set, Union
+# from synonymes import Synonymes
+# from data_search_opt import SearchEngine
 import polars as pl
 
 
@@ -33,11 +35,10 @@ class ProceedingsEvent:
     """
     The instance class of a Proceedings.com event. In this all information can be stored during one process run. (tbc)
     """
-    input_info: Optional[pl.Series] = None
+    input_info: pl.Series = None
     keywords: TokenSet = None
 
-    # after semantification
-    full_title: str
+    full_title: str = None
     short_name: Optional[str] = None
     ordinal: Optional[int] = None
     part_of_series: Optional[str] = None
@@ -47,6 +48,23 @@ class ProceedingsEvent:
     year: Optional[int] = None
     start_time = None
     end_time = None
+
+    '''def apply_tokenizer(self):
+        self.keywords = Synonymes.synonymes(self.input_info)
+
+    def apply_semantifier(self):
+
+        self.full_title: str = None
+        self.short_name: Optional[str] = None
+        ordinal: Optional[int] = None
+        part_of_series: Optional[str] = None
+        country_name: Optional[str] = None
+        city_name: Optional[str] = None
+        main_object: Optional[str] = None
+        year: Optional[int] = None
+        start_time = None
+        end_time = None'''
+
 
 
 @dataclass
@@ -54,11 +72,11 @@ class WikidataEvent:
     """
     The instance class of a Wikidata event. In this all information can be stored ruing one process run. (tbc)
     """
-    input_info: Optional[pl.Series] = None
+    input_info: pl.Series = None
     keywords_score: Optional[float] = None
 
     # after semantification
-    full_title: str
+    full_title: str = None
     short_name: Optional[str] = None
     ordinal: Optional[int] = None
     part_of_series: Optional[str] = None
@@ -68,6 +86,10 @@ class WikidataEvent:
     year: Optional[int] = None
     start_time = None
     end_time = None
+
+    '''def apply_searchengine(self, source: str = "Wikidata", fastsearch: bool = "False"):
+        se = SearchEngine(source, f_seach=fastsearch)
+        pass'''
 
 
 @dataclass

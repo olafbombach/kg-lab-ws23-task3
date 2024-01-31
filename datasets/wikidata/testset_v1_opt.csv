@@ -1,4 +1,4 @@
-;conf_label;title;country;location;main_subject;start_time;end_time;series_label;series_short_name;beginnings;WikiCFP_identifier;DBLP_identifier
+index;conf_label;title;country;location;main_subject;start_time;end_time;series_label;series_short_name;beginnings;WikiCFP_identifier;DBLP_identifier
 4507;25th International Conference on World Wide Web;;Canada;Montreal;;11.04.2016;15.04.2016;The Web Conference;WWW;1994.0;3182.0;conf/www
 2145;9th Annual SIGCSE Conference on Innovation and Technology in Computer Science Education, ITiCSE 2004, Leeds, UK, June 28-30, 2004;9th Annual SIGCSE Conference on Innovation and Technology in Computer Science Education;United Kingdom;Leeds;computer science;28.06.2004;30.06.2004;Annual Conference on Innovation and Technology in Computer Science Education;ITiCSE;1996.0;1790.0;conf/iticse
 7300;VR 1999;IEEE Virtual Reality Conference 1999, VR 1999;United States of America;Houston;;13.03.1999;17.03.1999;Virtual Reality and 3D User Interfaces;VR;;2970.0;conf/vr

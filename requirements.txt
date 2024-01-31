@@ -11,3 +11,4 @@ numpy
 number_parser
 seaborn
 polars
+pathlib

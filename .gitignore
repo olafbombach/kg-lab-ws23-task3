@@ -1,5 +1,7 @@
 /.idea/*
 !/.idea/runConfigurations
 
+test/evaluation/log/*
+
 __pycache__
 venv
