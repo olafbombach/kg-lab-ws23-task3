@@ -49,10 +49,14 @@ class ProceedingsEvent:
     start_time = None
     end_time = None
 
-    '''def apply_tokenizer(self):
+    def apply_tokenizer(self):
         self.keywords = Synonymes.synonymes(self.input_info)
 
+
     def apply_semantifier(self):
+        se = NLP()
+        output = se.semantify(self.input_info)
+        self.full_title = output['full_title']
 
         self.full_title: str = None
         self.short_name: Optional[str] = None
@@ -63,7 +67,11 @@ class ProceedingsEvent:
         main_object: Optional[str] = None
         year: Optional[int] = None
         start_time = None
-        end_time = None'''
+        end_time = None
+
+    def apply_encoder(self):
+
+
 
 
 
@@ -90,6 +98,7 @@ class WikidataEvent:
     '''def apply_searchengine(self, source: str = "Wikidata", fastsearch: bool = "False"):
         se = SearchEngine(source, f_seach=fastsearch)
         pass'''
+
 
 
 @dataclass
