@@ -1,9 +1,8 @@
 import time
 
-from source.synonymes import Tokenizer
-from source.data_search_opt import SearchEngine
-from source.Evaluator import Evaluator
-from source.EventClass import TokenSet, ProceedingsEvent, WikidataEvent
+from source.Tokenizer import Tokenizer
+from source.SearchEngine import SearchEngine
+from source.EventClass import ProceedingsEvent, WikidataEvent
 
 import logging
 import polars as pl
@@ -54,7 +53,7 @@ def evaluate_testset_v1(testset_file: str = r"../../datasets/wikidata/testset_v1
             if correct_index in found_indices:
                 position = np.where(np.array(found_indices) == correct_index)[0][0]
                 logging.info(f"index {int(testset.row(entry)[0])}: Success! "
-                            f"Result: position {position+1} of {len(found_indices)}")
+                             f"Result: position {position+1} of {len(found_indices)}")
                 del position, correct_index, found_indices
             else:
                 logging.error(f"index {int(testset.row(entry)[0])}: Fail!")
@@ -94,9 +93,6 @@ def evaluate_testset_v2(testset_file: str = r"../../datasets/wikidata/testset_v1
         current_entry = testset.row(entry, named=True)
         # init proceedings entry
         proceedingsentry = ProceedingsEvent(input_info=current_entry)
-        proceedingsentry.apply_tokenizer()
-        proceedingsentry.apply_searchengine()
-        proceedingsentry.
 
 # next steps:
 # create new testset with proceedings.com entries (aligns with later application)
