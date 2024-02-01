@@ -1,5 +1,37 @@
+# .gitignore file
+
+# project-specific files to neglegt
+test/evaluation/log/*
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+__pypackages__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Notebook
+.ipynb_checkpoints
+
+#Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Environments of any kind
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Jetbrains environments
 /.idea/*
 !/.idea/runConfigurations
-
-__pycache__
-venv

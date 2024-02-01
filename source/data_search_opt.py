@@ -1,4 +1,5 @@
-import re
+from pathlib import Path
+import os
 import polars as pl
 import numpy as np
 from timeit import default_timer as timer
@@ -17,60 +18,72 @@ def get_timer(func):
 
 class SearchEngine:
     """
-        An operator that takes a list as a search filter and then searches for these keywords in a specified dataset.
-        So for you can only specify the datasets Wikidata, Conference Corpus and proceedings.com
+    An operator that takes a list as a search filter and then searches for these keywords in a specified dataset.
+    So for you can only specify the datasets Wikidata, Conference Corpus and proceedings.com
     """
 
-    def __init__(self, dataset_name: str, fastsearch: bool = False):
+    def __init__(self, dataset_name: str, f_search: bool = False):
         """
-            Initialize the SearchEngine.
-            It takes the dataset_name and a boolean value that determines if we should use fastsearch.
-            Caution: fastsearch=True restricts the columns and thus could lead to false results.
+        Initialize the SearchEngine.
+        It takes the dataset_name and a boolean value that determines if we should use fastsearch.
+        Caution: f_search=True restricts the columns and thus could lead to false results.
         """
         assert dataset_name in ['Conference Corpus', 'proceedings.com', 'Wikidata'],\
             "Please specify a dataset which is part of " \
             "[\'Conference Corpus\', \'proceedings.com\', \'Wikidata\']"
 
+        self._file_to_root = self._find_root_directory()
         self._dataset_name = dataset_name
-        self._fastsearch = fastsearch
+        self._fastsearch = f_search
         self._data = self._read_in_data()
         self._columns_sel = self._get_columns_sel()
         self._hit_mask = None
         self._filtered_data = None
 
+    @staticmethod
+    def _find_root_directory(marker_file: str = ".git") -> str:
+        """
+        The idea of this static method is to define a marker-file that we can search in the current root.
+        If we find the file, then we can be sure, that we are in the real root directory path of the project.
+        If we do not find it in the current file directory, we proceed to the parent of the file.
+        """
+        current_path = Path(__file__).resolve()
+        while current_path != current_path.parent:
+            if (current_path / marker_file).exists():
+                return current_path
+            else:
+                current_path = current_path.parent
+
     def _read_in_data(self) -> pl.DataFrame:
         """
-            This method reads in data of the different sources and projects it in polars.
-            (It is meant to be a private method since it is called in the __init__ method.)
+        This method reads in data of the different sources and projects it in polars.
+        (It is meant to be a private method since it is called in the __init__ method.)
         """
         if self._dataset_name == 'Conference Corpus':
             try:
-                path = "./datasets/.conferencecorpus/conf_corpus_data.csv"
+                path = self._file_to_root / "datasets" / ".conferencecorpus" / "conf_corpus_data.csv"
                 data = pl.read_csv(path, has_header=True)
-            except FileNotFoundError:
-                path = "../datasets/.conferencecorpus/conf_corpus_data.csv"
-                data = pl.read_csv(path, has_header=True)
+            except FileNotFoundError(f"Are you sure you are in the right directory? \n ROOT: {self._file_to_root}"):
+                pass
         elif self._dataset_name == 'proceedings.com':
             try:
-                path = "./datasets/proceedings.com/all-nov-23.xlsx"
+                path = self._file_to_root / "datasets" / "proceedings.com" / "all-nov-23.xlsx"
                 data = pl.read_excel(path, engine='openpyxl')
-            except FileNotFoundError:
-                path = "../datasets/proceedings.com/all-nov-23.xlsx"
-                data = pl.read_excel(path, engine='openpyxl')
+            except FileNotFoundError(f"Are you sure you are in the right directory? \n ROOT: {self._file_to_root}"):
+                pass
         elif self._dataset_name == 'Wikidata':
             try:
-                path = './datasets/wikidata/wikidata_conf_data.csv'
+                path = self._file_to_root / "datasets" / "wikidata" / "wikidata_conf_data.csv"
                 data = pl.read_csv(path, has_header=True)
-            except FileNotFoundError:
-                path = '../datasets/wikidata/wikidata_conf_data.csv'
-                data = pl.read_csv(path, has_header=True)
+            except FileNotFoundError(f"Are you sure you are in the right directory? \n ROOT: {self._file_to_root}"):
+                pass
         return data
 
     def _get_columns_sel(self) -> list[str]:
         """
-            This method determines the columns selection for the search.
-            It is dependent on the attribute fastsearch since this determines which columns to include.
-            (It is meant to be a private method since it is called in the __init__ method.)
+        This method determines the columns selection for the search.
+        It is dependent on the attribute fastsearch since this determines which columns to include.
+        (It is meant to be a private method since it is called in the __init__ method.)
         """
         if not self._fastsearch:
             columns_sel = self._data.columns
@@ -86,10 +99,10 @@ class SearchEngine:
 
     def _mask_eval(self) -> pl.DataFrame:
         """
-            This method evaluates the quality of the found results with the SearchEngine.
-            It returns the number of hits that a row had when using the keywords specified in the search method.
-            The number of hits (score) is then added to the polars dataframe.
-            (It is meant to be a private method since it is called in search_dict originally.)
+        This method evaluates the quality of the found results with the SearchEngine.
+        It returns the number of hits that a row had when using the keywords specified in the search method.
+        The number of hits (score) is then added to the polars dataframe.
+        (It is meant to be a private method since it is called in search_dict originally.)
         """
         self._data = self._data.with_columns(pl.Series(name="score",
                                                        values=np.sum(self._hit_mask, axis=1),
@@ -99,15 +112,15 @@ class SearchEngine:
     @get_timer
     def search_dict(self, keywords_dict: dict[str, float], threshold_method: str = "three quarter") -> pl.DataFrame:
         """
-            The method does the following:
-            1.  Converts all selected dataframe columns to type string in order to better search for values.
-            2.  Searches for specific keywords in the specified dataframe using regex methods.
-                If a match could be found, the position in the dataframe is marked (hit_mask with bool-values).
-            3.  This is done for all strings of the keywords and multiplied according to its weight.
-                The hit_mask is appended using normal sum.
-            4.  After all keywords a score is computed using _mask_eval().
-            5.  Filtering of all rows in which hit_mask for one column has at least half of the maximum score.
-            6.  Sorting of all rows based on score-value (descending).
+        The method does the following:
+        1.  Converts all selected dataframe columns to type string in order to better search for values.
+        2.  Searches for specific keywords in the specified dataframe using regex methods.
+            If a match could be found, the position in the dataframe is marked (hit_mask with bool-values).
+        3.  This is done for all strings of the keywords and multiplied according to its weight.
+            The hit_mask is appended using normal sum.
+        4.  After all keywords a score is computed using _mask_eval().
+        5.  Filtering of all rows in which hit_mask for one column has at least half of the maximum score.
+        6.  Sorting of all rows based on score-value (descending).
         """
         assert threshold_method in ["three quarter", "half", "top 5"], \
             "This threshold method, does not exist. Please select one of the following: " \
@@ -120,10 +133,16 @@ class SearchEngine:
             mapper_for_cols = {key: pl.String for key in self._columns_sel}
             self._data = self._data.cast(mapper_for_cols, strict=True)
 
-        hit_mask = np.zeros((self._data.shape[0], len(self._columns_sel)))
+        if "index" in self._columns_sel:
+            length_hit_mask = len(self._columns_sel)-1
+        else:
+            length_hit_mask = len(self._columns_sel)
+
+        hit_mask = np.zeros((self._data.shape[0], length_hit_mask))
         for string in keywords_dict.keys():
             addition = np.column_stack([self._data[column].str.contains(r"(?i)"+string, strict=True)
-                                       .replace({None: False}) for column in self._columns_sel])
+                                       .replace({None: False}) for column in self._columns_sel
+                                        if column != 'index'])
             hit_mask = hit_mask + addition * keywords_dict[string]
 
         self._hit_mask = hit_mask.astype(dtype=int)
@@ -133,25 +152,35 @@ class SearchEngine:
         # carries out the filtering based on determined method
         if threshold_method == "half":
             threshold = self._data.select(pl.max("score")) * 1/2
-            self._filtered_data = self._data.filter(pl.col('score') >= threshold)
-            self._filtered_data = self._filtered_data.sort('score', descending=True)
+            self._filtered_data = self._data.sort('score', descending=True)
+            self._filtered_data = self._filtered_data.filter(pl.col('score') >= threshold)
         elif threshold_method == "three quarter":
             threshold = self._data.select(pl.max("score")) * 3/4
-            self._filtered_data = self._data.filter(pl.col('score') >= threshold)
-            self._filtered_data = self._filtered_data.sort('score', descending=True)
+            self._filtered_data = self._data.sort('score', descending=True)
+            self._filtered_data = self._filtered_data.filter(pl.col('score') >= threshold)
         elif threshold_method == "top 5":
             self._filtered_data = self._data.sort('score', descending=True)
             self._filtered_data = self._filtered_data.head(5)
 
         return self._filtered_data
 
-'''
-input_query = {'25th': 40, 'twentyfifth': 40, '2017': 70,
-               'Euromicro International Conference on Parallel, Distributed and Network-based Processing': 100,
-               'PDP': 70, '6. March': 75, '8. March': 75, '06.03.': 75, '08.03': 75, 'St. Petersburg': 60, 'Russia': 60,
-               'Euromicro': 50, 'Parallel, Distributed and Network-based Processing': 60}
 
-se = SearchEngine("Wikidata", fastsearch=True)
-print(se.search_dict(input_query, threshold_method="three quarter"))
+'''
+input_query = {'Fourth National Conference on Artificial Intelligence, Austin, 06.08.1984, 10.08.1984, AAAI Conference on Artificial Intelligence, AAAI, 1980': 4,
+               '4th National Conference on Artificial Intelligence, Austin, 06.08.1984, 10.08.1984, AAAI Conference on Artificial Intelligence, AAAI, 1980': 3,
+               '06.08.1984,': 1, '10.08.1984,': 1, 'AAAI': 3, 'AAAI,': 3, '1980': 1, 'Fourth': 1, 'Fourth National': 1,
+               'Fourth National Conference': 1, 'Fourth National Conference on': 1,
+               'Fourth National Conference on Artificial': 1, 'Fourth National Conference on Artificial Intelligence,': 1,
+               'Fourth National Conference on Artificial Intelligence, Austin,': 1,
+               'Fourth National Conference on Artificial Intelligence, Austin, 06.08.1984,': 1,
+               'Fourth National Conference on Artificial Intelligence, Austin, 06.08.1984, 10.08.1984,': 1,
+               'Fourth National Conference on Artificial Intelligence, Austin, 06.08.1984, 10.08.1984, AAAI': 1,
+               'Fourth National Conference on Artificial Intelligence, Austin, 06.08.1984, 10.08.1984, AAAI Conference': 1,
+               'Fourth National Conference on Artificial Intelligence, Austin, 06.08.1984, 10.08.1984, AAAI Conference on': 1,
+               'Fourth National Conference on Artificial Intelligence, Austin, 06.08.1984, 10.08.1984, AAAI Conference on Artificial': 1,
+               'Fourth National Conference on Artificial Intelligence, Austin, 06.08.1984, 10.08.1984, AAAI Conference on Artificial Intelligence,': 1,
+               'Fourth National Conference on Artificial Intelligence, Austin, 06.08.1984, 10.08.1984, AAAI Conference on Artificial Intelligence, AAAI,': 1}
+
+se = SearchEngine("Wikidata", fsearch=True)
 print(se.search_dict(input_query, threshold_method="three quarter"))
 '''
