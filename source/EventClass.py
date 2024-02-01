@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional, List, Set, Union
-# from synonymes import Synonymes
-# from data_search_opt import SearchEngine
+from source.Tokenizer import Tokenizer
 import polars as pl
 
 
@@ -50,9 +49,9 @@ class ProceedingsEvent:
     end_time = None
 
     def apply_tokenizer(self):
-        self.keywords = Synonymes.synonymes(self.input_info)
+        self.keywords = Tokenizer.synonymes(self.input_info)
 
-
+    '''
     def apply_semantifier(self):
         se = NLP()
         output = se.semantify(self.input_info)
@@ -70,9 +69,7 @@ class ProceedingsEvent:
         end_time = None
 
     def apply_encoder(self):
-
-
-
+    '''
 
 
 @dataclass
@@ -100,7 +97,6 @@ class WikidataEvent:
         pass'''
 
 
-
 @dataclass
 class EventSeries:
     """
@@ -115,8 +111,8 @@ def main():
     set_of_tokens = set()
     set_of_tokens.add(tok1.token)
     set_of_tokens.add(tok2.token)
-    keywords = TokenSet(set_of_tokens)
-    print((keywords.tokens))
+    #keywords = TokenSet(set_of_tokens)
+    #print(keywords.tokens)
 
 
 if __name__ == "__main__":
