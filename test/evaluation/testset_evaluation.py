@@ -1,9 +1,8 @@
 import time
 
-from source.synonymes import Synonymes
-from source.data_search_opt import SearchEngine
-from source.Evaluator import Evaluator
-from source.EventClass import TokenSet, ProceedingsEvent, WikidataEvent
+from source.Tokenizer import Tokenizer
+from source.SearchEngine import SearchEngine
+from source.EventClass import ProceedingsEvent, WikidataEvent
 
 import logging
 import polars as pl
@@ -44,7 +43,7 @@ def evaluate_testset_v1(testset_file: str = r"../../datasets/wikidata/testset_v1
             current_string = current_string.rstrip(", ")
 
         try:
-            tokens = Synonymes.synonymes(current_string)
+            tokens = Tokenizer.synonymes(current_string)
             results_wiki = se_wiki.search_dict(tokens)
 
             # evaluation part
@@ -54,7 +53,7 @@ def evaluate_testset_v1(testset_file: str = r"../../datasets/wikidata/testset_v1
             if correct_index in found_indices:
                 position = np.where(np.array(found_indices) == correct_index)[0][0]
                 logging.info(f"index {int(testset.row(entry)[0])}: Success! "
-                            f"Result: position {position+1} of {len(found_indices)}")
+                             f"Result: position {position+1} of {len(found_indices)}")
                 del position, correct_index, found_indices
             else:
                 logging.error(f"index {int(testset.row(entry)[0])}: Fail!")
@@ -83,25 +82,24 @@ def evaluate_testset_v2(testset_file: str = r"../../datasets/wikidata/testset_v1
 
     # read-in and preprocess dataset in polars
     testset = pl.read_csv(testset_file, has_header=True, separator=';')
-    testset = testset.drop("WikiCFP_identifier", "DBLP_identifier", "title")  # hier nochmal überarbeiten
-    testset = testset.with_columns(pl.col('beginnings').cast(pl.Int64, strict=True))  # hier nochmal überarbeiten
+    testset = testset.drop("WikiCFP_identifier", "DBLP_identifier", "title")  # check here
+    testset = testset.with_columns(pl.col('beginnings').cast(pl.Int64, strict=True))  # check here
     testset = testset.cast(pl.String)
     testset = testset.fill_null("")
 
     logging.info("Finished reading in the complete testset datafile.")
 
-    for entry in range(5):
-        current_entry = testset.row(entry)
-        print(type(current_entry))
-
-    proceedingsentry = ProceedingsEvent(input_info=current_entry)
+    for entry in range(len(testset)):
+        current_entry = testset.row(entry, named=True)
+        # init proceedings entry
+        proceedingsentry = ProceedingsEvent(input_info=current_entry)
 
 # next steps:
-# sort out the problems of the tokenizer since it can create "(..." which is suboptimal for regex-method
-# create new definition where I also include semantification and encoding
+# create new testset with proceedings.com entries (aligns with later application)
+# create EventClass methods? Or other pipeline?
 # build cache
 
 
 if __name__ == "__main__":
 
-    evaluate_testset_v1()
+    evaluate_testset_v2()
