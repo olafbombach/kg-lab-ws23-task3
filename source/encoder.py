@@ -48,6 +48,9 @@ class Encoder:
         return self.glove_embeddings.get(word, None)
     
     # Apply for a set of string
+    # entry_no: integer value for selecting the JSON element for computation
+    # optional parameters title, abbreviation, date, year, location of type boolean. Passing these parameters indicate which elements are going to be calculated
+    # TODO empty string "" has also an embedding value, find a solution to not calculate it
     def get_glove_encoding(self, conference_data, entry_no: int, title: bool=None, abbreviation: bool=None, date: bool=None, year: bool=None, location: bool=None):
         if not self.glove_embeddings:
             raise ValueError("GloVe word embeddings not loaded, call load_embeddings")
@@ -111,75 +114,25 @@ class Encoder:
         return similarity
     
 
-    # ############# Bert Training #############
-    # #TODO Check if this makes sense as a whole
-    # def encode_data(self, data_item):
-    #     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
-    #     inputs = tokenizer.encode_plus(
-    #         f"{data_item['text']} {tokenizer.sep_token} {data_item['extra_info']}",
-    #         add_special_tokens=True,
-    #         max_length=512,
-    #         return_tensors='pt',
-    #         padding='max_length',
-    #         truncation=True
-    #     )
-    #     return {
-    #         'input_ids': inputs['input_ids'],
-    #         'attention_mask': inputs['attention_mask'],
-    #         'labels': torch.tensor(data_item['label'])
-    #         }
+# #Test if the class works
 
-    # def do_train(self, train_data):
-    #     #tokenize and encode the training data
-    #     encoded_train_data = [self.encode_data(item) for item in train_data]
+# #Bert
+# instance = Encoder()
+# json_path = "/home/efeboz/Desktop/OpenAI_output_example.json"
+# data = instance.read_json(json_path)
+# bert1 = instance.get_bert_encoding(data, 0, year=True)
+# bert2 = instance.get_bert_encoding(data, 1, year=True)
+# bert3 = instance.get_cosine_similarity(bert1, bert2)
+# bert4 = instance.get_bert_euclidean(bert1,bert2)
+# print(bert4)
 
-    #     #define training arguments
-    #     #TODO check if these make sense
-    #     training_args = TrainingArguments(
-    #     output_dir='./results',
-    #     num_train_epochs=3,
-    #     per_device_train_batch_size=16,
-    #     warmup_steps=500,
-    #     weight_decay=0.01,
-    #     )
-    #     #init Trainer
-    #     trainer = Trainer(
-    #     model=BertForSequenceClassification.from_pretrained('bert-base-uncased'),
-    #     args=training_args,
-    #     train_dataset=encoded_train_data,
-    #     )
-    #     #fine-tune bert model
-    #     trained_bert = trainer.train()
+# #GloVe
+# glove_path = "/home/efeboz/Desktop/kg-lab-ws23-task3/datasets/glove.6B/glove.6B.50d.txt"
+# glove_embeddings = instance.load_glove_embeddings(glove_path)
+# glove1 = instance.get_glove_encoding(data, 0, year=True)
+# glove2 = instance.get_glove_encoding(data, 1, year=True)
+# glove3 = instance.get_cosine_similarity(glove1, glove2)
+# glove4 = instance.get_bert_euclidean(glove1, glove2)
+# print(glove4)
 
-    #     return trained_bert
-
-
-#Test if the class works
-
-#Bert
-instance = Encoder()
-json_path = "/home/efeboz/Desktop/OpenAI_output_example.json"
-data = instance.read_json(json_path)
-bert1 = instance.get_bert_encoding(data, 0, year=True)
-bert2 = instance.get_bert_encoding(data, 1, year=True)
-bert3 = instance.get_cosine_similarity(bert1, bert2)
-bert4 = instance.get_bert_euclidean(bert1,bert2)
-print(bert4)
-
-#GloVe
-glove_path = "/home/efeboz/Desktop/kg-lab-ws23-task3/datasets/glove.6B/glove.6B.50d.txt"
-glove_embeddings = instance.load_glove_embeddings(glove_path)
-glove1 = instance.get_glove_encoding(data, 0, year=True)
-glove2 = instance.get_glove_encoding(data, 1, year=True)
-glove3 = instance.get_cosine_similarity(glove1, glove2)
-glove4 = instance.get_bert_euclidean(glove1, glove2)
-print(glove4)
-
-
-#prepare input data, text is the primary source information whereas extra_info is of secondary importance. This process can be extended arbitrarily
-#label 
-# train_data = [
-#     #{"text": "text 1", "extra_info": "Additional information 1", "label": 0},
-#     {"text": "Proceeding 1", "label": 0},
-# ]
