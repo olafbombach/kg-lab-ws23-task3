@@ -1,5 +1,6 @@
 from source.SearchEngine import SearchEngine
 
+
 def test_wikidata_searchengine():
     # test if there is something wrong with the dataset or the searchengine
 
