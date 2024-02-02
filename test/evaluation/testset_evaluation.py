@@ -9,7 +9,7 @@ import polars as pl
 import numpy as np
 
 
-def evaluate_testset_v1(testset_file: str = r"../../datasets/wikidata/testset_v1_opt.csv"):
+def evaluate_testset_v1(testset_file: str = r"../../datasets/wikidata/testset_v1.csv"):
     # initialize logging and search-engine
     logging.basicConfig(level=logging.INFO,
                         filename="log/eval_log_1.log",
@@ -64,7 +64,7 @@ def evaluate_testset_v1(testset_file: str = r"../../datasets/wikidata/testset_v1
             logging.critical(f"index {testset.row(entry)[0]}: Mayor problem occurred while performing.")
 
 
-def evaluate_testset_v2(testset_file: str = r"../../datasets/wikidata/testset_v1_opt.csv"):
+def evaluate_testset_v2(testset_file: str = r"../../datasets/proceedings.com/testset_v2.csv"):
     """
     Here we also try to implement the EventClasses.
     Further, we updated the testset so that it incorporates proceedings.com entries and not wikidata entries.
@@ -76,11 +76,14 @@ def evaluate_testset_v2(testset_file: str = r"../../datasets/wikidata/testset_v1
                         filemode="w",
                         format="%(asctime)s %(levelname)s - %(message)s",
                         datefmt="%m/%d/%Y %I:%M:%S")
+
+    # initialize SearchEngines
+    se_proceedings = SearchEngine("proceedings.com", f_search=True)
     se_wiki = SearchEngine("Wikidata", f_search=True)
 
     logging.info("Start reading and preprocessing the testset datafile.")
 
-    # read-in and preprocess dataset in polars
+    # read-in and naively preprocess dataset in polars
     testset = pl.read_csv(testset_file, has_header=True, separator=';')
     testset = testset.drop("WikiCFP_identifier", "DBLP_identifier", "title")  # check here
     testset = testset.with_columns(pl.col('beginnings').cast(pl.Int64, strict=True))  # check here
@@ -91,8 +94,18 @@ def evaluate_testset_v2(testset_file: str = r"../../datasets/wikidata/testset_v1
 
     for entry in range(len(testset)):
         current_entry = testset.row(entry, named=True)
+
         # init proceedings entry
-        proceedingsentry = ProceedingsEvent(input_info=current_entry)
+        proceedentry = ProceedingsEvent(input_info=current_entry)
+
+        # apply tokenizer
+        proceedentry.apply_tokenizer()
+
+        # apply searchengine for proceedings and wikidata datasets
+        proceedhits = proceedentry.apply_searchengine(se_proceedings)
+        wikihits = proceedentry.apply_searchengine(se_wiki)
+
+
 
 # next steps:
 # create new testset with proceedings.com entries (aligns with later application)
@@ -102,4 +115,4 @@ def evaluate_testset_v2(testset_file: str = r"../../datasets/wikidata/testset_v1
 
 if __name__ == "__main__":
 
-    evaluate_testset_v2()
+    evaluate_testset_v1()

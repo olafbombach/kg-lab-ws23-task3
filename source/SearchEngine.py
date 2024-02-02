@@ -164,6 +164,65 @@ class SearchEngine:
 
         return self._filtered_data
 
+    def search_set_of_tuples(self, keywords_set: set[tuple], threshold_method: str = "three quarter") -> pl.DataFrame:
+        """
+                The method does the following:
+                1.  Converts all selected dataframe columns to type string in order to better search for values.
+                2.  Searches for specific keywords in the specified dataframe using regex methods.
+                    If a match could be found, the position in the dataframe is marked (hit_mask with bool-values).
+                3.  This is done for all strings of the keywords and multiplied according to its weight.
+                    The hit_mask is appended using normal sum.
+                4.  After all keywords a score is computed using _mask_eval().
+                5.  Filtering of all rows in which hit_mask for one column has at least half of the maximum score.
+                6.  Sorting of all rows based on score-value (descending).
+                """
+        assert threshold_method in ["three quarter", "half", "top 5"], \
+            "This threshold method, does not exist. Please select one of the following: " \
+            "[\"three quarter\", \"half\", \"top 5\"]."
+
+        self._hit_mask = None  # reset self._hit_mask
+        self._filtered_data = None  # reset self._filtered_data
+
+        if set(self._data[self._columns_sel].dtypes) != {pl.String}:
+            mapper_for_cols = {key: pl.String for key in self._columns_sel}
+            self._data = self._data.cast(mapper_for_cols, strict=True)
+
+        if "index" in self._columns_sel:
+            length_hit_mask = len(self._columns_sel) - 1
+        else:
+            length_hit_mask = len(self._columns_sel)
+
+        hit_mask = np.zeros((self._data.shape[0], length_hit_mask))
+        for tup in keywords_set:
+            # setup for tup: (keyword, category, weight)
+            addition = np.column_stack([self._data[column].str.contains(r"(?i)" + tup[0], strict=True)
+                                       .replace({None: False}) for column in self._columns_sel
+                                        if column != 'index'])
+            hit_mask = hit_mask + addition * tup[2]
+
+        self._hit_mask = hit_mask.astype(dtype=int)
+
+        self._data = self._mask_eval()  # adds score as the last column
+
+        # carries out the filtering based on determined method
+        if threshold_method == "half":
+            threshold = self._data.select(pl.max("score")) * 1 / 2
+            self._filtered_data = self._data.sort('score', descending=True)
+            self._filtered_data = self._filtered_data.filter(pl.col('score') >= threshold)
+        elif threshold_method == "three quarter":
+            threshold = self._data.select(pl.max("score")) * 3 / 4
+            self._filtered_data = self._data.sort('score', descending=True)
+            self._filtered_data = self._filtered_data.filter(pl.col('score') >= threshold)
+        elif threshold_method == "top 5":
+            self._filtered_data = self._data.sort('score', descending=True)
+            self._filtered_data = self._filtered_data.head(5)
+
+        return self._filtered_data
+
+    @property
+    def get_dataset_name(self):
+        return self._dataset_name
+
 
 '''
 input_query = {'Fourth National Conference on Artificial Intelligence, Austin, 06.08.1984, 10.08.1984, AAAI Conference on Artificial Intelligence, AAAI, 1980': 4,
