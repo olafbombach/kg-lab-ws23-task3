@@ -208,20 +208,17 @@ class Tokenizer(object):
 
     #Creates token from the index-th entry in the given pandas dataframe, structured as the .proceedings excel sheet
     @classmethod
-    def tokenizeProceedings(cls,file,index):
+    def tokenizeProceedings(cls,dict):
        
        cols = ['Publisher', 'Conference Title','Book Title','Series','Description','Mtg Year','Editor','ISBN','Pages','Format','POD Publisher','Publ Year','Subject1','Subject2','Subject3','Subject4','List','Price']
-       if(index>len(file)):
-          raise IndexError("Index must be an integer in the range 0 to "+str(len(file)-1))
       
        #print(file)
-       indexCol = file.loc[index]
-       results = Tokenizer.synonymes(indexCol['Conference Title'])
-       if(str(indexCol['Mtg Year'])[0].isdigit()):
-           results += Token(str(indexCol['Mtg Year'])[0:4], "MtgYear",4)
+       results = Tokenizer.synonymes(dict['Conference Title'])
+       if(str(dict['Mtg Year'])[0].isdigit()):
+           results += Token(str(dict['Mtg Year'])[0:4], "MtgYear",4)
           
-       if(not str(indexCol['Publisher']) == "nan"):
-          results += Token(str(indexCol['Publisher']),"Publisher",2)
+       if(not str(dict['Publisher']) == "nan"):
+          results += Token(str(dict['Publisher']),"Publisher",2)
        
        return results
 
@@ -231,10 +228,15 @@ class Tokenizer(object):
        file = pandas.read_excel(path, engine = 'openpyxl')
        results = []
        for i in range(0,len(file)-1):
-          results.append(Tokenizer.tokenizeProceedings(file,i))
+          dicti = dict()
+          dicti["Publisher"] = file.iloc[i]["Publisher"]
+          dicti["Mtg Year"] = file.iloc[i]["Mtg Year"]
+          dicti["Conference Title"] = file.iloc[i]["Conference Title"]
+          results.append(Tokenizer.tokenizeProceedings(dicti))
         
 
        return results
 
 
 #print(Tokenizer.initializer("datasets/proceedings.com/all-nov-23.xlsx"))
+
