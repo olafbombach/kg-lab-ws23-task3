@@ -14,7 +14,7 @@ import json
 
 import openpyxl
 
-from KGLab import TokenSet, Token
+from source.EventClass import TokenSet, Token
 
 
 #static class containing functions to obtain equivalent expressions
