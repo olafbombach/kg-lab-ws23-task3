@@ -14,6 +14,14 @@ import json
 
 import openpyxl
 
+#handles parsing of brackets
+
+import re
+
+
+# dependencies on source code
+#from KGLab import TokenSet, Token
+
 from source.EventClass import TokenSet, Token
 
 
@@ -94,7 +102,7 @@ class Tokenizer(object):
         #Remove useless empty spaces (use that string as the baseline for all further transformations) score:3
         string = (" ").join(input_s.split(" "))
         if(not string == input_s):
-           results += Token(string,"Modified",3)
+           results += Token(string,"Modified",90)
         
         #Text format (Convert ordinals to text), using the dictionary above score:3
         string_text = string
@@ -142,10 +150,13 @@ class Tokenizer(object):
                      results += Token(word, "Abbreviation",3)
        
 
-        #Abbreviation, this time in brackets (for example (ICIMTech) is not fully uppercase) score:3
-        for word in words:
-           if(len(word)>2 and word[0] == "(" and word[len(word)-1]==")"):
-              results += Token(word[1:len(word)-1],"Abbreviation",3)
+        #Abbreviation, this time in brackets (for example (ICIMTech) is not fully uppercase) score:2
+        #Checks that the first letter is not a number 
+        #Is often eithen an abbreviation, publisher or file type   
+        m = re.findall(r"\(([A-Za-z0-9_]+)\)", string)
+        for ele in m:
+           if(not ele[0].isdigit()):
+              results += Token(ele,"Bracketexpression",2)
        
 
         #Extract date score:2
@@ -238,5 +249,5 @@ class Tokenizer(object):
        return results
 
 
-#print(Tokenizer.initializer("datasets/proceedings.com/all-nov-23.xlsx"))
+#Tokenizer.initializer("datasets/proceedings.com/all-nov-23.xlsx")
 
