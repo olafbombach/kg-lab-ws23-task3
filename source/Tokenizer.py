@@ -14,6 +14,8 @@ import json
 
 import openpyxl
 
+from KGLab import TokenSet, Token
+
 
 #static class containing functions to obtain equivalent expressions
 #gives the results as keys in a dictionary, that also contains a metric for the usefulness of the synonym in the value of the entry
@@ -83,16 +85,16 @@ class Tokenizer(object):
     def synonymes(cls,input_s): 
           
          
-        results = dict()
+        results = TokenSet()
           
           
         #Add the base string score:4
-        results[input_s] = 100
+        results += Token(input_s, "Base", 100)
         
         #Remove useless empty spaces (use that string as the baseline for all further transformations) score:3
         string = (" ").join(input_s.split(" "))
         if(not string == input_s):
-           results.append(string+":3")
+           results += Token(string,"Modified",3)
         
         #Text format (Convert ordinals to text), using the dictionary above score:3
         string_text = string
@@ -100,7 +102,7 @@ class Tokenizer(object):
            string_text = string_text.replace(" "+key, " "+value)
         
         if(not string_text == input_s):
-           results[string_text] = 3
+           results += Token(string_text, "Modified", 3)
           
         #Numerical format (Convert text ordinals to numbers) score:3
         words = string.split(" ")
@@ -119,7 +121,7 @@ class Tokenizer(object):
         string_ord = (" ").join(words)
           
         if(not string_ord == input_s):
-           results[string_ord] = 3
+           results += Token(string_ord, "Modified",3)
            
         #Use Abbreviation (Assumed to be all uppercase, possibly in brackets, and does not start with a number) score:3
         #Numbers (such as years and days of the month are also checked, but with a score of 1)
@@ -134,16 +136,16 @@ class Tokenizer(object):
               if(uppercase):
                  if(word[0].isdigit()):
                      #year, date ,etc.
-                     results[word] = 1
+                     results += Token(word, "Year", 1)
                  else:
                      #abbreviation (uppercase word)
-                     results[word] = 3
+                     results += Token(word, "Abbreviation",3)
        
 
         #Abbreviation, this time in brackets (for example (ICIMTech) is not fully uppercase) score:3
         for word in words:
            if(len(word)>2 and word[0] == "(" and word[len(word)-1]==")"):
-              results[word[1:len(word)-1]] = 3
+              results += Token(word[1:len(word)-1],"Abbreviation",3)
        
 
         #Extract date score:2
@@ -188,7 +190,7 @@ class Tokenizer(object):
                 if(len(month) == 1):
                    month = "0"+month
                 if(not day+":"+month+":"+year in results):
-                   results[day+":"+month+":"+year] = 2
+                   results += Token(day+":"+month+":"+year, "Date", 2)
       
 
         #Infixes score:1
@@ -196,8 +198,8 @@ class Tokenizer(object):
         for i in range(1,len(words)+1):
            index = 0
            for word in words:
-             if(not (" ").join(words[index:index + i]) in results and index + i < len(words) + 1):
-                results[(" ").join(words[index:index + i])] = 1
+             if(index + i < len(words) + 1):
+                results += Token((" ").join(words[index:index + i]), "Infix",1)
 
         
         #Discard unnecessary Information (end substring at year or end substring at/after Abbreviation)
@@ -216,10 +218,10 @@ class Tokenizer(object):
        indexCol = file.loc[index]
        results = Tokenizer.synonymes(indexCol['Conference Title'])
        if(str(indexCol['Mtg Year'])[0].isdigit()):
-           results[str(indexCol['Mtg Year'])[0:4]] = 4
+           results += Token(str(indexCol['Mtg Year'])[0:4], "MtgYear",4)
           
        if(not str(indexCol['Publisher']) == "nan"):
-          results[str(indexCol['Publisher'])] = 2
+          results += Token(str(indexCol['Publisher']),"Publisher",2)
        
        return results
 
@@ -235,3 +237,4 @@ class Tokenizer(object):
        return results
 
 
+#print(Tokenizer.initializer("datasets/proceedings.com/all-nov-23.xlsx"))
