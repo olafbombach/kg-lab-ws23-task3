@@ -1,27 +1,62 @@
-[project]
-name = "event series completion"
-dynamic = ["dependencies"]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
+[project]
+name = "EventSeriesCompletion"
+version = "0.1.0"
+readme = "README.md"
+requires-python = ">=3.9"
 authors = [
   {name = "Efe Bilgili", email = "efe.bozkurt.bilgili@rwth-aachen.de"},
   {name = "Lukas Jäschke", email = "lukas.jaeschke@rwth-aachen.de"},
   {name = "Christophe Haag", email = "christophe.haag@rwth-aachen.de"},
   {name = "Daniel Quirmbach", email = "daniel.quirmbach@rwth-aachen.de"},
 ]
-
 maintainers = [
   {name = "Efe Bilgili", email = "efe.bozkurt.bilgili@rwth-aachen.de"},
   {name = "Lukas Jäschke", email = "lukas.jaeschke@rwth-aachen.de"},
   {name = "Christophe Haag", email = "christophe.haag@rwth-aachen.de"},
   {name = "Daniel Quirmbach", email = "daniel.quirmbach@rwth-aachen.de"},
 ]
+keywords = [
+  'Event Series Completion', 
+  'Wikidata', 
+  'OpenAI'
+]
+dependencies = [
+  "tqdm == 4.66.1",
+  "pathlib == 1.0.1",
+  "GitPython == 3.1.41",
+  "numpy == 1.26.1",
+  # datastructure
+  "polars == 0.20.5",
+  "openpyxl == 3.1.2",
+  "SPARQLWrapper == 1.8.5",
+  "requests == 2.31.0",
+  # parser
+  "spacy == 3.7.2",
+  "pylookupparser == 0.0.2",
+  "number_parser == 0.3.2",
+  # additionals
+  "xlrd == 2.0.1"
+]
 
-readme = "README.md"
-requires-python = ">=3.9"
-version = "0.0.1"
+[project.optional-dependencies]
+dev = [
+  "jupyter", 
+  "pandas == 2.1.4",
+  "matplotlib == 3.7.4",
+  "seaborn == 0.13.1",
+]
 
 [project.urls]
-Home = "https://github.com/olafbombach/kg-lab-ws23-task3"
+"Source Code" = "https://github.com/olafbombach/kg-lab-ws23-task3"
 
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
+[tool.hatch.build.targets.wheel]
+packages = [
+  "source",
+]
+
+[project.scripts]
+esc = "source.esc_cmd:main"
