@@ -118,9 +118,9 @@ class ListOfEvents:
         This method is necessary for the operations 
         that are carried out in dataclass methods.
         """
-        if self.source is 'Wikidata':
-            assert type(other) is WikidataEvent, "You can only add an instance of type WikidataEvent."
-        elif self.source is 'proceedings.com':
+        if self.source == 'Wikidata':
+            assert type(other) == WikidataEvent, "You can only add an instance of type WikidataEvent."
+        elif self.source == 'proceedings.com':
             assert type(other) == ProceedingsEvent, "You can only add an instance of type Proceedings.com"
         self.list_of_events.append(other)
         return ListOfEvents(source=self.source, list_of_events=self.list_of_events)
