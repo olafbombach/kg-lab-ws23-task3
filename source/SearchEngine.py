@@ -3,6 +3,7 @@ import os
 import polars as pl
 import numpy as np
 from timeit import default_timer as timer
+from source.HelperFunctions import find_root_directory
 
 
 # create wrapper to visualize elapsed time
@@ -32,27 +33,13 @@ class SearchEngine:
             "Please specify a dataset which is part of " \
             "[\'Conference Corpus\', \'proceedings.com\', \'Wikidata\']"
 
-        self._file_to_root = self._find_root_directory()
+        self._file_to_root = find_root_directory()
         self._dataset_name = dataset_name
         self._fastsearch = f_search
         self._data = self._read_in_data()
         self._columns_sel = self._get_columns_sel()
         self._hit_mask = None
         self._filtered_data = None
-
-    @staticmethod
-    def _find_root_directory(marker_file: str = ".git") -> str:
-        """
-        The idea of this static method is to define a marker-file that we can search in the current root.
-        If we find the file, then we can be sure, that we are in the real root directory path of the project.
-        If we do not find it in the current file directory, we proceed to the parent of the file.
-        """
-        current_path = Path(__file__).resolve()
-        while current_path != current_path.parent:
-            if (current_path / marker_file).exists():
-                return current_path
-            else:
-                current_path = current_path.parent
 
     def _read_in_data(self) -> pl.DataFrame:
         """

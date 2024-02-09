@@ -1,18 +1,22 @@
-import time
+import polars as pl
+import numpy as np
 
+from source.HelperFunctions import find_root_directory
 from source.Tokenizer import Tokenizer
 from source.SearchEngine import SearchEngine
 from source.EventClass import ProceedingsEvent, WikidataEvent
+from source.Preprocessor import Preprocessor
 
 import logging
-import polars as pl
-import numpy as np
+import time
 
 
 def evaluate_testset_v1(testset_file: str = r"../../datasets/wikidata/testset_v1.csv"):
     # initialize logging and search-engine
+    root_dir = find_root_directory()
+
     logging.basicConfig(level=logging.INFO,
-                        filename="log/eval_log_1.log",
+                        filename=root_dir / "logs" / "testset_v1_log.log",
                         filemode="w",
                         format="%(asctime)s %(levelname)s - %(message)s",
                         datefmt="%m/%d/%Y %I:%M:%S")
@@ -22,17 +26,16 @@ def evaluate_testset_v1(testset_file: str = r"../../datasets/wikidata/testset_v1
 
     # read-in and preprocess dataset in polars
     testset = pl.read_csv(testset_file, has_header=True, separator=';')
-    testset = testset.drop("WikiCFP_identifier", "DBLP_identifier", "title")  # no index needed
-    testset = testset.with_columns(pl.col('beginnings').cast(pl.Int64, strict=True))
-    testset = testset.cast(pl.String)
-    testset = testset.fill_null("")
+    pr = Preprocessor(raw_data=testset)
+    pr.apply_preprocessing_pipeline(del_columns=["WikiCFP_identifier", "DBLP_identifier", "title"])
+    preproc_testset = pr.get_preprocessed_data
 
     logging.info("Finished reading in the complete testset datafile.")
 
     # create tokens and apply SearchEngine
     for entry in range(100):
         current_string = ""
-        for i, info in enumerate(testset.row(entry)):
+        for i, info in enumerate(preproc_testset.row(entry)):
             if i > 0:  # gets rid of index value for tokenization
                 current_string = current_string + info + ", "
         current_string = current_string.replace(", , , , ,", ",")
@@ -71,8 +74,10 @@ def evaluate_testset_v2(testset_file: str = r"../../datasets/proceedings.com/tes
     This aligns with the later application.
     """
     # initialize logging and search-engine
+    root_dir = find_root_directory()
+
     logging.basicConfig(level=logging.INFO,
-                        filename="log/eval_log_2.log",
+                        filename=root_dir / "logs" / "testset_v2_log.log",
                         filemode="w",
                         format="%(asctime)s %(levelname)s - %(message)s",
                         datefmt="%m/%d/%Y %I:%M:%S")
@@ -85,34 +90,24 @@ def evaluate_testset_v2(testset_file: str = r"../../datasets/proceedings.com/tes
 
     # read-in and naively preprocess dataset in polars
     testset = pl.read_csv(testset_file, has_header=True, separator=';')
-    testset = testset.drop("WikiCFP_identifier", "DBLP_identifier", "title")  # check here
-    testset = testset.with_columns(pl.col('beginnings').cast(pl.Int64, strict=True))  # check here
-    testset = testset.cast(pl.String)
-    testset = testset.fill_null("")
+    pr = Preprocessor(raw_data=testset)
+    pr.apply_preprocessing_pipeline()  # check here due to column drops and value simplification
+    preproc_testset = pr.get_preprocessed_data
 
     logging.info("Finished reading in the complete testset datafile.")
 
-    for entry in range(len(testset)):
-        current_entry = testset.row(entry, named=True)
+    for entry in range(len(preproc_testset)):
+        current_entry = preproc_testset.row(entry, named=True)
 
-        # init proceedings entry
+        # init proceedings entry, tokenizer in post_init
         proceedentry = ProceedingsEvent(input_info=current_entry)
-
-        # apply tokenizer
-        proceedentry.apply_tokenizer()
 
         # apply searchengine for proceedings and wikidata datasets
         proceedhits = proceedentry.apply_searchengine(se_proceedings)
         wikihits = proceedentry.apply_searchengine(se_wiki)
 
 
-
 # next steps:
 # create new testset with proceedings.com entries (aligns with later application)
 # create EventClass methods? Or other pipeline?
 # build cache
-
-
-if __name__ == "__main__":
-
-    evaluate_testset_v1()
