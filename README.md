@@ -29,33 +29,38 @@ Expected Result:
 Proceedings of the same event series are interconnected in a way such that the user is able to access the whole event series.
 ## Current status of the project:
 <ul> 
-    <li> Assessment of current KG status ❌ </li>
-    <li> Preprocessing of queries ❌ </li>
-    <il> (Method for encoding established) ❌ </il>
+    <li> Assessment of current KG status &#x2713; </li>
+    <li> Preprocessing of queries &#x1F6E1; </li>
+    <il> (Method for encoding established) &#x1F6E1; </il>
     <li> Validation of LLM (check for accuracy and precision) ❌ </li>
     <li> (Further methods of assignments established) ❌ </li>
     <li> Method for data transfer to the KG ❌ </li>
-    <li> Establishment of an automated method ❌ </li>
-    <li> Validation of the method ❌ </li>
+    <li> Establishment of an automated method &#x1F6E1; </li>
+    <li> Validation of the method &#x1F6E1; </li>
 </ul>
 
 ## Deadlines
 
-- 2024-01-19: Midterm coordination
+- 2024-01-19: Midterm coordination &#x2713;
 - 2024-03-22: Project result delivery
 - 2024-03-29: Final presentation
 
 ## Usage
-- First setup:
+<b><big>First setup:</big></b>
+- Clone repository
 ```bash
 git clone https://github.com/olafbombach/kg-lab-ws23-task3
-
+```
+- Create virtual environment
+```bash
 python -m venv venv
 source venv/Scripts/activate
-
+```
+- Install dependencies
+```bash
 pip install .
 ```
-- General usage:
+<b><big>General usage:</big></b>
 ```bash
 esc -h
 ```
