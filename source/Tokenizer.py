@@ -230,8 +230,7 @@ class Tokenizer(object):
                    year = "0"+year
                 if(len(month) == 1):
                    month = "0"+month
-                if(not day+":"+month+":"+year in results):
-                   results += Token(day+":"+month+":"+year, "Date", 2)
+                results += Token(day+":"+month+":"+year, "Date", 2)
       
 
         #Infixes score:1
