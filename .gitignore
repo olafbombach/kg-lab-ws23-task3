@@ -1,6 +1,7 @@
 # .gitignore file
 
 # project-specific files to neglegt
+logs/*
 test/evaluation/log/*
 
 # Byte-compiled / optimized / DLL files

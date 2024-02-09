@@ -45,9 +45,19 @@ Proceedings of the same event series are interconnected in a way such that the u
 - 2024-03-22: Project result delivery
 - 2024-03-29: Final presentation
 
-## How to install the repository in your workspace:
+## Usage
+- First setup:
 ```bash
 git clone https://github.com/olafbombach/kg-lab-ws23-task3
+
+python -m venv venv
+source venv/Scripts/activate
+
+pip install .
+```
+- General usage:
+```bash
+esc -h
 ```
 
 ## Why?
