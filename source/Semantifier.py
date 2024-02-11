@@ -1,7 +1,8 @@
 from openai import OpenAI
 import polars as pl
+import json
 
-class NLP:
+class Semantifier:
 
     def conferenceNLP(conference,user_key, temperature=0, model="gpt-3.5-turbo"):
         client = OpenAI(api_key=user_key)
@@ -18,10 +19,13 @@ class NLP:
     def open_ai_semantification(df,user_key,dataset_name= 'Wikidata',max_entries=0, temperature=0, model="gpt-3.5-turbo"):
         data_string=""
         #define the amount of rows we want to semantify
-        if max_entries>0:
-            entries_count=min(len(df),max_entries)
-        else:
-            entries_count=len(df)
+        if dataset_name == 'Wikidata':
+            if max_entries>0:
+                entries_count=min(len(df),max_entries)
+            else:
+                entries_count=len(df)
+        elif dataset_name =='proceedings.com':
+            entries_count=1
         #convert dataframe into string
         for i in range(entries_count):
             data_string+=str(df[i].cast(pl.String).to_dict(as_series=False))
@@ -56,7 +60,7 @@ class NLP:
             '''
         elif dataset_name == 'proceedings.com':
             query+='''
-            {'Conference Title': ['AMERICAN COLLEGE OF VETERINARY PATHOLOGISTS. ANNUAL MEETING. 63RD 2012. (AND 47TH ANNUAL MEETING OF THE AMERICAN SOCIETY FOR VETERINARY CLINICAL PATHOLOGY)'], 'Book Title': ['63rd Annual Meeting of the American College of Veterinary Pathologists and the 47th Annual Meeting of the American Society of Veterinary Clinical Pathology 2012'], 'Series': [None], 'Description': ['Held 1-5 December 2012, Seattle, Washington, USA. '], 'Mtg Year': ['2012']} 
+            {'Conference Title': 'AMERICAN COLLEGE OF VETERINARY PATHOLOGISTS. ANNUAL MEETING. 65TH 2014. (AND 49TH ANNUAL MEETING OF THE AMERICAN SOCIETY FOR VETERINARY CLINICAL PATHOLOGY, IN PARTNERSHIP WITH ASIP)', 'Book Title': '65th Annual Meeting of the American College of Veterinary Pathologists and the 49th Annual Meeting of the American Society of Veterinary Clinical Pathology (ACVP & ASVCP 2014)', 'Series': None, 'Description': 'Held 8-12 November 2014, Atlanta, Georgia, USA. In Partnership with ASIP.', 'Mtg Year': 2014} 
             would look like
             full_title: "AMERICAN COLLEGE OF VETERINARY PATHOLOGISTS. ANNUAL MEETING."
             short_name: null
@@ -68,22 +72,25 @@ class NLP:
             end_time: "5.12.2012"
             '''
         #individual part for given request
-        query+="perform the conversion on the following dictionary: "+data_string
+        query+="perform the conversion on the following dictionary: "+data_string+ ". If a signature element is not given in the query, fill the corresponding element with 'null'"
         response=client.chat.completions.create(
             model=MODEL,
             messages=[{"role": "user", "content": query}],
             temperature=temperature
         )
-        return response.choices[0].message.content.strip()
+        return json.loads(response.choices[0].message.content.strip())
     
-    def semantifier(conferences: pl.DataFrame,user_key:str,dataset_name= 'Wikidata',max_entries=0, temperature=0, model="gpt-3.5-turbo"):
+    def semantifier(conferences,user_key:str,dataset_name= 'Wikidata',max_entries=0, temperature=0, model="gpt-3.5-turbo"):
         #disambiguate the different datasets and filter the desired columns
         if dataset_name == 'Wikidata':
+            #datatype: polars data frame
             df= conferences.select("conf_label","title","country","location","main_subject","start_time","end_time","series_label")
         elif dataset_name == 'proceedings.com':
-            df= conferences.select("Conference Title","Book Title","Series","Description","Mtg Year")
+            #datatype: dictionary
+            #df= conferences.select("Conference Title","Book Title","Series","Description","Mtg Year")
+            df = {key: conferences[key] for key in ("Conference Title","Book Title","Series","Description","Mtg Year")}
         #semantify with openai
-        data=NLP.open_ai_semantification(df,user_key,dataset_name,max_entries,temperature,model)
+        data=Semantifier.open_ai_semantification(df,user_key,dataset_name,max_entries,temperature,model)
         return data
 
         
