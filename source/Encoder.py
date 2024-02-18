@@ -8,11 +8,17 @@ from scipy import spatial
 
 class Encoder:
 
-    # Read JSON file and return it
-    def read_json(self, file_path):
-        with open(file_path, 'r') as file:
-              conference_data = json.load(file)
-        return conference_data
+    # # Read JSON file and return it
+    # def read_json(self, file_path):
+    #     with open(file_path, 'r') as file:
+    #           conference_data = json.load(file)
+    #     return conference_data
+    def __init__(self, json_data):
+        self.json_data = json_data
+        # TODO create a downloader class that gets the required datasets from their source, unpack in the working directory
+        # the path should then point to the said directory. 
+        glove_path = "/home/efeboz/Desktop/glove.6B/glove.6B.50d.txt"
+        self.glove_embeddings = self.load_glove_embeddings(glove_path)
 
     # Read GloVe dataset
     def load_glove_embeddings(self, file_path):
@@ -51,7 +57,8 @@ class Encoder:
     # entry_no: integer value for selecting the JSON element for computation
     # optional parameters title, abbreviation, date, year, location of type boolean. Passing these parameters indicate which elements are going to be calculated
     # TODO empty string "" has also an embedding value, find a solution to not calculate it
-    def get_glove_encoding(self, conference_data, entry_no: int, title: bool=None, abbreviation: bool=None, date: bool=None, year: bool=None, location: bool=None):
+    def get_glove_encoding(self, entry_no: int, title: bool=None, abbreviation: bool=None, date: bool=None, year: bool=None, location: bool=None):
+        conference_data = self.json_data
         if not self.glove_embeddings:
             raise ValueError("GloVe word embeddings not loaded, call load_embeddings")
         conference_title = conference_data[entry_no]['title'] if conference_data[entry_no]['title'] != "not available" else ""
@@ -83,7 +90,8 @@ class Encoder:
     # entry_no: integer value for selecting the JSON element for computation
     # optional parameters title, abbreviation, date, year, location of type boolean. Passing these parameters indicate which elements are going to be calculated
     # TODO empty string "" has also an embedding value, find a solution to not calculate it
-    def get_bert_encoding(self, conference_data, entry_no: int, title: bool=None, abbreviation: bool=None, date: bool=None, year: bool=None, location: bool=None):
+    def get_bert_encoding(self, entry_no: int, title: bool=None, abbreviation: bool=None, date: bool=None, year: bool=None, location: bool=None):
+        conference_data = self.json_data
         conference_title = conference_data[entry_no]['title'] if conference_data[entry_no]['title'] != "not available" else ""
         conference_abbreviation = conference_data[entry_no]['abbreviation'] if conference_data[entry_no]['abbreviation'] != "not available" else ""
         conference_date = conference_data[entry_no]['date'] if conference_data[entry_no]['date'] != "not available" else ""
@@ -116,22 +124,45 @@ class Encoder:
 
 
 # #Test if the class works
-
+# Sample JSON
+# json = [
+# 	{
+#   		"title": "FIELD-PROGRAMMABLE TECHNOLOGY",
+#   		"abbreviation": "FPT 2010",
+#   		"date": "not available",
+#   		"year": "2010",
+#   		"location": "not available"
+# 	},
+# 	{
+#   		"title": "SEMICONDUCTOR CONFERENCE",
+#   		"abbreviation": "CAS",
+#   		"date": "2011",
+#   		"year": "2011",
+#   		"location": "not available"
+# 	},
+# 	{
+#   		"title": "ENVIRONMENTAL SCIENCE AND DEVELOPMENT",
+#   		"abbreviation": "ICESD",
+#   		"date": "9TH",
+#   		"year": "2018",
+#   		"location": "not available"
+# 	}
+# ]
 # #Bert
-# instance = Encoder()
-# json_path = "/home/efeboz/Desktop/OpenAI_output_example.json"
-# data = instance.read_json(json_path)
-# bert1 = instance.get_bert_encoding(data, 0, year=True)
-# bert2 = instance.get_bert_encoding(data, 1, year=True)
+# instance = Encoder(json)
+# json_path = "/home/efeboz/Desktop/OpenAI_output_example.json" # Now uncessery with the introduction of __init__
+# data = instance.read_json(json_path) # Also not necessery
+# bert1 = instance.get_bert_encoding(0, year=True)
+# bert2 = instance.get_bert_encoding(1, year=True)
 # bert3 = instance.get_cosine_similarity(bert1, bert2)
 # bert4 = instance.get_bert_euclidean(bert1,bert2)
 # print(bert4)
 
 # #GloVe
-# glove_path = "/home/efeboz/Desktop/kg-lab-ws23-task3/datasets/glove.6B/glove.6B.50d.txt"
+# glove_path = "/home/efeboz/Desktop/glove.6B/glove.6B.50d.txt"
 # glove_embeddings = instance.load_glove_embeddings(glove_path)
-# glove1 = instance.get_glove_encoding(data, 0, year=True)
-# glove2 = instance.get_glove_encoding(data, 1, year=True)
+# glove1 = instance.get_glove_encoding(0, year=True)
+# glove2 = instance.get_glove_encoding(1, year=True)
 # glove3 = instance.get_cosine_similarity(glove1, glove2)
 # glove4 = instance.get_bert_euclidean(glove1, glove2)
 # print(glove4)
