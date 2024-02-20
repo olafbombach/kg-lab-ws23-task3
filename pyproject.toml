@@ -26,9 +26,10 @@ keywords = [
 ]
 dependencies = [
   "tqdm == 4.66.1",
-  "pathlib == 1.0.1",
   "GitPython == 3.1.41",
   "numpy == 1.26.1",
+  "scikit-learn",
+  "scipy == 1.12.0",
   # datastructure
   "polars == 0.20.5",
   "openpyxl == 3.1.2",
@@ -38,15 +39,15 @@ dependencies = [
   "spacy == 3.7.2",
   "pylookupparser == 0.0.2",
   "number_parser == 0.3.2",
-  # additionals
-  "xlrd == 2.0.1"
+  # NLP stuff
+  "openai == 1.12.0",
+  "transformers",
+  "torch == 2.2.0"
 ]
 
 [project.optional-dependencies]
 dev = [
-  "jupyter", 
-  "pandas == 2.1.4",
-  "matplotlib == 3.7.4",
+  "jupyter",
   "seaborn == 0.13.1",
 ]
 
@@ -55,7 +56,7 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
 packages = [
-  "source",
+  "esc",
 ]
 
 [project.scripts]
