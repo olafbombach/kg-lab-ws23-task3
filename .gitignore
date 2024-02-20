@@ -2,7 +2,9 @@
 
 # project-specific files to neglegt
 logs/*
+*/logs/*
 test/evaluation/log/*
+datasets/api_secrets.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

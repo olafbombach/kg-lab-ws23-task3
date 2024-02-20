@@ -1,96 +1,127 @@
+from typing import Union
+import logging
+
 from openai import OpenAI
 import polars as pl
 import json
 
+http_logger = logging.getLogger("http")
+http_logger.setLevel(logging.WARNING)
+
 class Semantifier:
 
-    def conferenceNLP(conference,user_key, temperature=0, model="gpt-3.5-turbo"):
-        client = OpenAI(api_key=user_key)
-        MODEL = model
-        query="Please perform NLP on the following prompt and export the entities with their type as a JSON file with the categories: title, abbreviation, date, year, location. " +conference + ". If a category can not be filled, fill it with 'not available'."
+    def __init__(self, dataset_name: str, temperature: float=0, model: str="gpt-3.5-turbo"):
+        self.dataset_name = dataset_name
+        self.temperature = temperature
+        self.model = model
 
-        response=client.chat.completions.create(
-            model=MODEL,
-            messages=[{"role": "user", "content": query}],
-            temperature=temperature
-        )
+    def conferenceNLP(self, conference, user_key):
+        client = OpenAI(api_key=user_key)
+        MODEL = self.model
+        query = "Please perform NLP on the following prompt and export the entities with their type as a JSON file with the categories: title, abbreviation, date, year, location. " +conference + ". If a category can not be filled, fill it with 'not available'."
+
+        response = client.chat.completions.create(model = MODEL,
+                                                  messages = [{"role": "user", "content": query}],
+                                                  temperature = self.temperature)
+        
         return(response.choices[0].message.content.strip())
     
-    def open_ai_semantification(df,user_key,dataset_name= 'Wikidata',max_entries=0, temperature=0, model="gpt-3.5-turbo"):
+    def open_ai_semantification(self, 
+                                data: Union[dict, pl.DataFrame], 
+                                user_key: str, 
+                                max_entries: int = 0):
         data_string=""
-        #define the amount of rows we want to semantify
-        if dataset_name == 'Wikidata':
-            if max_entries>0:
-                entries_count=min(len(df),max_entries)
+        # define the amount of rows we want to semantify
+        if self.dataset_name == 'Wikidata':
+            entries_count = 1
+            data_string = str(data)
+            """if max_entries > 0:
+                entries_count = min(len(data), max_entries)
             else:
-                entries_count=len(df)
-        elif dataset_name =='proceedings.com':
-            entries_count=1
-        #convert dataframe into string
-        for i in range(entries_count):
-            data_string+=str(df[i].cast(pl.String).to_dict(as_series=False))
+                entries_count = len(data)
+                # convert dataframe into string
+            for i in range(entries_count):
+                data_string += str(data[i].to_dict(as_series=False))"""
+        elif self.dataset_name == 'proceedings.com':
+            # this method should be optimized
+            entries_count = 1
+            data_string = str(data)        
+
         client = OpenAI(api_key=user_key)
-        MODEL = model
-        #default part for query
-        query="""
-        Please convert the following"""+entries_count+"""dictionaries into a JSON file with the conference signature elements: 
+        MODEL = self.model
+        # default part for query
+        query = """Please convert the following""" + \
+        str(entries_count) + \
+        """dictionaries into a JSON file with the conference signature elements: 
         -full_title: The full title of the event, often indicating the scope and subject.
         -short_name: The short name of the conference, often in uppercase.
         -ordinal: The instance number of the event, like 18th or 1st. 
         -part_of_series: The overlying conference-series, often a substring of full_title.
-        -city_name: The year in which the conference takes place.
-        -year: The year in which the conference takes place. 
-        -start_time: The start date of the conference.
-        -end_time: The end date of the conference.
+        -country_name: The country in which the conference takes place.
+        -country_identifier: The country_identifier with respect to the country that is found. Give this identifier using a 2 digit ISO 3166-1 alpha-2 code.
+        -city_name: Give the city with it's english label.
+        -year: Give the year of the conference as a 4 digit number.
+        -start_time: The start date of the conference in ISO date format.
+        -end_time: The end date of the conference in ISO date format.
         Valid answers for e.g. the query 
         """
         #individual part for each dataset type
-        if dataset_name == 'Wikidata':
-            query+= '''
+        if self.dataset_name == 'Wikidata':
+            query += """
             {'conf_label': ['Advances in Web Based Learning - ICWL 2007, 6th International Conference, Edinburgh, UK, August 15-17, 2007'], 'title': ['Advances in Web Based Learning - ICWL 2007, 6th International Conference'], 'country': ['United Kingdom'], 'location': ['Edinburgh'], 'main_subject': [None], 'start_time': ['15.08.2007'], 'end_time': ['17.08.2007'], 'series_label': ['International Conference on Advances in Web-Based Learning']}
              would look like
-            full_title: "Advances in Web Based Learning - ICWL 2007, 6th International Conference"
-            short_name: "ICWL 2007"
-            ordinal: 6th
-            part_of_series: "International Conference on Advances in Web-Based Learning"
-            city_name: "Edinburgh"
-            year: "2007"
-            start_time: "15.08.2007"
-            end_time: "17.08.2007"
-            '''
-        elif dataset_name == 'proceedings.com':
-            query+='''
-            {'Conference Title': 'AMERICAN COLLEGE OF VETERINARY PATHOLOGISTS. ANNUAL MEETING. 65TH 2014. (AND 49TH ANNUAL MEETING OF THE AMERICAN SOCIETY FOR VETERINARY CLINICAL PATHOLOGY, IN PARTNERSHIP WITH ASIP)', 'Book Title': '65th Annual Meeting of the American College of Veterinary Pathologists and the 49th Annual Meeting of the American Society of Veterinary Clinical Pathology (ACVP & ASVCP 2014)', 'Series': None, 'Description': 'Held 8-12 November 2014, Atlanta, Georgia, USA. In Partnership with ASIP.', 'Mtg Year': 2014} 
+            {full_title: 'Advances in Web Based Learning - ICWL 2007, 6th International Conference',
+            short_name: 'ICWL 2007',
+            ordinal: '6th',
+            part_of_series: 'International Conference on Advances in Web-Based Learning',
+            country_name: 'United Kingdom',
+            country_identifier: 'UK',
+            city_name: 'Edinburgh',
+            year: '2007',
+            start_time: '2007-08-15',
+            end_time: '2007-08-17'}
+            """
+        elif self.dataset_name == 'proceedings.com':
+            query += """
+            {'Conference Title': 'AMERICAN COLLEGE OF VETERINARY PATHOLOGISTS. ANNUAL MEETING. 65TH 2014. (AND 49TH ANNUAL MEETING OF THE AMERICAN SOCIETY FOR VETERINARY CLINICAL PATHOLOGY, IN PARTNERSHIP WITH ASIP)', 'Book Title': '65th Annual Meeting of the American College of Veterinary Pathologists and the 49th Annual Meeting of the American Society of Veterinary Clinical Pathology (ACVP & ASVCP 2014)', 'Series': None, 'Description': 'Held 8-12 November 2014, Atlanta, Georgia, USA. In Partnership with ASIP.', 'Mtg Year': '2014'} 
             would look like
-            full_title: "AMERICAN COLLEGE OF VETERINARY PATHOLOGISTS. ANNUAL MEETING."
-            short_name: null
-            ordinal: 63rd
-            part_of_series: "AMERICAN COLLEGE OF VETERINARY PATHOLOGISTS."
-            city_name: "Seattle"
-            year: "2012"
-            start_time: "1.12.2012"
-            end_time: "5.12.2012"
-            '''
-        #individual part for given request
-        query+="perform the conversion on the following dictionary: "+data_string+ ". If a signature element is not given in the query, fill the corresponding element with 'null'"
-        response=client.chat.completions.create(
-            model=MODEL,
-            messages=[{"role": "user", "content": query}],
-            temperature=temperature
-        )
+            {full_title: 'AMERICAN COLLEGE OF VETERINARY PATHOLOGISTS. ANNUAL MEETING.',
+            short_name: null,
+            ordinal: '63rd',
+            part_of_series: 'AMERICAN COLLEGE OF VETERINARY PATHOLOGISTS.',
+            country_name: 'USA',
+            country_identifier: 'US',
+            city_name: 'Seattle',
+            year: '2012',
+            start_time: '2012-12-01',
+            end_time: '2012-12-05'}
+            """
+        # individual part for given request
+        query += "perform the conversion on the following dictionary: " + data_string + ". If a signature element is not given in the query, fill the corresponding element with 'null'"
+        response=client.chat.completions.create(model=MODEL,
+                                                messages=[{"role": "user", "content": query}],
+                                                temperature=self.temperature)
+        
         return json.loads(response.choices[0].message.content.strip())
     
-    def semantifier(conferences,user_key:str,dataset_name= 'Wikidata',max_entries=0, temperature=0, model="gpt-3.5-turbo"):
-        #disambiguate the different datasets and filter the desired columns
-        if dataset_name == 'Wikidata':
-            #datatype: polars data frame
-            df= conferences.select("conf_label","title","country","location","main_subject","start_time","end_time","series_label")
-        elif dataset_name == 'proceedings.com':
-            #datatype: dictionary
-            #df= conferences.select("Conference Title","Book Title","Series","Description","Mtg Year")
+    def semantifier(self, 
+                    conferences: Union[dict, pl.DataFrame], 
+                    user_key: str,
+                    max_entries: int  = 0):
+        # disambiguate the different datasets and filter the desired columns
+        if self.dataset_name == 'Wikidata':
+            # datatype: polars data frame
+            df = {key: conferences[key] for key in ("conf_label","title","country","location","main_subject","start_time","end_time","series_label")}
+            #df = conferences.select("conf_label","title","country","location","main_subject","start_time","end_time","series_label")
+        elif self.dataset_name == 'proceedings.com':
+            # datatype: dictionary
+            # df= conferences.select("Conference Title","Book Title","Series","Description","Mtg Year")
             df = {key: conferences[key] for key in ("Conference Title","Book Title","Series","Description","Mtg Year")}
-        #semantify with openai
-        data=Semantifier.open_ai_semantification(df,user_key,dataset_name,max_entries,temperature,model)
+        # semantify with openai
+        data = Semantifier.open_ai_semantification(self,
+                                                   df, 
+                                                   user_key, 
+                                                   max_entries)
         return data
 
         

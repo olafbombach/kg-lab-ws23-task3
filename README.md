@@ -58,7 +58,7 @@ source venv/Scripts/activate
 ```
 - Install dependencies
 ```bash
-pip install .
+python -m pip install .
 ```
 <b><big>General usage:</big></b>
 ```bash
