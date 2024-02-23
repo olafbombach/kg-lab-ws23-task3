@@ -74,3 +74,6 @@ In this regard, please follow our [Code of Conduct](.github/CONTRIBUTION.md)
 
 ## Considered pipeline
 <img src="images/Pipeline_v2.png">
+
+## Code workflow (v2)
+<img src="images/code_workflow.png">
