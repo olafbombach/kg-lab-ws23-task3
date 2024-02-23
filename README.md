@@ -51,15 +51,11 @@ Proceedings of the same event series are interconnected in a way such that the u
 ```bash
 git clone https://github.com/olafbombach/kg-lab-ws23-task3
 ```
-- Create virtual environment
+- Run script
 ```bash
-python -m venv venv
-source venv/Scripts/activate
+. scripts/run.sh
 ```
-- Install dependencies
-```bash
-python -m pip install .
-```
+
 <b><big>General usage:</big></b>
 ```bash
 esc -h
@@ -74,3 +70,6 @@ In this regard, please follow our [Code of Conduct](.github/CONTRIBUTION.md)
 
 ## Considered pipeline
 <img src="images/Pipeline_v2.png">
+
+## Code workflow (v2)
+<img src="images/code_workflow.png">

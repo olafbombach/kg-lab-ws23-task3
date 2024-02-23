@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field, asdict
 from typing import Optional, List, Union
-import json
 import numpy as np
 
 from source.Tokenizer import TokenSet, Tokenizer
@@ -8,7 +7,6 @@ from source.SearchEngine import SearchEngine
 from source.Semantifier import Semantifier
 from source.Encoder import Encoder
 
-from datasets.api_secrets import API_KEY
 import polars as pl
 
 
@@ -67,8 +65,7 @@ class ProceedingsEvent:
 
     def apply_semantifier(self, get_dict: bool = True):
         sf = Semantifier(dataset_name='proceedings.com')
-        sf_output = sf.semantifier(self.input_info,
-                                            API_KEY)
+        sf_output = sf.semantifier(self.input_info)
         self.full_title = sf_output['full_title']
         self.short_name = sf_output['short_name']
         self.ordinal = sf_output['ordinal']
@@ -169,8 +166,7 @@ class WikidataEvent:
     
     def apply_semantifier(self, get_dict: bool = True):
         sf = Semantifier(dataset_name='Wikidata')
-        sf_output = sf.semantifier(self.input_info,
-                       API_KEY)
+        sf_output = sf.semantifier(self.input_info)
         
         self.full_title = sf_output['full_title']
         self.short_name = sf_output['short_name']
