@@ -1,5 +1,7 @@
 from typing import Union
 import logging
+import os
+from pathlib import Path
 
 from openai import OpenAI
 import polars as pl
@@ -10,13 +12,35 @@ http_logger.setLevel(logging.WARNING)
 
 class Semantifier:
 
-    def __init__(self, dataset_name: str, temperature: float=0, model: str="gpt-3.5-turbo"):
+    def __init__(self, dataset_name: str, openai_key: str, temperature: float=0, model: str="gpt-3.5-turbo"):
         self.dataset_name = dataset_name
         self.temperature = temperature
         self.model = model
+        
+        # get openai key
+        if openai_key:
+            self.key = openai_key
+        else:
+            # Load the API key from the environment or a JSON file
+            openai_key = os.getenv("OPENAI_API_KEY")
+            json_file = Path.home() / ".openai" / "openai_api_key.json"
 
-    def conferenceNLP(self, conference, user_key):
-        client = OpenAI(api_key=user_key)
+            if openai_key is None and json_file.is_file():
+                with open(json_file, "r") as file:
+                    data = json.load(file)
+                    openai_key = data.get("OPENAI_API_KEY")
+
+        if openai_key is None:
+            raise ValueError(
+                "No OpenAI API key found. Please set the 'OPENAI_API_KEY \
+                    environment variable or \
+                        store it in `~/.openai/openai_api_key.json`.")
+        # set the global api key
+        self.key = openai_key
+
+
+    def conferenceNLP(self, conference):
+        client = OpenAI(api_key=self.key)
         MODEL = self.model
         query = "Please perform NLP on the following prompt and export the entities with their type as a JSON file with the categories: title, abbreviation, date, year, location. " +conference + ". If a category can not be filled, fill it with 'not available'."
 
@@ -28,7 +52,6 @@ class Semantifier:
     
     def open_ai_semantification(self, 
                                 data: Union[dict, pl.DataFrame], 
-                                user_key: str, 
                                 max_entries: int = 0):
         data_string=""
         # define the amount of rows we want to semantify
@@ -47,7 +70,7 @@ class Semantifier:
             entries_count = 1
             data_string = str(data)        
 
-        client = OpenAI(api_key=user_key)
+        client = OpenAI(api_key=self.key)
         MODEL = self.model
         # default part for query
         query = """Please convert the following""" + \
@@ -105,8 +128,7 @@ class Semantifier:
         return json.loads(response.choices[0].message.content.strip())
     
     def semantifier(self, 
-                    conferences: Union[dict, pl.DataFrame], 
-                    user_key: str,
+                    conferences: Union[dict, pl.DataFrame],
                     max_entries: int  = 0):
         # disambiguate the different datasets and filter the desired columns
         if self.dataset_name == 'Wikidata':
@@ -120,7 +142,6 @@ class Semantifier:
         # semantify with openai
         data = Semantifier.open_ai_semantification(self,
                                                    df, 
-                                                   user_key, 
                                                    max_entries)
         return data
 

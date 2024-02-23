@@ -1,6 +1,4 @@
 import sys
-import os
-import pathlib
 import logging
 import polars as pl
 
@@ -146,6 +144,6 @@ def main():
 
     # dummy
     if args.operation == "v1":
-        print("You have chosen v1-evaluation.")
+        print("You have chosen v1-evaluation. Still not working...")
     elif args.operation == "v2":
         evaluation_v2()
