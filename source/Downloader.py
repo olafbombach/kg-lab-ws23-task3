@@ -16,9 +16,10 @@ class Downloader:
     # def __init__(self, url):
     #     self.url = url
 
-    def glove_downloader(self, url):
+    def glove_downloader(self): #self has to be the first parameter of any function which belongs to a class
         try:
             # Parse the URL to extract the filename
+            url = "https://nlp.stanford.edu/data/glove.6B.zip"
             parsed_url = urlparse(url)
             filename = os.path.basename(parsed_url.path)
 
@@ -54,3 +55,4 @@ class Downloader:
 #a = Downloader("https://getsamplefiles.com/download/zip/sample-1.zip")
 #a.glove_downloader("https://nlp.stanford.edu/data/glove.6B.zip")
 #a.glove_downloader("https://getsamplefiles.com/download/zip/sample-1.zip")
+#a.glove_downloader()
