@@ -8,6 +8,7 @@ from source.EventClass import WikidataEvent, ProceedingsEvent
 
 from source.Preprocessor import Preprocessor
 from source.SearchEngine import SearchEngine
+from source.Comparor import Comparor
 
 
 
@@ -94,27 +95,39 @@ def evaluation_v2() -> None:
     # create tokens and apply SearchEngine
     for i, entry in enumerate(preproc_testset.iter_rows(named=True)):
         pe = ProceedingsEvent(input_info=entry)
-        loe = pe.apply_searchengine(se_instance=se_wiki)
+
+        # searching of events
+        loe = pe.apply_searchengine(se_instance=se_wiki, max_search_hits=10)
         logging.info(f"Found {len(loe)} wikidata entries for this proceedings.com entry.")
         
+        # semantification of events
         logging.info("Semantification of entries started.")
         dict_file_pe = pe.apply_semantifier(get_dict=True)
         loe.apply_semantifier(get_list=True)
 
+        # encoding events
         logging.info("Semantification finished. Moving on to encoding...")
         pe.apply_encoder(dict_file_pe)
         loe.apply_encoder()
 
-        logging.info("Encoding finished. Writing to log:")
-        logging.info("The proceedings.com entry:")
+        # comparing events
+        logging.info("Encoding finished...")
+        co = Comparor(pe=pe, loe=loe)
+        co.add_measure_as_attribute("euc")
+
+        # presentation of fit
+        logging.info("Finding optimal value for the following ProceedingsEvent:")
         logging.info(pe)
-        logging.info("The List of Events (Wikidata) as outcomes:")
-        logging.info(loe)
+        opt_event = loe.get_optimal_similarity("euc")
+        logging.info("Optimal WikidataEvent for ProceedingsEvent:")
+        logging.info(opt_event)
+        logging.info(f"With similarity measure: {opt_event.similarity}")
+
         print(f"Finished {i+1}. iteration.")
 
         del pe, loe
 
-        if i > 4:
+        if i+1 >= 20:
             break
 
     del se_wiki, testset, preproc_testset
