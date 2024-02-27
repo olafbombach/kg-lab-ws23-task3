@@ -29,25 +29,36 @@ Expected Result:
 Proceedings of the same event series are interconnected in a way such that the user is able to access the whole event series.
 ## Current status of the project:
 <ul> 
-    <li> Assessment of current KG status ❌ </li>
-    <li> Preprocessing of queries ❌ </li>
-    <il> (Method for encoding established) ❌ </il>
+    <li> Assessment of current KG status &#x2713; </li>
+    <li> Preprocessing of queries &#x1F6E1; </li>
+    <il> (Method for encoding established) &#x1F6E1; </il>
     <li> Validation of LLM (check for accuracy and precision) ❌ </li>
     <li> (Further methods of assignments established) ❌ </li>
     <li> Method for data transfer to the KG ❌ </li>
-    <li> Establishment of an automated method ❌ </li>
-    <li> Validation of the method ❌ </li>
+    <li> Establishment of an automated method &#x1F6E1; </li>
+    <li> Validation of the method &#x1F6E1; </li>
 </ul>
 
 ## Deadlines
 
-- 2024-01-19: Midterm coordination
+- 2024-01-19: Midterm coordination &#x2713;
 - 2024-03-22: Project result delivery
 - 2024-03-29: Final presentation
 
-## How to install the repository in your workspace:
+## Usage
+<b><big>First setup:</big></b>
+- Clone repository
 ```bash
 git clone https://github.com/olafbombach/kg-lab-ws23-task3
+```
+- Run script
+```bash
+. scripts/run.sh
+```
+
+<b><big>General usage:</big></b>
+```bash
+esc -h
 ```
 
 ## Why?
@@ -56,3 +67,9 @@ This task is part of the practical lab (KG Lab) presented by the Chair of Databa
 ## How to contribute to this project:
 Thank you for your interest in contributing to this project! We welcome all kinds of contributions, no matter how small or big they are. Whether it's adding new features, fixing bugs, improving documentation, or suggesting new ideas.
 In this regard, please follow our [Code of Conduct](.github/CONTRIBUTION.md)
+
+## Considered pipeline
+<img src="images/Pipeline_v2.png">
+
+## Code workflow (v2)
+<img src="images/code_workflow.png">

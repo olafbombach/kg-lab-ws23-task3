@@ -1,6 +1,27 @@
-sparqlwrapper
-pandas
-crossrefapi
-requests
+# requirements for the code to work
+
+# basics for helper functions
 jupyter
-tqdm
+tqdm == 4.66.1
+pathlib == 1.0.1
+GitPython == 3.1.41
+numpy == 1.26.1
+
+# visualizations
+matplotlib == 3.7.4
+seaborn == 0.13.1
+
+# datastructure
+pandas == 2.1.4
+polars == 0.20.5
+openpyxl == 3.1.2
+SPARQLWrapper == 1.8.5
+requests == 2.31.0
+
+# parser
+spacy == 3.7.2
+pylookupparser == 0.0.2
+number_parser == 0.3.2
+
+# additionals
+xlrd == 2.0.1
