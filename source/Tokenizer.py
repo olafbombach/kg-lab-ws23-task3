@@ -15,6 +15,14 @@ import re
 from dataclasses import dataclass, field
 from typing import Set
 
+#pyparser
+
+from source.pyLookupParser.Tokenizer import *
+
+from source.pyLookupParser.Signature import *
+
+from tqdm import tqdm
+
 @dataclass
 class Token:
     """
@@ -46,6 +54,9 @@ class TokenSet:
     
     def __iter__(self):
         return iter(self.tokens)
+    
+    def len(self):
+        return len(self.tokens)
 
 class Tokenizer(object):
     """
@@ -59,6 +70,7 @@ class Tokenizer(object):
     Gives out the date of the paper
     Gives out infixes of the title (low scores)
     """
+
 
     # The following dictionaries save the transformations done on a text to obtain "synonyms"
     # Convert ordinal to text (basic dictionary, from 1 to 18)
@@ -109,6 +121,7 @@ class Tokenizer(object):
             suffix = ['th', 'st', 'nd', 'rd', 'th'][min(n % 10, 4)]
         return str(n) + suffix
 
+    #Main Methods
 
     @classmethod
     def synonymes(cls,input_s: str) -> TokenSet: 
@@ -226,18 +239,99 @@ class Tokenizer(object):
                     if len(month) == 1:
                         month = "0" + month
                     results += Token(day+":"+month+":"+year, "Date", 2)
+                    
+        #Use pyparser for the analysis (output both a string and the wikidata encoding)
+        #Country
+
+        tokenizer2 = TokenizerParser([CountryCategory()])
+
+        item = {"title": input_s}
+
+
+        token = tokenizer2.tokenize(input_s,item)
+
+        for t in token.getTokenOfCategory("country"):
+    
+           results += Token(t.value, "Wikidata Identifier", 5)
+           
+           results += Token(t.tokenStr, "Country", 5) 
       
+        #Limit the number of results
+        lim = 20
 
         # Infixes score:1
         for i in range(1, len(words) + 1):
             index = 0
             for word in words:
                 if index + i < len(words) + 1:
-                    results += Token((" ").join(words[index:index + i]), "Infix",1)
+                    if results.len() < lim:
+                       results += Token((" ").join(words[index:index + i]), "Infix",1)
+                    else:
+                        break
+        
+        
+        return results
+    
+    def analyzeDesciption(input_s):
+        """
+        (Not implemented)
+        Checks the description in proceedings.com for country, city (not implemented) and date (not implemented) using yLookupParser.
+        Input: string representing the description
+        Output: List of tokens to add to the tokenset
+        """
+        results = []        
+
+        #Country
+
+        tokenizer2 = TokenizerParser([CountryCategory()])
+
+        item = {"title": input_s}
+
+
+        token = tokenizer2.tokenize(input_s,item)
+
+        for t in token.getTokenOfCategory("country"):
+    
+           results.append (Token(t.value, "Wikidata Identifier", 5))
+           
+           results.append(Token(t.tokenStr, "Country", 5))
+           
+        #City
+
+        tokenizer2 = TokenizerParser([CityCategory()])
+
+        item = {"title": input_s}
+
+
+        token = tokenizer2.tokenize(input_s,item)
+
+        for t in token.getTokenOfCategory("city"):
+    
+           results.append(Token(t.value, "Wikidata Identifier", 5))
+           
+           results.append(Token(t.tokenStr, "City", 5))
+           
+
+        #Date
+
+        tokenizer2 = TokenizerParser([YearCategory()])
+
+        item = {"title": input_s}
+
+
+        token = tokenizer2.tokenize(input_s,item)
+
+        for t in token.getTokenOfCategory("year"):
+           
+           results.append(Token(t.tokenStr, "Year", 5))
+           
 
         
-        # Discard unnecessary Information (end substring at year or end substring at/after Abbreviation)
         return results
+    
+        
+        
+   
     
 
     def check_semantics(ts: TokenSet) -> None:
@@ -273,13 +367,20 @@ class Tokenizer(object):
         # print(file)
         results = Tokenizer.synonymes(dict['Conference Title'])
         if str(dict['Mtg Year'])[0].isdigit():
-            results += Token(str(dict['Mtg Year'])[0:4], "MtgYear",4)
+            results + Token(str(dict['Mtg Year'])[0:4], "MtgYear",4)
           
         if 'Publisher' in dict and not str(dict['Publisher']) == "nan":
             results += Token(str(dict['Publisher']),"Publisher",2)
+            
+        if 'Description' in dict and not str(dict['Description']) == "nan":
+            tokenList = Tokenizer.analyzeDesciption(dict['Description'])
         
         # checks if semantics with parantheses are correct
         results = cls.check_semantics(results)
+        
+
+        
+        
 
         return results
 
@@ -292,15 +393,19 @@ class Tokenizer(object):
         """
         file = pandas.read_excel(path, engine = 'openpyxl')
         results = []
-        for i in range(0,len(file)-1):
+        for i in tqdm(range(0,len(file)-1)):
             dicti = dict()
             dicti["Publisher"] = file.iloc[i]["Publisher"]
             dicti["Mtg Year"] = file.iloc[i]["Mtg Year"]
             dicti["Conference Title"] = file.iloc[i]["Conference Title"]
+            dicti["Description"] = file.iloc[i]["Description"]
+            print(dicti)
             results.append(Tokenizer.tokenizeProceedings(dicti))
         return results
 
 
 if __name__ == "__main__":
-    Tokenizer.initializer("datasets/proceedings.com/all-nov-23.xlsx")
+     Tokenizer.initializer("datasets/proceedings.com/all-nov-23.xlsx")
+
+
 
