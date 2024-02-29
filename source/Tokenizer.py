@@ -15,13 +15,9 @@ import re
 from dataclasses import dataclass, field
 from typing import Set
 
-#pyparser
-
 from source.pyLookupParser.Tokenizer import *
 
 from source.pyLookupParser.Signature import *
-
-from tqdm import tqdm
 
 @dataclass
 class Token:
@@ -57,12 +53,31 @@ class TokenSet:
     
     def len(self):
         return len(self.tokens)
+    
+    def contains(self, other):
+        assert type(other) == tuple
+        return other in self.tokens
+        
+    def equals(self, other):
+        assert type(other) == TokenSet
+        result = True
+        for token in other.tokens:
+            if not self.contains(token):
+                result = False
+        for token in self.tokens:
+            if not other.contains(token):
+                result = False
+        return result
 
 class Tokenizer(object):
     """
     Static class containing functions to obtain equivalent expressions.
     Gives the results as keys in a TokenSet, 
-    that also contains a metric for the usefulness of the synonym in the value of the entry
+    that also contains a metric for the usefulness of the synonym in the value of the entry based
+    on Semantified CEUR-WS and SemPubFlow: a
+    Metadata-First scientific publishing workflow
+    leveraging LLMs and Wikidata
+    Wolfgang Fahl et al. (f1-score times 10, rounded to the nearest integer).
     
     Currently:
     Without superfluous spaces, ordinals to mathform, ordinals to textform
@@ -140,7 +155,7 @@ class Tokenizer(object):
         # Remove useless empty spaces (use that string as the baseline for all further transformations) score:3
         string = (" ").join(input_s.split(" "))
         if not string == input_s:
-            results += Token(string,"Modified",90)
+            results += Token(string,"Modified",100)
         
         # Text format (Convert ordinals to text), using the dictionary above score:3
         string_text = string
@@ -148,7 +163,7 @@ class Tokenizer(object):
             string_text = string_text.replace(" "+key, " "+value)
         
         if not string_text == input_s:
-            results += Token(string_text, "Modified", 3)
+            results += Token(string_text, "Modified", 50)
           
         # Numerical format (Convert text ordinals to numbers) score:3
         words = string.split(" ")
@@ -167,11 +182,13 @@ class Tokenizer(object):
         string_ord = (" ").join(words)
           
         if not string_ord == input_s:
-            results += Token(string_ord, "Modified",3)
+            results += Token(string_ord, "Modified",50)
            
         # Use Abbreviation (Assumed to be all uppercase, possibly in brackets, and does not start with a number) score:3
         # Numbers (such as years and days of the month are also checked, but with a score of 1)
         words = string.split(" ")
+
+        abbreviation_added = False
 
         for word in words:
             uppercase = True
@@ -182,10 +199,11 @@ class Tokenizer(object):
                 if uppercase:
                     if word[0].isdigit():
                         # year, date ,etc.
-                        results += Token(word, "Year", 1)
+                        results += Token(word, "Year", 4) #4-digit number can also not be a year -> score halved
                     else:
                         # abbreviation (uppercase word)
-                        results += Token(word, "Abbreviation",3)
+                        results += Token(word, "Acronym",2) #unsure if a word fully in uppercase is the acronym
+                        abbreviation_added = True
        
 
         # Abbreviation, this time in brackets (for example (ICIMTech) is not fully uppercase) score:2
@@ -194,7 +212,10 @@ class Tokenizer(object):
         m = re.findall(r"\(([A-Za-z0-9_]+)\)", string)
         for ele in m:
             if not ele[0].isdigit():
-                results += Token(ele,"Bracketexpression",2)
+                if(abbreviation_added):
+                   results += Token(ele,"Acronym",2)
+                else:
+                   results += Token(ele,"Acronym",4)
        
 
         # Extract date score:2
@@ -238,7 +259,7 @@ class Tokenizer(object):
                         year = "0" + year
                     if len(month) == 1:
                         month = "0" + month
-                    results += Token(day+":"+month+":"+year, "Date", 2)
+                    results += Token(day+":"+month+":"+year, "Date", 8)
                     
         #Use pyparser for the analysis (output both a string and the wikidata encoding)
         #Country
@@ -281,7 +302,7 @@ class Tokenizer(object):
         """
         results = []        
 
-        #Country
+        #Country (Score guessed)
 
         tokenizer2 = TokenizerParser([CountryCategory()])
 
@@ -292,9 +313,9 @@ class Tokenizer(object):
 
         for t in token.getTokenOfCategory("country"):
     
-           results.append (Token(t.value, "Wikidata Identifier", 5))
+           #results.append (Token(t.value, "Wikidata Identifier", 6))
            
-           results.append(Token(t.tokenStr, "Country", 5))
+           results.append(Token(t.tokenStr, "Country", 6))
            
         #City
 
@@ -307,12 +328,12 @@ class Tokenizer(object):
 
         for t in token.getTokenOfCategory("city"):
     
-           results.append(Token(t.value, "Wikidata Identifier", 5))
+           results.append(Token(t.value, "Wikidata Identifier", 8))
            
-           results.append(Token(t.tokenStr, "City", 5))
+           #results.append(Token(t.tokenStr, "City", 4))
            
 
-        #Date
+        #Year
 
         tokenizer2 = TokenizerParser([YearCategory()])
 
@@ -323,7 +344,7 @@ class Tokenizer(object):
 
         for t in token.getTokenOfCategory("year"):
            
-           results.append(Token(t.tokenStr, "Year", 5))
+           results.append(Token(t.tokenStr, "Year", 8))
            
 
         
@@ -393,7 +414,7 @@ class Tokenizer(object):
         """
         file = pandas.read_excel(path, engine = 'openpyxl')
         results = []
-        for i in tqdm(range(0,len(file)-1)):
+        for i in range(0,len(file)-1):
             dicti = dict()
             dicti["Publisher"] = file.iloc[i]["Publisher"]
             dicti["Mtg Year"] = file.iloc[i]["Mtg Year"]
@@ -406,6 +427,4 @@ class Tokenizer(object):
 
 if __name__ == "__main__":
      Tokenizer.initializer("datasets/proceedings.com/all-nov-23.xlsx")
-
-
-
+     
