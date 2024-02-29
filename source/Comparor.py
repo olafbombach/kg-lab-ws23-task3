@@ -1,4 +1,4 @@
-from source.EventClass import ProceedingsEvent, WikidataEvent, ListOfEvents
+from source.EventClass import ProceedingsEvent, ListOfEvents
 
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy.spatial.distance import euclidean
@@ -46,4 +46,3 @@ class Comparor:
         """
         sim = euclidean(emb_1, emb_2)
         return sim
-    

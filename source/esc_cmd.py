@@ -60,7 +60,7 @@ def evaluation_v1() -> None:
     del se_wiki, testset, preproc_testset
 
 
-def evaluation_v2() -> None:
+def evaluation_v2(sim_measure: str) -> None:
     """
     This function evaluates operation using the Tokenizer, the SearchEngine, 
     the Semantifier and the Encoding.
@@ -78,7 +78,7 @@ def evaluation_v2() -> None:
                         filemode="w",
                         format="%(asctime)s %(levelname)s - %(message)s",
                         datefmt="%m/%d/%Y %I:%M:%S",
-                        filename=root_dir/"results"/"logs"/"testset_v2_log.log")
+                        filename=root_dir/"results"/"logs"/f"testset_v2_{sim_measure}.log")
     
     # start with the code
     se_wiki = SearchEngine("Wikidata", f_search=True)
@@ -113,22 +113,20 @@ def evaluation_v2() -> None:
         # comparing events
         logging.info("Encoding finished...")
         co = Comparor(pe=pe, loe=loe)
-        co.add_measure_as_attribute("euc")
+        co.add_measure_as_attribute(sim_measure)
 
         # presentation of fit
         logging.info("Finding optimal value for the following ProceedingsEvent:")
         logging.info(pe)
-        opt_event = loe.get_optimal_similarity("euc")
+        opt_event = loe.get_optimal_similarity(sim_measure)
         logging.info("Optimal WikidataEvent for ProceedingsEvent:")
         logging.info(opt_event)
         logging.info(f"With similarity measure: {opt_event.similarity}")
+        logging.info(f"Real / True labeling: {entry['wikidata_index']}")
 
         print(f"Finished {i+1}. iteration.")
 
         del pe, loe
-
-        if i+1 >= 20:
-            break
 
     del se_wiki, testset, preproc_testset
 
@@ -136,7 +134,6 @@ def evaluation_v2() -> None:
 def main():
     """ main program """
 
-    program_short_name = "esc"
     program_build_date = get_last_commit_time()
     program_description = f"Program for Event Series Completion. \n"\
                           f"Different operations are possible.\n" \
@@ -159,4 +156,7 @@ def main():
     if args.operation == "v1":
         print("You have chosen v1-evaluation. Still not working...")
     elif args.operation == "v2":
-        evaluation_v2()
+        if args.s_measure == "euc":
+            evaluation_v2(sim_measure="euc")
+        elif args.s_measure == "cos":
+            evaluation_v2(sim_measure="cos")

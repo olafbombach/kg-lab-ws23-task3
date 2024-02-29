@@ -31,9 +31,13 @@ def get_arg_parser(description: str) -> ArgumentParser:
     parser.add_argument("operation",
                         choices=["v1", "v2"],
                         help="Set the operation for the evaluation.")
+    parser.add_argument('--s_measure',
+                        choices=["euc", "cos"],
+                        help="Determine the similarity measure to compare the encodings.")    
     parser.add_argument('--set_testset',
                         type=str,
                         help="Set the testset that you want to evaluate")
+
     return parser
 
 
