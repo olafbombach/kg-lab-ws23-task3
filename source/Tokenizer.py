@@ -15,6 +15,10 @@ import re
 from dataclasses import dataclass, field
 from typing import Set
 
+from source.pyLookupParser.Tokenizer import *
+
+from source.pyLookupParser.Signature import *
+
 @dataclass
 class Token:
     """
@@ -46,12 +50,34 @@ class TokenSet:
     
     def __iter__(self):
         return iter(self.tokens)
+    
+    def len(self):
+        return len(self.tokens)
+    
+    def contains(self, other):
+        assert type(other) == tuple
+        return other in self.tokens
+        
+    def equals(self, other):
+        assert type(other) == TokenSet
+        result = True
+        for token in other.tokens:
+            if not self.contains(token):
+                result = False
+        for token in self.tokens:
+            if not other.contains(token):
+                result = False
+        return result
 
 class Tokenizer(object):
     """
     Static class containing functions to obtain equivalent expressions.
     Gives the results as keys in a TokenSet, 
-    that also contains a metric for the usefulness of the synonym in the value of the entry
+    that also contains a metric for the usefulness of the synonym in the value of the entry based
+    on Semantified CEUR-WS and SemPubFlow: a
+    Metadata-First scientific publishing workflow
+    leveraging LLMs and Wikidata
+    Wolfgang Fahl et al. (f1-score times 10, rounded to the nearest integer).
     
     Currently:
     Without superfluous spaces, ordinals to mathform, ordinals to textform
@@ -59,6 +85,7 @@ class Tokenizer(object):
     Gives out the date of the paper
     Gives out infixes of the title (low scores)
     """
+
 
     # The following dictionaries save the transformations done on a text to obtain "synonyms"
     # Convert ordinal to text (basic dictionary, from 1 to 18)
@@ -109,6 +136,7 @@ class Tokenizer(object):
             suffix = ['th', 'st', 'nd', 'rd', 'th'][min(n % 10, 4)]
         return str(n) + suffix
 
+    #Main Methods
 
     @classmethod
     def synonymes(cls,input_s: str) -> TokenSet: 
@@ -127,7 +155,7 @@ class Tokenizer(object):
         # Remove useless empty spaces (use that string as the baseline for all further transformations) score:3
         string = (" ").join(input_s.split(" "))
         if not string == input_s:
-            results += Token(string,"Modified",90)
+            results += Token(string,"Modified",100)
         
         # Text format (Convert ordinals to text), using the dictionary above score:3
         string_text = string
@@ -135,7 +163,7 @@ class Tokenizer(object):
             string_text = string_text.replace(" "+key, " "+value)
         
         if not string_text == input_s:
-            results += Token(string_text, "Modified", 3)
+            results += Token(string_text, "Modified", 50)
           
         # Numerical format (Convert text ordinals to numbers) score:3
         words = string.split(" ")
@@ -154,11 +182,13 @@ class Tokenizer(object):
         string_ord = (" ").join(words)
           
         if not string_ord == input_s:
-            results += Token(string_ord, "Modified",3)
+            results += Token(string_ord, "Modified",50)
            
         # Use Abbreviation (Assumed to be all uppercase, possibly in brackets, and does not start with a number) score:3
         # Numbers (such as years and days of the month are also checked, but with a score of 1)
         words = string.split(" ")
+
+        abbreviation_added = False
 
         for word in words:
             uppercase = True
@@ -169,10 +199,11 @@ class Tokenizer(object):
                 if uppercase:
                     if word[0].isdigit():
                         # year, date ,etc.
-                        results += Token(word, "Year", 1)
+                        results += Token(word, "Year", 4) #4-digit number can also not be a year -> score halved
                     else:
                         # abbreviation (uppercase word)
-                        results += Token(word, "Abbreviation",3)
+                        results += Token(word, "Acronym",2) #unsure if a word fully in uppercase is the acronym
+                        abbreviation_added = True
        
 
         # Abbreviation, this time in brackets (for example (ICIMTech) is not fully uppercase) score:2
@@ -181,7 +212,10 @@ class Tokenizer(object):
         m = re.findall(r"\(([A-Za-z0-9_]+)\)", string)
         for ele in m:
             if not ele[0].isdigit():
-                results += Token(ele,"Bracketexpression",2)
+                if(abbreviation_added):
+                   results += Token(ele,"Acronym",2)
+                else:
+                   results += Token(ele,"Acronym",4)
        
 
         # Extract date score:2
@@ -225,19 +259,100 @@ class Tokenizer(object):
                         year = "0" + year
                     if len(month) == 1:
                         month = "0" + month
-                    results += Token(day+":"+month+":"+year, "Date", 2)
+                    results += Token(day+":"+month+":"+year, "Date", 8)
+                    
+        #Use pyparser for the analysis (output both a string and the wikidata encoding)
+        #Country
+
+        tokenizer2 = TokenizerParser([CountryCategory()])
+
+        item = {"title": input_s}
+
+
+        token = tokenizer2.tokenize(input_s,item)
+
+        for t in token.getTokenOfCategory("country"):
+    
+           results += Token(t.value, "Wikidata Identifier", 5)
+           
+           results += Token(t.tokenStr, "Country", 5) 
       
+        #Limit the number of results
+        lim = 20
 
         # Infixes score:1
         for i in range(1, len(words) + 1):
             index = 0
             for word in words:
                 if index + i < len(words) + 1:
-                    results += Token((" ").join(words[index:index + i]), "Infix",1)
+                    if results.len() < lim:
+                       results += Token((" ").join(words[index:index + i]), "Infix",1)
+                    else:
+                        break
+        
+        
+        return results
+    
+    def analyzeDesciption(input_s):
+        """
+        (Not implemented)
+        Checks the description in proceedings.com for country, city (not implemented) and date (not implemented) using yLookupParser.
+        Input: string representing the description
+        Output: List of tokens to add to the tokenset
+        """
+        results = []        
+
+        #Country (Score guessed)
+
+        tokenizer2 = TokenizerParser([CountryCategory()])
+
+        item = {"title": input_s}
+
+
+        token = tokenizer2.tokenize(input_s,item)
+
+        for t in token.getTokenOfCategory("country"):
+    
+           #results.append (Token(t.value, "Wikidata Identifier", 6))
+           
+           results.append(Token(t.tokenStr, "Country", 6))
+           
+        #City
+
+        tokenizer2 = TokenizerParser([CityCategory()])
+
+        item = {"title": input_s}
+
+
+        token = tokenizer2.tokenize(input_s,item)
+
+        for t in token.getTokenOfCategory("city"):
+    
+           results.append(Token(t.value, "Wikidata Identifier", 8))
+           
+           #results.append(Token(t.tokenStr, "City", 4))
+           
+
+        #Year
+
+        tokenizer2 = TokenizerParser([YearCategory()])
+
+        item = {"title": input_s}
+
+
+        token = tokenizer2.tokenize(input_s,item)
+
+        for t in token.getTokenOfCategory("year"):
+           
+           results.append(Token(t.tokenStr, "Year", 8))
+           
 
         
-        # Discard unnecessary Information (end substring at year or end substring at/after Abbreviation)
         return results
+    
+        
+        
+   
     
 
     def check_semantics(ts: TokenSet) -> None:
@@ -273,13 +388,20 @@ class Tokenizer(object):
         # print(file)
         results = Tokenizer.synonymes(dict['Conference Title'])
         if str(dict['Mtg Year'])[0].isdigit():
-            results += Token(str(dict['Mtg Year'])[0:4], "MtgYear",4)
+            results + Token(str(dict['Mtg Year'])[0:4], "MtgYear",4)
           
         if 'Publisher' in dict and not str(dict['Publisher']) == "nan":
             results += Token(str(dict['Publisher']),"Publisher",2)
+            
+        if 'Description' in dict and not str(dict['Description']) == "nan":
+            tokenList = Tokenizer.analyzeDesciption(dict['Description'])
         
         # checks if semantics with parantheses are correct
         results = cls.check_semantics(results)
+        
+
+        
+        
 
         return results
 
@@ -297,10 +419,12 @@ class Tokenizer(object):
             dicti["Publisher"] = file.iloc[i]["Publisher"]
             dicti["Mtg Year"] = file.iloc[i]["Mtg Year"]
             dicti["Conference Title"] = file.iloc[i]["Conference Title"]
+            dicti["Description"] = file.iloc[i]["Description"]
+            print(dicti)
             results.append(Tokenizer.tokenizeProceedings(dicti))
         return results
 
 
 if __name__ == "__main__":
-    Tokenizer.initializer("datasets/proceedings.com/all-nov-23.xlsx")
-
+     Tokenizer.initializer("datasets/proceedings.com/all-nov-23.xlsx")
+     
