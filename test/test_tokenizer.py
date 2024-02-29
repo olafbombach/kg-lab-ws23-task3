@@ -1,4 +1,4 @@
-from source.Tokenizer import Tokenizer
+from source.Tokenizer import *
 
 
 
