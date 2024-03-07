@@ -12,8 +12,12 @@ fi
 echo "Found Python in commands..."
 
 # Create a virtual environment
-echo "Creating virtual environment..."
-python -m venv venv
+if [ -d "venv" ]; then
+    echo "Virtual Environment already exists..."
+else
+    python -m venv venv
+    echo "Virtual Environment initialized"
+fi
 
 # Activate the virtual environment based on the operating system
 echo "Activating virtual environment..."
@@ -42,4 +46,4 @@ echo "Installing dependencies..."
 pip install .
 
 echo "Setup complete!"
-esc "$@"
+esc -h

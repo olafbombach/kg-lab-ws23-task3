@@ -115,7 +115,7 @@ class Encoder:
         """
         if value_of_attribute: 
             if self.dict_data[name_of_attribute] is not None:
-                current_string += " " + self.dict_data[name_of_attribute]
+                current_string += " " + str(self.dict_data[name_of_attribute])
             else:
                 pass
         return current_string
@@ -143,16 +143,6 @@ class Encoder:
         
         text_to_evaluate = text_to_evaluate.strip()
         return self.get_bert_embedding(text_to_evaluate)
-    
-    def get_cosine_similarity(self, embedding1, embedding2):
-        embedding1 = np.array(embedding1).reshape(1, -1)
-        embedding2 = np.array(embedding2).reshape(1, -1)
-        similarity = cosine_similarity(embedding1, embedding2)
-        return similarity[0][0]
-    
-    def get_bert_euclidean(self, embedding1, embedding2):
-        similarity = spatial.distance.euclidean(embedding1, embedding2)
-        return similarity
     
 
 

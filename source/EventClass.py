@@ -35,8 +35,8 @@ class ProceedingsEvent:
 
     def __repr__(self):
         attributes = asdict(self)
-        #attributes['input_info'] = 'Filled' if self.input_info != None else 'Unfilled'
-        #attributes['keywords'] = 'Filled' if self.keywords != None else 'Unfilled'
+        attributes['input_info'] = 'Filled' if self.input_info != None else 'Unfilled'
+        attributes['keywords'] = 'Filled' if self.keywords != None else 'Unfilled'
         attributes['encoding'] = 'Filled' if isinstance(self.encoding, np.ndarray) else 'Unfilled'
         return f"ProceedingsEvent({attributes})"
 
@@ -88,7 +88,11 @@ class ProceedingsEvent:
 
     def apply_encoder(self, dict_file: dict):
         enc = Encoder(dict_file=dict_file)
-        encoding = enc.get_bert_encoding(city_name=True, year=True, full_title=True)
+        encoding = enc.get_bert_encoding(full_title=True,
+                                         ordinal=True,
+                                         city_name=True,
+                                         country_identifier=True,
+                                         year=True)
         self.encoding = encoding
 
 
@@ -117,11 +121,12 @@ class WikidataEvent:
 
     # after encoding
     encoding: Optional[np.array] = None
+    similarity: Optional[float] = None
 
     def __repr__(self):
         attributes = asdict(self)
-        #attributes['input_info'] = 'Filled' if self.input_info != None else 'Unfilled'
-        #attributes['keywords'] = 'Filled' if self.keywords != None else 'Unfilled'
+        attributes['input_info'] = 'Filled' if self.input_info != None else 'Unfilled'
+        attributes['keywords'] = 'Filled' if self.keywords != None else 'Unfilled'
         attributes['encoding'] = 'Filled' if isinstance(self.encoding, np.ndarray) else 'Unfilled'
         return f"WikidataEvent({attributes})"
         
@@ -184,13 +189,18 @@ class WikidataEvent:
             att_dict = asdict(self)
             att_dict.pop('input_info', None)
             att_dict.pop('keywords', None) 
-            att_dict.pop('encoding', None)           
+            att_dict.pop('encoding', None)         
+            att_dict.pop('similarity', None)  
             return att_dict
 
 
     def apply_encoder(self, dict_file: dict):       
         enc = Encoder(dict_file=dict_file)
-        encoding = enc.get_bert_encoding(city_name=True, year=True, full_title=True)
+        encoding = enc.get_bert_encoding(full_title=True,
+                                         ordinal=True,
+                                         city_name=True,
+                                         country_identifier=True,
+                                         year=True)
         self.encoding = encoding
 
 
@@ -251,7 +261,28 @@ class ListOfEvents:
     def apply_encoder(self):
         for i, entry in enumerate(self.list_of_events):
             entry.apply_encoder(dict_file=self.list_of_dicts[i])
-            
+
+    def get_optimal_similarity(self, metric: str):
+        """
+        Returns the optimal fit for the given ProceedingsEvent. 
+        If LoE consists of WikidataEvents, 
+        this method will give the optimal WikidataEvent and its attributes.
+        """
+        assert metric in {"cos", "euc"}, "Your method is not supported."
+        
+        current_optimal = self.list_of_events[0]  # initialization
+        
+        if metric == "cos":   
+            for entry in self.list_of_events:
+                if current_optimal.similarity < entry.similarity:
+                    current_optimal = entry
+        elif metric == "euc":
+            for entry in self.list_of_events:
+                if current_optimal.similarity > entry.similarity:
+                    current_optimal = entry
+        else:
+            pass
+        return current_optimal            
 
 @dataclass
 class EventSeries:
