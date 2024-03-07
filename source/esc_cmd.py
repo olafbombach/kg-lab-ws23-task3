@@ -60,7 +60,7 @@ def evaluation_v1() -> None:
     del se_wiki, testset, preproc_testset
 
 
-def evaluation_v2(sim_measure: str) -> None:
+def evaluation_v2(sim_measure: str, small_test: bool=False) -> None:
     """
     This function evaluates operation using the Tokenizer, the SearchEngine, 
     the Semantifier and the Encoding.
@@ -69,16 +69,22 @@ def evaluation_v2(sim_measure: str) -> None:
     
     Also returns a log in \"results/logs\".
     """
-    
     root_dir = find_root_directory()
     testset_file = root_dir/"datasets"/"proceedings.com"/"testset_v2.csv"
 
     # set up logger
-    logging.basicConfig(level=logging.INFO,
-                        filemode="w",
-                        format="%(asctime)s %(levelname)s - %(message)s",
-                        datefmt="%m/%d/%Y %I:%M:%S",
-                        filename=root_dir/"results"/"logs"/f"testset_v2_{sim_measure}.log")
+    if small_test:
+        logging.basicConfig(level=logging.INFO,
+                            filemode="w",
+                            format="%(asctime)s %(levelname)s - %(message)s",
+                            datefmt="%m/%d/%Y %I:%M:%S",
+                            filename=root_dir/"results"/"logs"/f"small_test_{sim_measure}.log")
+    else:
+        logging.basicConfig(level=logging.INFO,
+                            filemode="w",
+                            format="%(asctime)s %(levelname)s - %(message)s",
+                            datefmt="%m/%d/%Y %I:%M:%S",
+                            filename=root_dir/"results"/"logs"/f"testset_v2_{sim_measure}.log")
     
     # start with the code
     se_wiki = SearchEngine("Wikidata", f_search=True)
@@ -125,6 +131,9 @@ def evaluation_v2(sim_measure: str) -> None:
         logging.info(f"Real / True labeling: {entry['wikidata_index']}")
 
         print(f"Finished {i+1}. iteration.")
+        
+        if small_test:  # only one item for small test
+            break
 
         del pe, loe
 
@@ -134,13 +143,13 @@ def evaluation_v2(sim_measure: str) -> None:
 def main():
     """ main program """
 
-    program_build_date = get_last_commit_time()
+    #program_build_date = get_last_commit_time()
     program_description = f"Program for Event Series Completion. \n"\
                           f"Different operations are possible.\n" \
                           f"\n"\
                           f"Maintainers: Efe Bilgili, Christophe Haag, " \
-                          f"Lukas Jaeschke, Daniel Quirmbach \n" \
-                          f"Last update: {program_build_date}"
+                          f"Lukas Jaeschke, Daniel Quirmbach \n"
+                          #f"Last update: {program_build_date}"
 
     try:
         parser = get_arg_parser(description=program_description)
@@ -153,10 +162,11 @@ def main():
         return sys.exit(0)
 
     # dummy
-    if args.operation == "v1":
-        print("You have chosen v1-evaluation. Still not working...")
+    if args.operation == "small_test":
+        print("This a small test to show what the v2 does...")
+        evaluation_v2(sim_measure=args.s_measure, small_test=True)
+        print("Please check the directory results/logs.")
     elif args.operation == "v2":
-        if args.s_measure == "euc":
-            evaluation_v2(sim_measure="euc")
-        elif args.s_measure == "cos":
-            evaluation_v2(sim_measure="cos")
+        print("Please check the directory results/logs to find your run.")
+        evaluation_v2(sim_measure=args.s_measure)
+

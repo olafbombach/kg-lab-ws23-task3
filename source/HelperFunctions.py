@@ -29,9 +29,9 @@ def get_arg_parser(description: str) -> ArgumentParser:
                             formatter_class=RawTextHelpFormatter)
     # add arguments
     parser.add_argument("operation",
-                        choices=["v1", "v2"],
+                        choices=["small_test", "v2"],
                         help="Set the operation for the evaluation.")
-    parser.add_argument('--s_measure',
+    parser.add_argument("s_measure",
                         choices=["euc", "cos"],
                         help="Determine the similarity measure to compare the encodings.")    
     parser.add_argument('--set_testset',
