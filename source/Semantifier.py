@@ -109,7 +109,7 @@ class Semantifier:
             {'Conference Title': 'AMERICAN COLLEGE OF VETERINARY PATHOLOGISTS. ANNUAL MEETING. 65TH 2014. (AND 49TH ANNUAL MEETING OF THE AMERICAN SOCIETY FOR VETERINARY CLINICAL PATHOLOGY, IN PARTNERSHIP WITH ASIP)', 'Book Title': '65th Annual Meeting of the American College of Veterinary Pathologists and the 49th Annual Meeting of the American Society of Veterinary Clinical Pathology (ACVP & ASVCP 2014)', 'Series': None, 'Description': 'Held 8-12 November 2014, Atlanta, Georgia, USA. In Partnership with ASIP.', 'Mtg Year': '2014'} 
             would look like
             {full_title: 'Annual Meeting American College of Veterinary Pathologists',
-            short_name: null,
+            short_name: None,
             ordinal: '63rd',
             part_of_series: 'American College of Veterinary Pathologists',
             country_name: 'USA',
@@ -120,7 +120,7 @@ class Semantifier:
             end_time: '2012-12-05'}
             """
         # individual part for given request
-        query += "perform the conversion on the following dictionary: " + data_string + ". If a signature element is not given in the query, fill the corresponding element with 'null'"
+        query += "perform the conversion on the following dictionary: " + data_string + ". If a signature element is not given in the query, fill the corresponding element with None."
         response=client.chat.completions.create(model=MODEL,
                                                 messages=[{"role": "user", "content": query}],
                                                 temperature=self.temperature)

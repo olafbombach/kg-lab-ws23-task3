@@ -42,7 +42,9 @@ dependencies = [
   # NLP stuff
   "openai == 1.12.0",
   "transformers",
-  "torch == 2.2.0"
+  "torch == 2.2.0",
+  # GUI
+  "nicegui"
 ]
 
 [project.optional-dependencies]
