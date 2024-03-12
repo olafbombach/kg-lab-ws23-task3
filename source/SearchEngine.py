@@ -61,7 +61,7 @@ class SearchEngine:
         elif self._dataset_name == 'Wikidata':
             try:
                 path = self._file_to_root / "datasets" / "wikidata" / "wikidata_conf_data.csv"
-                data = pl.read_csv(path, has_header=True)
+                data = pl.read_csv(path, has_header=True, separator=';')
             except FileNotFoundError(f"Are you sure you are in the right directory? \n ROOT: {self._file_to_root}"):
                 pass
         return data
@@ -183,9 +183,20 @@ class SearchEngine:
         hit_mask = np.zeros((self._data.shape[0], length_hit_mask))
         for tup in keywords_set:
             # setup for tup: (keyword, category, weight)
+            
             addition = np.column_stack([self._data[column].str.contains(r"(?i)" + tup[0], strict=True)
                                        .replace({None: False}) for column in self._columns_sel
                                         if column != 'index'])
+            col_add = addition.shape[1]
+
+            # some kind of logic
+            if tup[1] == "Country Identifier":
+                # in 'addition': set all columns expect 3 to False
+                addition[:, np.arange(col_add) != 3] = False 
+            if tup[1] == "City Identifier":
+                # in 'addition': set all columns expect 5 to False
+                addition[:, np.arange(col_add) != 5] = False
+
             hit_mask = hit_mask + addition * tup[2]
 
         self._hit_mask = hit_mask.astype(dtype=float)
@@ -213,10 +224,10 @@ class SearchEngine:
     
 
 if __name__ == "__main__":
-    tuples = {('14TH 2006', 'Infix', 0.25), ('Fortaleza', 'City', 0.75), 
-              ('Curran Associates, Inc.', 'Publisher', 0.1), 
+    tuples = {('Q155', 'Country Identifier', 0.5), ('14TH 2006', 'Infix', 0.25), ('Fortaleza', 'City', 0.75), 
+              ('Curran Associates, Inc.', 'Publisher', 0.1), ('Q43463', 'City Identifier', 0.5),
               ('ISMB 2006', 'Acronym with Year', 0.8), ('fourteenth', 'Ordinal', 0.5), 
-              ('INTELLIGENT SYSTEMS FOR MOLECULAR BIOLOGY', 'Infix', 0.25), 
+              ('INTELLIGENT SYSTEMS FOR MOLECULAR BIOLOGY', 'Infix', 0.25),
               ('2006', 'Year', 0.82), ('annual international conference', 'Infix', 0.25), 
               ('ISMB 2006', 'Infix', 0.25), ('INTELLIGENT SYSTEMS FOR MOLECULAR BIOLOGY. ANNUAL INTERNATIONAL CONFERENCE. 14TH 2006. ISMB 2006', 'Full Title', 1), 
               ('ISMB', 'Acronym', 0.43), ('ANNUAL INTERNATIONAL CONFERENCE', 'Infix', 0.25), 

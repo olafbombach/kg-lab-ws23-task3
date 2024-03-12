@@ -279,7 +279,7 @@ class Tokenizer:
         token = pylookup_tokenizer_country.tokenize(string, item)
 
         for t in token.getTokenOfCategory("country"):
-            #results.append (Token(t.value, "Wikidata Identifier", 6))
+            self.tokenset += Token(t.value, "Country Identifier", 0.5)
             self.tokenset += Token(t.tokenStr, "Country", 0.5)
            
         # City
@@ -288,7 +288,7 @@ class Tokenizer:
         token = pylookup_tokenizer_city.tokenize(string,item)
 
         for t in token.getTokenOfCategory("city"):
-            #results.append(Token(t.value, "Wikidata Identifier", 0.75))
+            self.tokenset += Token(t.value, "City Identifier", 0.75)
             self.tokenset += Token(t.tokenStr, "City", 0.75)
 
         #Year
