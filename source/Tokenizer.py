@@ -47,7 +47,7 @@ class TokenSet:
     def __iter__(self):
         return iter(self.tokens)
     
-    def len(self):
+    def __len__(self):
         return len(self.tokens)
     
     def contains(self, other):
@@ -145,12 +145,12 @@ class Tokenizer:
         """
        
         # Plane Title
-        string = re.sub('\s{2,}', ' ', input_string)
+        string = re.sub(r'\s{2,}', ' ', input_string)
         string = string.rstrip()  # get rid of multiple whitespaces
         self.tokenset += Token(string, "Full Title", 1)
         
         # Title change in text format (Convert ordinals to text)
-        re_results = re.findall('(\d+(st|nd|rd|th))', string, flags=re.IGNORECASE)
+        re_results = re.findall(r'(\d+(st|nd|rd|th))', string, flags=re.IGNORECASE)
         altered_string = string
         for res, suffix in re_results:
             num_text = Tokenizer._ordinal_to_text_number((res, suffix))
@@ -178,7 +178,7 @@ class Tokenizer:
                 pass
 
         numerical_form = (" ").join(words)
-        numerical_form = re.sub('\s{2,}', ' ', numerical_form)
+        numerical_form = re.sub(r'\s{2,}', ' ', numerical_form)
 
         changed_in_numerical_format = False  
         if numerical_form != string:
@@ -234,7 +234,7 @@ class Tokenizer:
                     if substring in infix.lower():
                         new_infix = infix.lower().replace(" "+substring+" ", " ")
                         if new_infix != string.lower():
-                            new_infix = re.sub('\s{2,}', ' ', new_infix).rstrip()
+                            new_infix = re.sub(r'\s{2,}', ' ', new_infix).rstrip()
                             self.tokenset += Token(new_infix, "Infix", 0.15)
                         else:
                             pass
@@ -245,7 +245,7 @@ class Tokenizer:
                 if substring in string.lower():
                     new_infix = string.lower().replace(" "+substring+" ", " ")
                     if new_infix != string.lower():
-                        new_infix = re.sub('\s{2,}', ' ', new_infix).rstrip()
+                        new_infix = re.sub(r'\s{2,}', ' ', new_infix).rstrip()
                         self.tokenset += Token(new_infix, "Infix", 0.15)
                     else:
                         pass

@@ -1,6 +1,5 @@
 from pathlib import Path
 from argparse import ArgumentParser, RawTextHelpFormatter
-import git
 
 
 def find_root_directory(marker_file: str = ".git") -> Path:
