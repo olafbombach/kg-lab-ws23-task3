@@ -41,7 +41,8 @@ class ProceedingsEvent:
         return f"ProceedingsEvent({attributes})"
 
     def __post_init__(self):
-        self.keywords = Tokenizer.tokenizeProceedings(self.input_info)
+        tok = Tokenizer()
+        self.keywords = tok.tokenizeProceedings(self.input_info)
 
     def apply_searchengine(self, se_instance: SearchEngine, max_search_hits: int = 5):
         search_hits = se_instance.search_set_of_tuples(self.keywords.tokens)
@@ -66,16 +67,17 @@ class ProceedingsEvent:
     def apply_semantifier(self, get_dict: bool = True):
         sf = Semantifier(dataset_name='proceedings.com')
         sf_output = sf.semantifier(self.input_info)
-        self.full_title = sf_output['full_title']
-        self.short_name = sf_output['short_name']
-        self.ordinal = sf_output['ordinal']
-        self.part_of_series = sf_output['part_of_series']
-        self.country_name = sf_output['country_name']
-        self.country_identifier = sf_output['country_identifier']
-        self.city_name = sf_output['city_name']
-        self.year = sf_output['year']
-        self.start_time = sf_output['start_time']
-        self.end_time = sf_output['end_time']
+
+        self.full_title = str(sf_output['full_title']) if sf_output['full_title'] != ("" or "None") else None
+        self.short_name = str(sf_output['short_name']) if sf_output['short_name'] != ("" or "None") else None
+        self.ordinal = str(sf_output['ordinal']) if sf_output['ordinal'] != ("" or "None") else None
+        self.part_of_series = str(sf_output['part_of_series']) if sf_output['part_of_series'] != ("" or "None") else None
+        self.country_name = str(sf_output['country_name']) if sf_output['country_name'] != ("" or "None") else None
+        self.country_identifier = str(sf_output['country_identifier']) if sf_output['country_identifier'] != ("" or "None") else None
+        self.city_name = str(sf_output['city_name']) if sf_output['city_name'] != ("" or "None") else None
+        self.year = str(sf_output['year']) if sf_output['year'] != ("" or "None") else None
+        self.start_time = str(sf_output['start_time']) if sf_output['start_time'] != ("" or "None") else None
+        self.end_time = str(sf_output['end_time']) if sf_output['end_time'] != ("" or "None") else None
 
         if get_dict:
             # I maybe have to enhance this with other keys
@@ -83,7 +85,7 @@ class ProceedingsEvent:
             att_dict.pop('input_info', None)
             att_dict.pop('keywords', None) 
             att_dict.pop('encoding', None)           
-            return att_dict
+        return att_dict
         
 
     def apply_encoder(self, dict_file: dict):
@@ -173,16 +175,16 @@ class WikidataEvent:
         sf = Semantifier(dataset_name='Wikidata')
         sf_output = sf.semantifier(self.input_info)
         
-        self.full_title = sf_output['full_title']
-        self.short_name = sf_output['short_name']
-        self.ordinal = sf_output['ordinal']
-        self.part_of_series = sf_output['part_of_series']
-        self.country_name = sf_output['country_name']
-        self.country_identifier = sf_output['country_identifier']
-        self.city_name = sf_output['city_name']
-        self.year = sf_output['year']
-        self.start_time = sf_output['start_time']
-        self.end_time = sf_output['end_time']
+        self.full_title = str(sf_output['full_title']) if sf_output['full_title'] != ("" or "None") else None
+        self.short_name = str(sf_output['short_name']) if sf_output['short_name'] != ("" or "None") else None
+        self.ordinal = str(sf_output['ordinal']) if sf_output['ordinal'] != ("" or "None") else None
+        self.part_of_series = str(sf_output['part_of_series']) if sf_output['part_of_series'] != ("" or "None") else None
+        self.country_name = str(sf_output['country_name']) if sf_output['country_name'] != ("" or "None") else None
+        self.country_identifier = str(sf_output['country_identifier']) if sf_output['country_identifier'] != ("" or "None") else None
+        self.city_name = str(sf_output['city_name']) if sf_output['city_name'] != ("" or "None") else None
+        self.year = str(sf_output['year']) if sf_output['year'] != ("" or "None") else None
+        self.start_time = str(sf_output['start_time']) if sf_output['start_time'] != ("" or "None") else None
+        self.end_time = str(sf_output['end_time']) if sf_output['end_time'] != ("" or "None") else None
 
         if get_dict:
             # I maybe have to enhance this with other keys
