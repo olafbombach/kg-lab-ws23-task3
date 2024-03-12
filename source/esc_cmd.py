@@ -3,7 +3,7 @@ import logging
 import polars as pl
 
 from source.HelperFunctions import find_root_directory
-from source.HelperFunctions import get_arg_parser, get_last_commit_time
+from source.HelperFunctions import get_arg_parser
 from source.EventClass import WikidataEvent, ProceedingsEvent
 
 from source.Preprocessor import Preprocessor

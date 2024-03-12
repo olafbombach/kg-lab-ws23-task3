@@ -38,16 +38,3 @@ def get_arg_parser(description: str) -> ArgumentParser:
                         help="Set the testset that you want to evaluate")
 
     return parser
-
-
-def get_last_commit_time():
-    """
-    Get the last time of the commit in main. This is useful for the argumentparser.
-    """
-    repo_path = Path(__file__).parent.parent.resolve()
-
-    repo = git.Repo(repo_path)
-    head_commit = repo.head.commit
-    last_commit_time = head_commit.authored_datetime
-
-    return last_commit_time
