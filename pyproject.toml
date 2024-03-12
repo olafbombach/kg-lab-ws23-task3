@@ -50,6 +50,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "jupyter",
+  "pandas",
   "seaborn == 0.13.1",
 ]
 
