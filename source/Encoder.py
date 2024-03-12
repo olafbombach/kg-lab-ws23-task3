@@ -3,16 +3,16 @@ from transformers import BertTokenizer, BertModel
 #from transformers import BertForSequenceClassification, Trainer, TrainingArguments
 import torch
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
 from scipy import spatial
 
 class Encoder:
+    """
+    Creates an Encoding based on a dictionary. 
+    Can create the encoding using BERT or Glove.
+    """
+    # keywords that are redundant for the encoding
+    REDUNDANT_STRINGS = ['ieee', 'iop', 'ieee/acm', 'edp', 'elsevier', 'spie', 'annual', 'yearly', 'meeting', 'symposium', 'workshop', 'conference', 'proceeding', 'proceedings', 'or', 'and', '&', 'of', 'on', 'at', 'about']
 
-    # # Read JSON file and return it
-    # def read_json(self, file_path):
-    #     with open(file_path, 'r') as file:
-    #           conference_data = json.load(file)
-    #     return conference_data
     def __init__(self, dict_file: dict):
         self.dict_data = dict_file
         # TODO create a downloader class that gets the required datasets from their source, unpack in the working directory
@@ -63,32 +63,12 @@ class Encoder:
     # TODO empty string "" has also an embedding value, find a solution to not calculate it
     #def get_glove_encoding(self, entry_no: int, title: bool=None, abbreviation: bool=None, date: bool=None, year: bool=None, location: bool=None):
     def get_glove_encoding(self, **kwargs):
-        # conference_data = self.dict_file
-        # if not self.glove_embeddings:
-        #     raise ValueError("GloVe word embeddings not loaded, call load_embeddings")
-        # conference_title = conference_data[entry_no]['title'] if conference_data[entry_no]['title'] != "not available" else ""
-        # conference_abbreviation = conference_data[entry_no]['abbreviation'] if conference_data[entry_no]['abbreviation'] != "not available" else ""
-        # conference_date = conference_data[entry_no]['date'] if conference_data[entry_no]['date'] != "not available" else ""
-        # conference_year = conference_data[entry_no]['year'] if conference_data[entry_no]['year'] != "not available" else ""
-        # conference_location = conference_data[entry_no]['location'] if conference_data[entry_no]['location'] != "not available" else ""
-        # text_to_evaluate = ""
-        # if title is True:
-        #     text_to_evaluate += conference_title
-        # if abbreviation is True:
-        #     text_to_evaluate += " " + conference_abbreviation
-        # if date is True:
-        #     text_to_evaluate += " " + conference_date
-        # if year is True:
-        #     text_to_evaluate += " " + conference_year
-        # if location is True:
-        #     text_to_evaluate += " " + conference_location
-        # text_to_evaluate.replace(" ", " ").strip()
-        # words = text_to_evaluate.split()
-        # embeddings = [self.get_glove_word_embedding(word) for word in words]
-        # embeddings = [emb for emb in embeddings if emb is not None]
-        # if not embeddings:
-        #     return None
-        # return np.mean(embeddings, axis=0)
+        """
+        Specify the attributs you want to include in your encoding as boolean kwargs.
+        Possible values: 
+        full_title, short_name, ordinal, part_of_series, country_name,
+        country_identifier, city_name, year, start_time, end_time.
+        """
         assert set(kwargs.keys()) <= {"full_title", "short_name", "ordinal", "part_of_series", "country_name", "country_identifier", "city_name", "year", "start_time", "end_time"}, \
         "You chose a wrong keyword argument!"
 
@@ -108,21 +88,6 @@ class Encoder:
             return None
         return np.mean(embeddings, axis=0)
     
-    def add_string(self, current_string: str, name_of_attribute: str, value_of_attribute: bool) -> str:
-        """
-        Get the string that is to evaluate.
-        This method is iterated over all chosen keyword arguments.
-        """
-        if value_of_attribute: 
-            if self.dict_data[name_of_attribute] is not None:
-                current_string += " " + str(self.dict_data[name_of_attribute])
-            else:
-                pass
-        return current_string
-
-    # entry_no: integer value for selecting the JSON element for computation
-    # optional parameters title, abbreviation, date, year, location of type boolean. Passing these parameters indicate which elements are going to be calculated
-    # TODO empty string "" has also an embedding value, find a solution to not calculate it
     def get_bert_encoding(self, **kwargs):
         """
         Specify the attributs you want to include in your encoding as boolean kwargs.
@@ -144,26 +109,60 @@ class Encoder:
         text_to_evaluate = text_to_evaluate.strip()
         return self.get_bert_embedding(text_to_evaluate)
     
-
-
-# #Test if the class works
-
-# #Bert
-# instance = Encoder(json)
-# json_path = "/home/efeboz/Desktop/OpenAI_output_example.json" # Now uncessery with the introduction of __init__
-# data = instance.read_json(json_path) # Also not necessery
-# bert1 = instance.get_bert_encoding(0, year=True)
-# bert2 = instance.get_bert_encoding(1, year=True)
-# bert3 = instance.get_cosine_similarity(bert1, bert2)
-# bert4 = instance.get_bert_euclidean(bert1,bert2)
-# print(bert4)
-
-# #GloVe
-# glove_path = "/home/efeboz/Desktop/glove.6B/glove.6B.50d.txt"
-# glove_embeddings = instance.load_glove_embeddings(glove_path)
-# glove1 = instance.get_glove_encoding(0, year=True)
-# glove2 = instance.get_glove_encoding(1, year=True)
-# glove3 = instance.get_cosine_similarity(glove1, glove2)
-# glove4 = instance.get_bert_euclidean(glove1, glove2)
-# print(glove4)
+    def add_string(self, current_string: str, name_of_attribute: str, value_of_attribute: bool) -> str:
+        """
+        Get the string that is to evaluate.
+        This method is iterated over all keyword arguments.
+        
+        Each keyword is sorted based on the first letter of the strings.
+        Further some redundant strings (fillwords) are sorted out.
+        """        
+        if value_of_attribute:    
+            if self.dict_data[name_of_attribute] is not None:
+                current_addition = self.dict_data[name_of_attribute].lower()
+                # separation and alphabetically sorting
+                sep_strings_as_lst = Encoder._separate_into_list(current_addition)
+                sorted_list = sorted(sep_strings_as_lst)
+                # sorting out redundant_strings
+                final_lst = [string for string in sorted_list if string not in Encoder.REDUNDANT_STRINGS]
+                final_add = ' '.join(final_lst)
+        
+                current_string += " " + final_add
+            else:
+                pass
+        return current_string.strip()  
+    
+    def _separate_into_list(addition: str):
+        """
+        Separate string into list.
+        Separation first based on \" \". 
+        Afterwards we check if there are \"/\", \",\" or \".\" inside the string.
+        In this case delete these characters and try to separate into further strings.
+        In the end it checks if the string is longer than 1 letter.
+        """
+        final = []
+        start_lst = addition.split()
+        for word in start_lst:
+            ls_of_word = []
+            for char in [",", ".", "/"]:
+                if len(ls_of_word) == 0:
+                    if char in word:
+                        ls_of_word = word.split(char)
+                    else:
+                        pass              
+                else:
+                    for substring in ls_of_word:
+                        if char in substring:
+                            further_substrings = substring.split(char)
+                            ls_of_word.remove(substring)
+                            ls_of_word.extend(further_substrings)
+                        else:
+                            pass
+            if len(ls_of_word) > 0:
+                ls_of_word = [subs for subs in ls_of_word if len(subs) > 1]
+                final.extend(ls_of_word)
+            else:
+                if len(word) > 1:
+                    final.append(word)
+        return final
 
