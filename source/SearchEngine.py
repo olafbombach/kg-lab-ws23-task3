@@ -94,6 +94,7 @@ class SearchEngine:
         self._data = self._data.with_columns(pl.Series(name="score",
                                                        values=np.sum(self._hit_mask, axis=1),
                                                        dtype=pl.Float64))
+
         return self._data
 
     @get_timer
@@ -132,7 +133,7 @@ class SearchEngine:
                                         if column != 'index'])
             hit_mask = hit_mask + addition * keywords_dict[string]
 
-        self._hit_mask = hit_mask.astype(dtype=int)
+        self._hit_mask = hit_mask.astype(dtype=float)
 
         self._data = self._mask_eval()  # adds score as the last column
 
@@ -187,7 +188,7 @@ class SearchEngine:
                                         if column != 'index'])
             hit_mask = hit_mask + addition * tup[2]
 
-        self._hit_mask = hit_mask.astype(dtype=int)
+        self._hit_mask = hit_mask.astype(dtype=float)
 
         self._data = self._mask_eval()  # adds score as the last column
 
@@ -210,3 +211,19 @@ class SearchEngine:
     def get_dataset_name(self):
         return self._dataset_name
     
+
+if __name__ == "__main__":
+    tuples = {('14TH 2006', 'Infix', 0.25), ('Fortaleza', 'City', 0.75), 
+              ('Curran Associates, Inc.', 'Publisher', 0.1), 
+              ('ISMB 2006', 'Acronym with Year', 0.8), ('fourteenth', 'Ordinal', 0.5), 
+              ('INTELLIGENT SYSTEMS FOR MOLECULAR BIOLOGY', 'Infix', 0.25), 
+              ('2006', 'Year', 0.82), ('annual international conference', 'Infix', 0.25), 
+              ('ISMB 2006', 'Infix', 0.25), ('INTELLIGENT SYSTEMS FOR MOLECULAR BIOLOGY. ANNUAL INTERNATIONAL CONFERENCE. 14TH 2006. ISMB 2006', 'Full Title', 1), 
+              ('ISMB', 'Acronym', 0.43), ('ANNUAL INTERNATIONAL CONFERENCE', 'Infix', 0.25), 
+              ('intelligent systems for molecular biology', 'Infix', 0.25), 
+              ('intelligent systems molecular biology', 'Infix', 0.25), ('14TH', 'Ordinal', 0.5), 
+              ('INTELLIGENT SYSTEMS FOR MOLECULAR BIOLOGY. ANNUAL INTERNATIONAL CONFERENCE. fourteenth 2006. ISMB 2006', 'Modified Title', 1), 
+              ('Brazil', 'Country', 0.5)}
+    
+    se = SearchEngine('Wikidata', f_search=True)
+    print(se.search_set_of_tuples(tuples))
