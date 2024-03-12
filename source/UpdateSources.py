@@ -1,10 +1,9 @@
 from SPARQLWrapper import SPARQLWrapper, JSON
 from source.HelperFunctions import find_root_directory
-import pandas as pd
+import polars as pl
 import numpy as np
 import json
-import os
-from pathlib import Path
+from lodstorage.sparql import SPARQL
 
 class WikidataQuery(object):
     """
@@ -14,7 +13,7 @@ class WikidataQuery(object):
     """
 
     # From https://www.wikidata.org/wiki/Wikidata:SPARQL_query_service/queries/examples#Cats
-    query = SPARQLWrapper("https://query.wikidata.org/sparql")
+    query = SPARQL("https://query.wikidata.org/sparql")
     root_dir = find_root_directory()
     path_to_results = root_dir / "results"
     path_to_datasets = root_dir / "datasets" / "wikidata"
@@ -24,10 +23,8 @@ class WikidataQuery(object):
         """
         The method to query using SPARQLWrapper.
         """
-        WikidataQuery.query.setQuery(input_text)
-        WikidataQuery.query.setReturnFormat(JSON)
-        results = WikidataQuery.query.query().convert()
-        return results
+        result = WikidataQuery.query.rawQuery(input_text)
+        return result
 
     @staticmethod
     def queryExample():
@@ -45,7 +42,7 @@ class WikidataQuery(object):
     @staticmethod
     def assess_wikidata(write_to_json: bool) -> dict:
         """
-            This method calls all Wikidata assessment methods and writes a json-file to results.
+        This method calls all Wikidata assessment methods and writes a json-file to results.
         """
         pro = WikidataQuery._how_many_proceedings()
         ac = WikidataQuery._how_many_academic_conferences()
@@ -62,13 +59,14 @@ class WikidataQuery(object):
         return assess_dict
 
     @staticmethod
-    def create_wikidata_dataset(overwrite_dataset: bool = False) -> pd.DataFrame:
+    def create_wikidata_dataset(overwrite_dataset: bool = False) -> pl.DataFrame:
         """
             This method (query) gets all conferences and their information as a pandas DataFrame.
             It further directly overwrites the dataset-file for wikidata.
         """
         text = '''
-                SELECT ?conferencesLabel ?title ?countryLabel ?locationLabel ?main_subjectLabel ?start_time ?end_time ?seriesLabel 
+                SELECT ?conferencesLabel ?title ?countryLabel ?country ?locationLabel 
+                ?location ?main_subjectLabel ?start_time ?end_time ?seriesLabel 
                 ?short_name ?beginnings ?WikiCFP_identifier ?DBLP_identifier
                 
                 WHERE {?conferences wdt:P31 wd:Q2020153.                
@@ -78,60 +76,53 @@ class WikidataQuery(object):
                 OPTIONAL { ?conferences wdt:P921 ?main_subject. }
                 OPTIONAL { ?conferences wdt:P580 ?start_time. }
                 OPTIONAL { ?conferences wdt:P582 ?end_time. }
-                
                 OPTIONAL { ?conferences wdt:P179 ?series.
                 OPTIONAL { ?series wdt:P1813 ?short_name. }
-                OPTIONAL { ?series wdt:P571 ?beginnings. }
                 OPTIONAL { ?series wdt:P5127 ?WikiCFP_identifier. }
                 OPTIONAL { ?series wdt:P8926 ?DBLP_identifier. }}
                 
                 SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en".}
                 }'''
+        
+        lod = WikidataQuery.query.queryAsListOfDicts(text)
+        result = []
+        for entry in lod:
+            conf_label = entry.get("conferencesLabel", None)
+            title = entry.get("title", None)
+            country = entry.get("countryLabel", None)
+            country_qid = entry.get("country", None)
+            location = entry.get("locationLabel", None)
+            location_qid = entry.get("location", None)
+            main_subject = entry.get("main_subjectLabel", None)
+            start_time = entry.get("start_time", None)
+            end_time = entry.get("end_time", None)
+            series_label = entry.get("seriesLabel", None)
+            series_short_name = entry.get("short_name", None)
+            WikiCFP_identifier = entry.get("WikiCFP_identifier", None)
+            DBLP_identifier = entry.get("DBLP_identifier", None)
+            if country_qid:
+                country_qid = country_qid.replace("http://www.wikidata.org/entity/", "")
+            if location_qid:
+                location_qid = location_qid.replace("http://www.wikidata.org/entity/", "")
 
-        output = WikidataQuery.queryWikiData(text)
-        results = output['results']['bindings']
+            entry_list = [conf_label, title, country, country_qid, location, location_qid, 
+                          main_subject, start_time, end_time, series_label, series_short_name, 
+                          WikiCFP_identifier, DBLP_identifier]
+            
+            col_for_df = ['conf_label', 'title', 'country', 'country_qid', 'location', 'location_qid', 
+                          'main_subject', 'start_time', 'end_time', 'series_label', 
+                          'series_short_name', 'WikiCFP_identifier', 'DBLP_identifier']
+            result.append(entry_list)
+        
+        df = pl.DataFrame(result, schema=col_for_df)
 
-        # untangling the results in order to get a dataframe
-        data_array = np.full((len(results)+1, 12), pd.NA)  # add another dimension for the columns names, 12 because there are 12 features in the query
-        data_array[0, :] = np.array(['conf_label', 'title', 'country', 'location', 'main_subject', 'start_time', 'end_time', 'series_label', 'series_short_name', 'beginnings', 'WikiCFP_identifier', 'DBLP_identifier'])
-        for i, result in enumerate(results):
-            for name in result.keys():
-                if name == 'conferencesLabel':
-                    data_array[i+1, 0] = result[name]['value']
-                elif name == 'title':
-                    data_array[i+1, 1] = result[name]['value']
-                elif name == 'countryLabel':
-                    data_array[i+1, 2] = result[name]['value']
-                elif name == 'locationLabel':
-                    data_array[i+1, 3] = result[name]['value']
-                elif name == 'main_subjectLabel':
-                    data_array[i+1, 4] = result[name]['value']
-                elif name == 'start_time':
-                    temp = result[name]['value'].split('T')[0].split('-')
-                    data_array[i+1, 5] = temp[2]+'.'+temp[1]+'.'+temp[0]  # date as DD.MM.YYYY
-                elif name == 'end_time':
-                    temp = result[name]['value'].split('T')[0].split('-')
-                    data_array[i+1, 6] = temp[2]+'.'+temp[1]+'.'+temp[0]  # date as DD.MM.YYYY
-                elif name == 'seriesLabel':
-                    data_array[i+1, 7] = result[name]['value']
-                elif name == 'short_name':
-                    data_array[i+1, 8] = result[name]['value']
-                elif name == 'beginnings':
-                    data_array[i+1, 9] = result[name]['value'].split('-')[0]  # only year is taken
-                elif name == 'WikiCFP_identifier':
-                    data_array[i+1, 10] = result[name]['value']
-                elif name == 'DBLP_identifier':
-                    data_array[i+1, 11] = result[name]['value']
-
-        # creation of the dataframe from data_array
-        dataframe = pd.DataFrame(data_array[1:, :], columns=data_array[0, :])
         # also write the csv-file in the datasets folder
         if overwrite_dataset:
-            WikidataQuery._write_csv_to_datasets(dataframe, 'wikidata_conf_data')
+            WikidataQuery._write_csv_to_datasets(df, 'wikidata_conf_data')
         else:
             pass
 
-        return dataframe
+        return df
 
     @staticmethod
     def _how_many_proceedings():
@@ -144,7 +135,7 @@ class WikidataQuery(object):
                 SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
                 }'''
         output = WikidataQuery.queryWikiData(text)
-        result = output['results']['bindings'][0]['count']['value']
+        result = output.bindings[0]['count'].value
 
         return result
 
@@ -159,7 +150,7 @@ class WikidataQuery(object):
                 SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
                 }'''
         output = WikidataQuery.queryWikiData(text)
-        result = output['results']['bindings'][0]['count']['value']
+        result = output.bindings[0]['count'].value
 
         return result
     
@@ -174,12 +165,14 @@ class WikidataQuery(object):
                 f.write(data)
 
     @staticmethod
-    def _write_csv_to_datasets(dataframe: pd.DataFrame, name_of_file: str) -> None:
+    def _write_csv_to_datasets(dataframe: pl.DataFrame, name_of_file: str) -> None:
         if name_of_file.endswith('.csv'):
             raise ValueError("Just name the file without the datatype (\'.csv\').")
-        dataframe.to_csv(WikidataQuery.path_to_datasets / name_of_file+'.csv')
+        full_file_name = name_of_file+'.csv'
+        path_to_file = WikidataQuery.path_to_datasets / full_file_name
+        dataframe.write_csv(path_to_file, include_header=True, separator=';')
 
 
 if __name__ == "__main__":
-    cre = WikidataQuery.assess_wikidata(write_to_json=True)
+    cre = WikidataQuery.create_wikidata_dataset(overwrite_dataset=True)
     print(cre)
