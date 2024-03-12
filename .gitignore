@@ -37,3 +37,9 @@ venv.bak/
 # Jetbrains environments
 /.idea/*
 !/.idea/runConfigurations
+
+# VS Code folders
+.vscode
+
+# Test folder
+.pytest_cache

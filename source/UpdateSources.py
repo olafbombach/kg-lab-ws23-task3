@@ -1,7 +1,10 @@
 from SPARQLWrapper import SPARQLWrapper, JSON
+from source.HelperFunctions import find_root_directory
 import pandas as pd
 import numpy as np
 import json
+import os
+from pathlib import Path
 
 class WikidataQuery(object):
     """
@@ -12,19 +15,25 @@ class WikidataQuery(object):
 
     # From https://www.wikidata.org/wiki/Wikidata:SPARQL_query_service/queries/examples#Cats
     query = SPARQLWrapper("https://query.wikidata.org/sparql")
-    path_to_results = '..\\results\\'
-    path_to_datasets = '..\\datasets\\wikidata\\'
+    root_dir = find_root_directory()
+    path_to_results = root_dir / "results"
+    path_to_datasets = root_dir / "datasets" / "wikidata"
 
     @staticmethod
-    def queryWikiData(text) -> json:
-
-        WikidataQuery.query.setQuery(text)
+    def queryWikiData(input_text: str):
+        """
+        The method to query using SPARQLWrapper.
+        """
+        WikidataQuery.query.setQuery(input_text)
         WikidataQuery.query.setReturnFormat(JSON)
         results = WikidataQuery.query.query().convert()
         return results
 
     @staticmethod
-    def queryExample() -> json:
+    def queryExample():
+        """
+        Example query searching for entries in Wikidata that are house cats (property).
+        """
         text = '''
                 SELECT ?item ?itemLabel
                 WHERE {?item wdt:P31 wd:Q146.
@@ -34,49 +43,23 @@ class WikidataQuery(object):
         return result
 
     @staticmethod
-    def how_many_proceedings():
-        """
-            How many entries exist in Wikidata that have the property: instance of 'proceedings' (Q1143604)
-        """
-        text = '''
-                SELECT (COUNT (?proceeding) AS ?count)
-                WHERE {?proceeding wdt:P31 wd:Q1143604.
-                SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
-                }'''
-        output = WikidataQuery.queryWikiData(text)
-        result = output['results']['bindings'][0]['count']['value']
-
-        return result
-
-    @staticmethod
-    def how_many_academic_conferences():
-        """
-            How many entries exist in Wikidata that have the property: instance of 'academic conference' (Q2020153)
-        """
-        text = '''
-                SELECT (COUNT (?conferences) AS ?count)
-                WHERE {?conferences wdt:P31 wd:Q2020153.
-                SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
-                }'''
-        output = WikidataQuery.queryWikiData(text)
-        result = output['results']['bindings'][0]['count']['value']
-
-        return result
-
-    @staticmethod
-    def assess_wikidata():
+    def assess_wikidata(write_to_json: bool) -> dict:
         """
             This method calls all Wikidata assessment methods and writes a json-file to results.
         """
-        pro = WikidataQuery.how_many_proceedings()
-        ac = WikidataQuery.how_many_academic_conferences()
+        pro = WikidataQuery._how_many_proceedings()
+        ac = WikidataQuery._how_many_academic_conferences()
 
-        assess_dict = {'number of proceedings': pro, 'number of academic conferences': ac}
+        assess_dict = {'number of proceedings': pro, 
+                       'number of academic conferences': ac}
         assess_json = json.dumps(assess_dict, indent=2)
 
-        WikidataQuery._write_json_to_results(assess_json, 'wikidata_assessment')
+        if write_to_json:
+            WikidataQuery._write_json_to_results(assess_json, 'wikidata_assessment')
+        else:
+            pass
 
-        return assess_json
+        return assess_dict
 
     @staticmethod
     def create_wikidata_dataset(overwrite_dataset: bool = False) -> pd.DataFrame:
@@ -151,18 +134,52 @@ class WikidataQuery(object):
         return dataframe
 
     @staticmethod
-    def _write_json_to_results(json_name: json, name_of_file: str) -> None:
+    def _how_many_proceedings():
+        """
+        How many entries exist in Wikidata that have the property: instance of 'proceedings' (Q1143604)
+        """
+        text = '''
+                SELECT (COUNT (?proceeding) AS ?count)
+                WHERE {?proceeding wdt:P31 wd:Q1143604.
+                SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+                }'''
+        output = WikidataQuery.queryWikiData(text)
+        result = output['results']['bindings'][0]['count']['value']
+
+        return result
+
+    @staticmethod
+    def _how_many_academic_conferences():
+        """
+        How many entries exist in Wikidata that have the property: instance of 'academic conference' (Q2020153)
+        """
+        text = '''
+                SELECT (COUNT (?conferences) AS ?count)
+                WHERE {?conferences wdt:P31 wd:Q2020153.
+                SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+                }'''
+        output = WikidataQuery.queryWikiData(text)
+        result = output['results']['bindings'][0]['count']['value']
+
+        return result
+    
+    @staticmethod
+    def _write_json_to_results(data: json, name_of_file: str) -> None:
         if name_of_file.endswith('.json'):
             raise ValueError("Just name the file without the datatype (\'.json\').")
-        with open(WikidataQuery.path_to_results+name_of_file+'.json', 'w') as outfile:
-            outfile.write(json_name)
+        full_file_name = name_of_file+".json"
+        path_to_file = WikidataQuery.path_to_results / full_file_name
+
+        with open(path_to_file, 'w') as f:
+                f.write(data)
 
     @staticmethod
     def _write_csv_to_datasets(dataframe: pd.DataFrame, name_of_file: str) -> None:
         if name_of_file.endswith('.csv'):
             raise ValueError("Just name the file without the datatype (\'.csv\').")
-        dataframe.to_csv(WikidataQuery.path_to_datasets+name_of_file+'.csv')
+        dataframe.to_csv(WikidataQuery.path_to_datasets / name_of_file+'.csv')
 
 
-cre = WikidataQuery.create_wikidata_dataset()
-print(cre)
+if __name__ == "__main__":
+    cre = WikidataQuery.assess_wikidata(write_to_json=True)
+    print(cre)
