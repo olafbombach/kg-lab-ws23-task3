@@ -12,7 +12,7 @@ http_logger.setLevel(logging.WARNING)
 
 class Semantifier:
 
-    def __init__(self, dataset_name: str, openai_key: str, temperature: float=0, model: str="gpt-3.5-turbo"):
+    def __init__(self, dataset_name: str, openai_key: str = None, temperature: float=0, model: str="gpt-3.5-turbo"):
         self.dataset_name = dataset_name
         self.temperature = temperature
         self.model = model
@@ -25,16 +25,16 @@ class Semantifier:
             openai_key = os.getenv("OPENAI_API_KEY")
             json_file = Path.home() / ".openai" / "openai_api_key.json"
 
-            if openai_key is None and json_file.is_file():
+            if openai_key is None and json_file.resolve().is_file():
                 with open(json_file, "r") as file:
                     data = json.load(file)
                     openai_key = data.get("OPENAI_API_KEY")
 
         if openai_key is None:
             raise ValueError(
-                "No OpenAI API key found. Please set the 'OPENAI_API_KEY \
-                    environment variable or \
-                        store it in `~/.openai/openai_api_key.json`.")
+                "No OpenAI API key found. Please set the 'OPENAI_API_KEY "
+                "environment variable or "
+                "store it in `~/.openai/openai_api_key.json`.")
         # set the global api key
         self.key = openai_key
 
@@ -75,10 +75,10 @@ class Semantifier:
         # default part for query
         query = """Please convert the following""" + \
         str(entries_count) + \
-        """dictionaries into a JSON file with the conference signature elements: 
-        -full_title: The full title of the event, often indicating the scope and subject.
-        -short_name: The short name of the conference, often in uppercase.
-        -ordinal: The instance number of the event, like 18th or 1st. 
+        """dictionaries into a json file with the conference signature elements: 
+        -full_title: The full title of the event, often indicating the scope and subject. Please make sure to delete any ordinals or shortnames here. If there is a short_name provided, you can try to validate the full_title by checking if the letters in the short title add up to the first letters of the full_title. 
+        -short_name: The short name of the conference, often in uppercases. If provided closely in the string, you can also add the year of the conference.
+        -ordinal: The instance number of the event, like 18th or 1st. Sometimes this is also written as first, second, etc.
         -part_of_series: The overlying conference-series, often a substring of full_title.
         -country_name: The country in which the conference takes place.
         -country_identifier: The country_identifier with respect to the country that is found. Give this identifier using a 2 digit ISO 3166-1 alpha-2 code.
@@ -93,7 +93,7 @@ class Semantifier:
             query += """
             {'conf_label': ['Advances in Web Based Learning - ICWL 2007, 6th International Conference, Edinburgh, UK, August 15-17, 2007'], 'title': ['Advances in Web Based Learning - ICWL 2007, 6th International Conference'], 'country': ['United Kingdom'], 'location': ['Edinburgh'], 'main_subject': [None], 'start_time': ['15.08.2007'], 'end_time': ['17.08.2007'], 'series_label': ['International Conference on Advances in Web-Based Learning']}
              would look like
-            {full_title: 'Advances in Web Based Learning - ICWL 2007, 6th International Conference',
+            {full_title: 'International Conference of Advances in Web Based Learning',
             short_name: 'ICWL 2007',
             ordinal: '6th',
             part_of_series: 'International Conference on Advances in Web-Based Learning',
@@ -108,10 +108,10 @@ class Semantifier:
             query += """
             {'Conference Title': 'AMERICAN COLLEGE OF VETERINARY PATHOLOGISTS. ANNUAL MEETING. 65TH 2014. (AND 49TH ANNUAL MEETING OF THE AMERICAN SOCIETY FOR VETERINARY CLINICAL PATHOLOGY, IN PARTNERSHIP WITH ASIP)', 'Book Title': '65th Annual Meeting of the American College of Veterinary Pathologists and the 49th Annual Meeting of the American Society of Veterinary Clinical Pathology (ACVP & ASVCP 2014)', 'Series': None, 'Description': 'Held 8-12 November 2014, Atlanta, Georgia, USA. In Partnership with ASIP.', 'Mtg Year': '2014'} 
             would look like
-            {full_title: 'AMERICAN COLLEGE OF VETERINARY PATHOLOGISTS. ANNUAL MEETING.',
+            {full_title: 'Annual Meeting American College of Veterinary Pathologists',
             short_name: null,
             ordinal: '63rd',
-            part_of_series: 'AMERICAN COLLEGE OF VETERINARY PATHOLOGISTS.',
+            part_of_series: 'American College of Veterinary Pathologists',
             country_name: 'USA',
             country_identifier: 'US',
             city_name: 'Seattle',

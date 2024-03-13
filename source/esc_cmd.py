@@ -8,6 +8,7 @@ from source.EventClass import WikidataEvent, ProceedingsEvent
 
 from source.Preprocessor import Preprocessor
 from source.SearchEngine import SearchEngine
+from source.Comparor import Comparor
 
 
 
@@ -59,7 +60,7 @@ def evaluation_v1() -> None:
     del se_wiki, testset, preproc_testset
 
 
-def evaluation_v2() -> None:
+def evaluation_v2(sim_measure: str, small_test: bool=False) -> None:
     """
     This function evaluates operation using the Tokenizer, the SearchEngine, 
     the Semantifier and the Encoding.
@@ -68,16 +69,22 @@ def evaluation_v2() -> None:
     
     Also returns a log in \"results/logs\".
     """
-    
     root_dir = find_root_directory()
     testset_file = root_dir/"datasets"/"proceedings.com"/"testset_v2.csv"
 
     # set up logger
-    logging.basicConfig(level=logging.INFO,
-                        filemode="w",
-                        format="%(asctime)s %(levelname)s - %(message)s",
-                        datefmt="%m/%d/%Y %I:%M:%S",
-                        filename=root_dir/"results"/"logs"/"testset_v2_log.log")
+    if small_test:
+        logging.basicConfig(level=logging.INFO,
+                            filemode="w",
+                            format="%(asctime)s %(levelname)s - %(message)s",
+                            datefmt="%m/%d/%Y %I:%M:%S",
+                            filename=root_dir/"results"/"logs"/f"small_test_{sim_measure}.log")
+    else:
+        logging.basicConfig(level=logging.INFO,
+                            filemode="w",
+                            format="%(asctime)s %(levelname)s - %(message)s",
+                            datefmt="%m/%d/%Y %I:%M:%S",
+                            filename=root_dir/"results"/"logs"/f"testset_v2_{sim_measure}.log")
     
     # start with the code
     se_wiki = SearchEngine("Wikidata", f_search=True)
@@ -94,28 +101,41 @@ def evaluation_v2() -> None:
     # create tokens and apply SearchEngine
     for i, entry in enumerate(preproc_testset.iter_rows(named=True)):
         pe = ProceedingsEvent(input_info=entry)
-        loe = pe.apply_searchengine(se_instance=se_wiki)
+
+        # searching of events
+        loe = pe.apply_searchengine(se_instance=se_wiki, max_search_hits=10)
         logging.info(f"Found {len(loe)} wikidata entries for this proceedings.com entry.")
         
+        # semantification of events
         logging.info("Semantification of entries started.")
         dict_file_pe = pe.apply_semantifier(get_dict=True)
         loe.apply_semantifier(get_list=True)
 
+        # encoding events
         logging.info("Semantification finished. Moving on to encoding...")
         pe.apply_encoder(dict_file_pe)
         loe.apply_encoder()
 
-        logging.info("Encoding finished. Writing to log:")
-        logging.info("The proceedings.com entry:")
+        # comparing events
+        logging.info("Encoding finished...")
+        co = Comparor(pe=pe, loe=loe)
+        co.add_measure_as_attribute(sim_measure)
+
+        # presentation of fit
+        logging.info("Finding optimal value for the following ProceedingsEvent:")
         logging.info(pe)
-        logging.info("The List of Events (Wikidata) as outcomes:")
-        logging.info(loe)
+        opt_event = loe.get_optimal_similarity(sim_measure)
+        logging.info("Optimal WikidataEvent for ProceedingsEvent:")
+        logging.info(opt_event)
+        logging.info(f"With similarity measure: {opt_event.similarity}")
+        logging.info(f"Real / True labeling: {entry['wikidata_index']}")
+
         print(f"Finished {i+1}. iteration.")
+        
+        if small_test:  # only one item for small test
+            break
 
         del pe, loe
-
-        if i > 4:
-            break
 
     del se_wiki, testset, preproc_testset
 
@@ -123,14 +143,13 @@ def evaluation_v2() -> None:
 def main():
     """ main program """
 
-    program_short_name = "esc"
-    program_build_date = get_last_commit_time()
+    #program_build_date = get_last_commit_time()
     program_description = f"Program for Event Series Completion. \n"\
                           f"Different operations are possible.\n" \
                           f"\n"\
                           f"Maintainers: Efe Bilgili, Christophe Haag, " \
-                          f"Lukas Jaeschke, Daniel Quirmbach \n" \
-                          f"Last update: {program_build_date}"
+                          f"Lukas Jaeschke, Daniel Quirmbach \n"
+                          #f"Last update: {program_build_date}"
 
     try:
         parser = get_arg_parser(description=program_description)
@@ -143,7 +162,11 @@ def main():
         return sys.exit(0)
 
     # dummy
-    if args.operation == "v1":
-        print("You have chosen v1-evaluation. Still not working...")
+    if args.operation == "small_test":
+        print("This a small test to show what the v2 does...")
+        evaluation_v2(sim_measure=args.s_measure, small_test=True)
+        print("Please check the directory results/logs.")
     elif args.operation == "v2":
-        evaluation_v2()
+        print("Please check the directory results/logs to find your run.")
+        evaluation_v2(sim_measure=args.s_measure)
+
