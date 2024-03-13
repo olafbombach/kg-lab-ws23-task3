@@ -51,6 +51,18 @@ class Preprocessor:
         self._preprocessed_data = self._preprocessed_data.fill_null("")
         self._preprocessed_data = self._preprocessed_data.fill_nan("")
 
+    def filter_CS_entries(self) -> None:
+        filter_dict = {
+            "Subject1": ["Computer"],
+            "Subject2": ["Computer"],
+            "Subject3": ["Computer"]
+        }
+        self._preprocessed_data=self._preprocessed_data.filter(
+            pl.col(list(filter_dict)[0]).str.contains("(?i)"+list(filter_dict.values())[0][0])|
+            pl.col(list(filter_dict)[1]).str.contains("(?i)"+list(filter_dict.values())[1][0])|
+            pl.col(list(filter_dict)[2]).str.contains("(?i)"+list(filter_dict.values())[2][0])
+            )            
+
     @property
     def get_raw_data(self) -> Union[pl.DataFrame, object]:
         return self._raw_data
