@@ -3,6 +3,12 @@ import pandas as pd
 import numpy as np
 import json
 
+#Imports for ProceedingsUpdater
+from bs4 import BeautifulSoup
+from urllib.request import urlretrieve, urlopen
+import os
+from os.path import isfile, join
+from source.HelperFunctions import find_root_directory
 class WikidataQuery(object):
     """
         An operator that enables to query from wikidata.
@@ -164,5 +170,54 @@ class WikidataQuery(object):
         dataframe.to_csv(WikidataQuery.path_to_datasets+name_of_file+'.csv')
 
 
-cre = WikidataQuery.create_wikidata_dataset()
-print(cre)
+#cre = WikidataQuery.create_wikidata_dataset()
+#print(cre)
+
+class ProceedingsUpdater:
+
+    def updateProceedings():
+        url = "https://www.proceedings.com/catalog.html"
+        page = urlopen(url)
+        html = page.read().decode("utf-8")
+        soup = BeautifulSoup(html, "html.parser")
+        tables = soup.find_all('table')
+        #Search for correct datarow
+        lineFound=False
+        offset=4
+        #Search for corresponding new dataset
+        for row in tables[0]:
+            if (lineFound):
+                offset-=1
+                if offset==0:
+                    datarow=row
+                    break
+            if (str(type(row))=="<class 'bs4.element.Comment'>"):
+                if ("Cumulative" in row):
+                    lineFound=True
+        #Search for name of latest dataset
+        for string in datarow.strings:
+            if ('.xlsx' in string):
+                newfile=string
+        #Search for name of current dataset
+        path=find_root_directory()
+        path_to_dataset = path / "datasets" / "proceedings.com"
+        oldfile=""
+        files = [f for f in os.listdir(path_to_dataset) if isfile(join(path_to_dataset, f))]
+        for file in files:
+            if ('.xlsx' in file):
+                oldfile=file
+        #Update file
+        #print(newfile)
+        #print(oldfile)
+        if (newfile != oldfile):
+            datalink=""
+            for item in datarow.children:
+                for data in item:
+                    if (str(type(data))=="<class 'bs4.element.Tag'>"):
+                        if (data.attrs['href']!=""):
+                            datalink=data.attrs['href']        
+            fulldatalink='https://www.proceedings.com'+datalink[2:]
+            print("download new file")
+            path, headers = urlretrieve(fulldatalink, path_to_dataset / newfile)
+            if oldfile!="":
+                os.remove(path_to_dataset / oldfile)
