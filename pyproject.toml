@@ -42,7 +42,8 @@ dependencies = [
   # NLP stuff
   "openai == 1.12.0",
   "transformers",
-  "torch == 2.2.0"
+  "torch == 2.2.0",
+  "WikibaseIntegrator = 0.12.5",
 ]
 
 [project.optional-dependencies]
