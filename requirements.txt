@@ -27,6 +27,7 @@ number_parser == 0.3.2
 xlrd == 2.0.1
 openai
 transformers
+torch
 
 #WikidataUpdate
 WikibaseIntegrator ==  0.12.5
