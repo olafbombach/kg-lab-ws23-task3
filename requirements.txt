@@ -26,6 +26,7 @@ number_parser == 0.3.2
 # additionals
 xlrd == 2.0.1
 openai
+transformers
 
 #WikidataUpdate
 WikibaseIntegrator ==  0.12.5
