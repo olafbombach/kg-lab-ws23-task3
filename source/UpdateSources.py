@@ -1,3 +1,4 @@
+import string
 from SPARQLWrapper import SPARQLWrapper, JSON
 import pandas as pd
 import numpy as np
@@ -32,6 +33,27 @@ class WikidataQuery(object):
                 }'''
         result = WikidataQuery.queryWikiData(text)
         return result
+    
+    #for the WikidataUpdater class (currently mostly not finding anything due to HTTP error 500 (could be anything))
+    @staticmethod
+    def getWDIdfromLabel(name: string):
+        wDid = None
+        try:
+            s = name.lower()
+            text = " SELECT ?item WHERE { ?item rdfs:label ?itemLabel. FILTER(CONTAINS(LCASE(?itemLabel), \""+s+"\"@en)).FILTER(CONTAINS(\""+s+"\"@en, LCASE(?itemLabel))).} LIMIT 1"
+            print(text)
+            result = WikidataQuery.queryWikiData(text)
+            WDresults= result["results"]["bindings"]
+            print(WDresults)
+            if(len(WDresults) > 0):
+                uri = WDresults[0]["item"]["value"]
+                WDid = uri[uri.find("entity")+7:]
+        
+            else:
+                WDid = None
+            return WDid
+        except:
+          return None  
 
     @staticmethod
     def how_many_proceedings():
@@ -164,5 +186,5 @@ class WikidataQuery(object):
         dataframe.to_csv(WikidataQuery.path_to_datasets+name_of_file+'.csv')
 
 
-cre = WikidataQuery.create_wikidata_dataset()
-print(cre)
+#cre = WikidataQuery.create_wikidata_dataset()
+#print(cre)
