@@ -57,7 +57,7 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
 packages = [
-  "esc",
+  "source",
 ]
 
 [project.scripts]

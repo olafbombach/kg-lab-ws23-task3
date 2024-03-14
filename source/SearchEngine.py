@@ -209,24 +209,4 @@ class SearchEngine:
     @property
     def get_dataset_name(self):
         return self._dataset_name
-
-
-'''
-input_query = {'Fourth National Conference on Artificial Intelligence, Austin, 06.08.1984, 10.08.1984, AAAI Conference on Artificial Intelligence, AAAI, 1980': 4,
-               '4th National Conference on Artificial Intelligence, Austin, 06.08.1984, 10.08.1984, AAAI Conference on Artificial Intelligence, AAAI, 1980': 3,
-               '06.08.1984,': 1, '10.08.1984,': 1, 'AAAI': 3, 'AAAI,': 3, '1980': 1, 'Fourth': 1, 'Fourth National': 1,
-               'Fourth National Conference': 1, 'Fourth National Conference on': 1,
-               'Fourth National Conference on Artificial': 1, 'Fourth National Conference on Artificial Intelligence,': 1,
-               'Fourth National Conference on Artificial Intelligence, Austin,': 1,
-               'Fourth National Conference on Artificial Intelligence, Austin, 06.08.1984,': 1,
-               'Fourth National Conference on Artificial Intelligence, Austin, 06.08.1984, 10.08.1984,': 1,
-               'Fourth National Conference on Artificial Intelligence, Austin, 06.08.1984, 10.08.1984, AAAI': 1,
-               'Fourth National Conference on Artificial Intelligence, Austin, 06.08.1984, 10.08.1984, AAAI Conference': 1,
-               'Fourth National Conference on Artificial Intelligence, Austin, 06.08.1984, 10.08.1984, AAAI Conference on': 1,
-               'Fourth National Conference on Artificial Intelligence, Austin, 06.08.1984, 10.08.1984, AAAI Conference on Artificial': 1,
-               'Fourth National Conference on Artificial Intelligence, Austin, 06.08.1984, 10.08.1984, AAAI Conference on Artificial Intelligence,': 1,
-               'Fourth National Conference on Artificial Intelligence, Austin, 06.08.1984, 10.08.1984, AAAI Conference on Artificial Intelligence, AAAI,': 1}
-
-se = SearchEngine("Wikidata", fsearch=True)
-print(se.search_dict(input_query, threshold_method="three quarter"))
-'''
+    

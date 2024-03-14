@@ -4,6 +4,7 @@ import urllib.request
 from tqdm import tqdm
 from urllib.parse import urlparse
 import zipfile
+from source.HelperFunctions import find_root_directory
 
 
 class DownloadProgressBar(tqdm):
@@ -13,13 +14,11 @@ class DownloadProgressBar(tqdm):
         self.update(b * bsize - self.n)
 
 class Downloader:
-    # def __init__(self, url):
-    #     self.url = url
 
-    def glove_downloader(self): #self has to be the first parameter of any function which belongs to a class
+    @staticmethod
+    def glove_downloader(url: str = "https://nlp.stanford.edu/data/glove.6B.zip"):
         try:
             # Parse the URL to extract the filename
-            url = "https://nlp.stanford.edu/data/glove.6B.zip"
             parsed_url = urlparse(url)
             filename = os.path.basename(parsed_url.path)
 
@@ -28,9 +27,7 @@ class Downloader:
                 urllib.request.urlretrieve(url, filename=filename, reporthook=t.update_to)
 
             # Move the downloaded file to the destination directory
-            current_dir = os.getcwd() # Get current dir
-            parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir)) # Path to parent dir
-            destination_path = os.path.join(parent_dir, "datasets") # Path to destination
+            destination_path = find_root_directory() / "datasets" # Path to destination
             shutil.move(filename, destination_path) # Move the file 
             print(f"File downloaded and moved to {destination_path}")
 
