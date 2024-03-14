@@ -67,9 +67,9 @@ class Encoder:
         Specify the attributs you want to include in your encoding as boolean kwargs.
         Possible values: 
         full_title, short_name, ordinal, part_of_series, country_name,
-        country_identifier, city_name, year, start_time, end_time.
+        country_short, city_name, year, start_time, end_time.
         """
-        assert set(kwargs.keys()) <= {"full_title", "short_name", "ordinal", "part_of_series", "country_name", "country_identifier", "city_name", "year", "start_time", "end_time"}, \
+        assert set(kwargs.keys()) <= {"full_title", "short_name", "ordinal", "part_of_series", "country_name", "country_short", "city_name", "year", "start_time", "end_time"}, \
         "You chose a wrong keyword argument!"
 
         # get string
@@ -93,9 +93,9 @@ class Encoder:
         Specify the attributs you want to include in your encoding as boolean kwargs.
         Possible values: 
         full_title, short_name, ordinal, part_of_series, country_name,
-        country_identifier, city_name, year, start_time, end_time.
+        country_short, city_name, year, start_time, end_time.
         """
-        assert set(kwargs.keys()) <= {"full_title", "short_name", "ordinal", "part_of_series", "country_name", "country_identifier", "city_name", "year", "start_time", "end_time"}, \
+        assert set(kwargs.keys()) <= {"full_title", "short_name", "ordinal", "part_of_series", "country_name", "country_short", "city_name", "year", "start_time", "end_time"}, \
         "You chose a wrong keyword argument!"
         
         # get string

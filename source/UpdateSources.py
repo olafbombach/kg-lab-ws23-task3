@@ -65,7 +65,7 @@ class WikidataQuery(object):
             It further directly overwrites the dataset-file for wikidata.
         """
         text = '''
-                SELECT ?conferencesLabel ?title ?countryLabel ?country ?locationLabel 
+                SELECT ?conferences ?conferencesLabel ?title ?countryLabel ?country ?locationLabel 
                 ?location ?main_subjectLabel ?start_time ?end_time ?seriesLabel 
                 ?short_name ?beginnings ?WikiCFP_identifier ?DBLP_identifier
                 
@@ -88,6 +88,7 @@ class WikidataQuery(object):
         result = []
         for entry in lod:
             conf_label = entry.get("conferencesLabel", None)
+            conf_qid = entry.get("conferences", None)
             title = entry.get("title", None)
             country = entry.get("countryLabel", None)
             country_qid = entry.get("country", None)
@@ -100,17 +101,19 @@ class WikidataQuery(object):
             series_short_name = entry.get("short_name", None)
             WikiCFP_identifier = entry.get("WikiCFP_identifier", None)
             DBLP_identifier = entry.get("DBLP_identifier", None)
+            if conf_qid:
+                conf_qid = conf_qid.replace("http://www.wikidata.org/entity/", "")
             if country_qid:
                 country_qid = country_qid.replace("http://www.wikidata.org/entity/", "")
             if location_qid:
                 location_qid = location_qid.replace("http://www.wikidata.org/entity/", "")
 
-            entry_list = [conf_label, title, country, country_qid, location, location_qid, 
+            entry_list = [conf_label, conf_qid, title, country, country_qid, location, location_qid, 
                           main_subject, start_time, end_time, series_label, series_short_name, 
                           WikiCFP_identifier, DBLP_identifier]
             
-            col_for_df = ['conf_label', 'title', 'country', 'country_qid', 'location', 'location_qid', 
-                          'main_subject', 'start_time', 'end_time', 'series_label', 
+            col_for_df = ['conf_label', 'conf_qid', 'title', 'country', 'country_qid', 'location', 
+                          'location_qid', 'main_subject', 'start_time', 'end_time', 'series_label', 
                           'series_short_name', 'WikiCFP_identifier', 'DBLP_identifier']
             result.append(entry_list)
         
@@ -174,5 +177,5 @@ class WikidataQuery(object):
 
 
 if __name__ == "__main__":
-    cre = WikidataQuery.create_wikidata_dataset(overwrite_dataset=True)
-    print(cre)
+    cre = WikidataQuery.create_wikidata_dataset(overwrite_dataset=False)
+    print(cre.describe())

@@ -191,11 +191,11 @@ class SearchEngine:
 
             # some kind of logic
             if tup[1] == "Country Identifier":
-                # in 'addition': set all columns expect 3 to False
-                addition[:, np.arange(col_add) != 3] = False 
+                # in 'addition': set all columns expect 4 to False
+                addition[:, np.arange(col_add) != 4] = False 
             if tup[1] == "City Identifier":
-                # in 'addition': set all columns expect 5 to False
-                addition[:, np.arange(col_add) != 5] = False
+                # in 'addition': set all columns expect 6 to False
+                addition[:, np.arange(col_add) != 6] = False
 
             hit_mask = hit_mask + addition * tup[2]
 

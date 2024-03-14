@@ -55,17 +55,19 @@ def evaluation_v2(sim_measure: str, small_test: bool=False) -> None:
         pe = ProceedingsEvent(input_info=entry)
 
         # searching of events
-        loe = pe.apply_searchengine(se_instance=se_wiki, max_search_hits=20)
+        loe = pe.apply_searchengine(se_instance=se_wiki, max_search_hits=3)
         logging.info(f"Found {len(loe)} wikidata entries for this proceedings.com entry.")
         
         # semantification of events
         logging.info("Semantification of entries started.")
         dict_file_pe = pe.apply_semantifier(get_dict=True)
-        loe.apply_semantifier(get_list=True)
+        loe.apply_semantifier(get_dict=True)  # dict saved as class attribute 
+
+        loe.get_configurations(pe=pe)
 
         # encoding events
         logging.info("Semantification finished. Moving on to encoding...")
-        pe.apply_encoder(dict_file_pe)
+        pe.apply_encoder(dict_file = dict_file_pe)
         loe.apply_encoder()
 
         # comparing events

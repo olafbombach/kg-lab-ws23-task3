@@ -81,7 +81,7 @@ class Semantifier:
         -ordinal: The instance number of the event, like 18th or 1st. Sometimes this is also written as first, second, etc.
         -part_of_series: The overlying conference-series, often a substring of full_title.
         -country_name: The country in which the conference takes place.
-        -country_identifier: The country_identifier with respect to the country that is found. Give this identifier using a 2 digit ISO 3166-1 alpha-2 code.
+        -country_short: The unique identifier with respect to the country that is found. Give this identifier using a 2 digit ISO 3166-1 alpha-2 code.
         -city_name: Give the city with it's english label.
         -year: Give the year of the conference as a 4 digit number.
         -start_time: The start date of the conference in ISO date format.
