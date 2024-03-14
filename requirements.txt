@@ -25,9 +25,12 @@ number_parser == 0.3.2
 
 # additionals
 xlrd == 2.0.1
+
+#encoding and semantification
 openai
 transformers
 torch
+sklearn
 
 #WikidataUpdate
 WikibaseIntegrator ==  0.12.5
