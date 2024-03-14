@@ -55,7 +55,7 @@ def evaluation_v2(sim_measure: str, small_test: bool=False) -> None:
         pe = ProceedingsEvent(input_info=entry)
 
         # searching of events
-        loe = pe.apply_searchengine(se_instance=se_wiki, max_search_hits=3)
+        loe = pe.apply_searchengine(se_instance=se_wiki, max_search_hits=10)
         logging.info(f"Found {len(loe)} wikidata entries for this proceedings.com entry.")
         
         # semantification of events
@@ -63,7 +63,8 @@ def evaluation_v2(sim_measure: str, small_test: bool=False) -> None:
         dict_file_pe = pe.apply_semantifier(get_dict=True)
         loe.apply_semantifier(get_dict=True)  # dict saved as class attribute 
 
-        loe.get_configurations(pe=pe)
+        # get key-configurations for the encodings!
+        loe.compute_configurations(pe=pe)
 
         # encoding events
         logging.info("Semantification finished. Moving on to encoding...")
@@ -75,10 +76,24 @@ def evaluation_v2(sim_measure: str, small_test: bool=False) -> None:
         co = Comparor(pe=pe, loe=loe)
         co.add_measure_as_attribute(sim_measure)
 
+        # get optimal value and receive decision
+        opt_event = co.get_optimal_similarity(metric=sim_measure)
+        decision = co.case_decision(metric=sim_measure)
+        logging.info(f"{opt_event.similarity:.3f} -> {decision}")
+
+        # further processing
+        if decision == "Unfound":
+            pass
+        elif decision == "Unclear":
+            pass
+        elif decision == "Found":
+            pass
+        else:
+            print("This should not happen...")
+
         # presentation of fit
         logging.info("Finding optimal value for the following ProceedingsEvent:")
         logging.info(pe)
-        opt_event = loe.get_optimal_similarity(sim_measure)
         logging.info("Optimal WikidataEvent for ProceedingsEvent:")
         logging.info(opt_event)
         logging.info(f"With similarity measure: {opt_event.similarity}")

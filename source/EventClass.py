@@ -39,7 +39,8 @@ class ProceedingsEvent:
         attributes = asdict(self)
         attributes['input_info'] = 'Filled' if self.input_info != None else 'Unfilled'
         attributes['keywords'] = 'Filled' if self.keywords != None else 'Unfilled'
-        attributes['encoding'] = 'Filled' if isinstance(self.encoding, np.ndarray) else 'Unfilled'
+        attributes['configuration'] = 'Filled' if len(self.encode_map) > 0 else 'Unfilled'
+        attributes['encodings'] = len(self.encodings) if len(self.encodings) > 0 else 'Unfilled'
         return f"ProceedingsEvent({attributes})"
 
     def __post_init__(self):
@@ -89,22 +90,23 @@ class ProceedingsEvent:
         sf = Semantifier(dataset_name='proceedings.com')
         sf_output = sf.semantifier(self.input_info)
 
-        self.full_title = str(sf_output['full_title']) if sf_output['full_title'] != ("" or "None") else None
-        self.short_name = str(sf_output['short_name']) if sf_output['short_name'] != ("" or "None") else None
-        self.ordinal = str(sf_output['ordinal']) if sf_output['ordinal'] != ("" or "None") else None
-        self.part_of_series = str(sf_output['part_of_series']) if sf_output['part_of_series'] != ("" or "None") else None
-        self.country_name = str(sf_output['country_name']) if sf_output['country_name'] != ("" or "None") else None
-        self.country_short = str(sf_output['country_short']) if sf_output['country_short'] != ("" or "None") else None
-        self.city_name = str(sf_output['city_name']) if sf_output['city_name'] != ("" or "None") else None
-        self.year = str(sf_output['year']) if sf_output['year'] != ("" or "None") else None
-        self.start_time = str(sf_output['start_time']) if sf_output['start_time'] != ("" or "None") else None
-        self.end_time = str(sf_output['end_time']) if sf_output['end_time'] != ("" or "None") else None
+        self.full_title = str(sf_output.get('full_title')) if sf_output.get('full_title') != ("" or "None" or None) else None
+        self.short_name = str(sf_output.get('short_name')) if sf_output.get('short_name') != ("" or "None" or None) else None
+        self.ordinal = str(sf_output.get('ordinal')) if sf_output.get('ordinal') != ("" or "None" or None) else None
+        self.part_of_series = str(sf_output.get('part_of_series')) if sf_output.get('part_of_series') != ("" or "None" or None) else None
+        self.country_name = str(sf_output.get('country_name')) if sf_output.get('country_name') != ("" or "None" or None) else None
+        self.country_short = str(sf_output.get('country_short')) if sf_output.get('country_short') != ("" or "None" or None) else None
+        self.city_name = str(sf_output.get('city_name')) if sf_output.get('city_name') != ("" or "None" or None) else None
+        self.year = str(sf_output.get('year')) if sf_output.get('year') != ("" or "None" or None) else None
+        self.start_time = str(sf_output.get('start_time')) if sf_output.get('start_time') != ("" or "None" or None) else None
+        self.end_time = str(sf_output.get('end_time')) if sf_output.get('end_time') != ("" or "None" or None) else None
 
-        if get_dict:
-            # I maybe have to enhance this with other keys
+        if get_dict:  # for encoding
             att_dict = asdict(self)
             att_dict.pop('input_info', None)
             att_dict.pop('keywords', None) 
+            att_dict.pop('configuration', None)
+            att_dict.pop('encode_map', None)
             att_dict.pop('encodings', None)         
         else:
             pass
@@ -176,31 +178,6 @@ class WikidataEvent:
         attributes['input_info'] = 'Filled' if self.input_info != None else 'Unfilled'
         attributes['encoding'] = 'Filled' if isinstance(self.encoding, np.ndarray) else 'Unfilled'
         return f"WikidataEvent({attributes})"
-
-    def apply_searchengine(self, se_instance: SearchEngine, max_search_hits: int = 5):
-        search_hits = se_instance.search_set_of_tuples(self.keywords.tokens)
-        if se_instance.get_dataset_name == "Wikidata":
-            loe = ListOfEvents(source="Wikidata")
-            for pos in range(search_hits.shape[0]):
-                if pos < max_search_hits:
-                    temp = search_hits.row(pos, named=True).pop('score')
-                    wikievent = WikidataEvent(input_info=temp,
-                                              keywords_score=search_hits.row(pos, named=True)['score'])
-                    loe = loe + wikievent
-                    del wikievent
-                else:
-                    break
-        elif se_instance.get_dataset_name == "proceedings.com":
-            loe = ListOfEvents(source="proceedings.com")
-            for pos in range(search_hits.shape[0]):
-                temp = search_hits.row(pos, named=True).pop('score')
-                proceedingsevent = ProceedingsEvent(input_info=temp)
-                loe = loe + proceedingsevent
-                del proceedingsevent
-        else:
-            print("Something does not add up.")
-
-        return loe
     
     def apply_semantifier(self, get_dict: bool = True):
         """
@@ -210,21 +187,21 @@ class WikidataEvent:
         sf = Semantifier(dataset_name='Wikidata')
         sf_output = sf.semantifier(self.input_info)
         
-        self.full_title = str(sf_output['full_title']) if sf_output['full_title'] != ("" or "None") else None
-        self.short_name = str(sf_output['short_name']) if sf_output['short_name'] != ("" or "None") else None
-        self.ordinal = str(sf_output['ordinal']) if sf_output['ordinal'] != ("" or "None") else None
-        self.part_of_series = str(sf_output['part_of_series']) if sf_output['part_of_series'] != ("" or "None") else None
-        self.country_name = str(sf_output['country_name']) if sf_output['country_name'] != ("" or "None") else None
-        self.country_short = str(sf_output['country_short']) if sf_output['country_short'] != ("" or "None") else None
-        self.city_name = str(sf_output['city_name']) if sf_output['city_name'] != ("" or "None") else None
-        self.year = str(sf_output['year']) if sf_output['year'] != ("" or "None") else None
-        self.start_time = str(sf_output['start_time']) if sf_output['start_time'] != ("" or "None") else None
-        self.end_time = str(sf_output['end_time']) if sf_output['end_time'] != ("" or "None") else None
+        self.full_title = str(sf_output.get('full_title')) if sf_output.get('full_title') != ("" or "None" or None) else None
+        self.short_name = str(sf_output.get('short_name')) if sf_output.get('short_name') != ("" or "None" or None) else None
+        self.ordinal = str(sf_output.get('ordinal')) if sf_output.get('ordinal') != ("" or "None" or None) else None
+        self.part_of_series = str(sf_output.get('part_of_series')) if sf_output.get('part_of_series') != ("" or "None" or None) else None
+        self.country_name = str(sf_output.get('country_name')) if sf_output.get('country_name') != ("" or "None" or None) else None
+        self.country_short = str(sf_output.get('country_short')) if sf_output.get('country_short') != ("" or "None" or None) else None
+        self.city_name = str(sf_output.get('city_name')) if sf_output.get('city_name') != ("" or "None" or None) else None
+        self.year = str(sf_output.get('year')) if sf_output.get('year') != ("" or "None" or None) else None
+        self.start_time = str(sf_output.get('start_time')) if sf_output.get('start_time') != ("" or "None" or None) else None
+        self.end_time = str(sf_output.get('end_time')) if sf_output.get('end_time') != ("" or "None" or None) else None
 
-        if get_dict:
-            # I maybe have to enhance this with other keys
+        if get_dict:  # for encoding
             att_dict = asdict(self)
             att_dict.pop('input_info', None)
+            att_dict.pop('keywords_score', None)
             att_dict.pop('encoding', None)         
             att_dict.pop('similarity', None)  
             
@@ -280,7 +257,7 @@ class ListOfEvents:
                 list_of_dicts.append(dictionary)
         self.list_of_dicts = list_of_dicts
 
-    def get_configurations(self, pe: ProceedingsEvent) -> None:
+    def compute_configurations(self, pe: ProceedingsEvent) -> None:
         configuration = dict()
         # Proceedings keys
         available_data = asdict(pe)
@@ -291,7 +268,7 @@ class ListOfEvents:
         # Wikidata element keys
         for element in self.list_of_dicts:
             dict_of_entry = element  # copy
-            qid = dict_of_entry['qid']
+            qid = dict_of_entry.get('qid')
             # delete unneeded keys
             dict_of_entry.pop('qid', None)
             dict_of_entry.pop('keywords_score', None)
@@ -324,29 +301,7 @@ class ListOfEvents:
             bool_dict = dict()
             for ele in current_conf:
                 bool_dict[ele] = True
-            entry.apply_encoder(dict_file=self.list_of_dicts[i], keyword_args=bool_dict)
-
-    def get_optimal_similarity(self, metric: str):
-        """
-        Returns the optimal fit for the given ProceedingsEvent. 
-        If LoE consists of WikidataEvents, 
-        this method will give the optimal WikidataEvent and its attributes.
-        """
-        assert metric in {"cos", "euc"}, "Your method is not supported."
-        
-        current_optimal = self.list_of_events[0]  # initialization
-        
-        if metric == "cos":   
-            for entry in self.list_of_events:
-                if current_optimal.similarity < entry.similarity:
-                    current_optimal = entry
-        elif metric == "euc":
-            for entry in self.list_of_events:
-                if current_optimal.similarity > entry.similarity:
-                    current_optimal = entry
-        else:
-            pass
-        return current_optimal            
+            entry.apply_encoder(dict_file=self.list_of_dicts[i], keyword_args=bool_dict)         
 
 @dataclass
 class EventSeries:

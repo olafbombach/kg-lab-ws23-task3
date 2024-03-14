@@ -78,7 +78,7 @@ class Semantifier:
         """dictionaries into a json file with the conference signature elements: 
         -full_title: The full title of the event, often indicating the scope and subject. Please make sure to delete any ordinals or shortnames here. If there is a short_name provided, you can try to validate the full_title by checking if the letters in the short title add up to the first letters of the full_title. 
         -short_name: The short name of the conference, often in uppercases. If provided closely in the string, you can also add the year of the conference in YYYY format. 
-        -ordinal: The instance number of the event, like 18th or 1st. Sometimes this is also written as first, second, etc.
+        -ordinal: The instance number of the event, like 18th or 1st. In some cases it might be given in text-form (e.g. first, second, etc.). However, give this value in number-format (e.g. 1st, 2nd, etc.)
         -part_of_series: The overlying conference-series, often a substring of full_title.
         -country_name: The country in which the conference takes place.
         -country_short: The unique identifier with respect to the country that is found. Give this identifier using a 2 digit ISO 3166-1 alpha-2 code.
@@ -129,11 +129,9 @@ class Semantifier:
 
         except json.decoder.JSONDecodeError:
             new_query = query + " Please assure that your response is a proper JSON file. The means that each key and each value have to be in quotation marks."
-            print("1")
             altered_response = client.chat.completions.create(model=MODEL,
                                                 messages=[{"role": "user", "content": new_query}],
                                                 temperature=self.temperature)
-            print(altered_response.choices[0].message.content.strip())
             dict_file = json.loads(altered_response.choices[0].message.content.strip())
 
         return dict_file
