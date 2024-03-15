@@ -8,7 +8,7 @@ from wikibaseintegrator import WikibaseIntegrator
 from wikibaseintegrator.wbi_config import config as wbi_config
 from wikibaseintegrator.datatypes import *
 from wikibaseintegrator.wbi_enums import ActionIfExists
-from wikibaseintegrator.wbi_login import wbi_login
+from wikibaseintegrator.wbi_login import Clientlogin
 from source.UpdateSources import WikidataQuery
 from typing import Optional
 
