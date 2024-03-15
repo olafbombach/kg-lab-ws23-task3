@@ -123,7 +123,7 @@ class WikidataUpdater:
         """
         wbi_config['USER_AGENT'] = 'MyWikibaseBot/1.0 (https://www.wikidata.org/wiki/User:Christophe Haag)'
         #Remember to change the credentials after testing
-        login = wbi_login.Clientlogin("user a", "some secret")
+        login = Clientlogin("user a", "some secret")
         return login
 
 
