@@ -1,4 +1,3 @@
-import imp
 from math import e
 from os import system
 from quopri import encodestring
