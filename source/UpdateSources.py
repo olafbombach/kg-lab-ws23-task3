@@ -1,5 +1,6 @@
-from SPARQLWrapper import SPARQLWrapper, JSON
+from typing import Union
 from source.HelperFunctions import find_root_directory
+from datetime import datetime
 import polars as pl
 import numpy as np
 import json
@@ -61,8 +62,8 @@ class WikidataQuery(object):
     @staticmethod
     def create_wikidata_dataset(overwrite_dataset: bool = False) -> pl.DataFrame:
         """
-            This method (query) gets all conferences and their information as a pandas DataFrame.
-            It further directly overwrites the dataset-file for wikidata.
+        This method (query) gets all conferences and their information as a polars DataFrame.
+        It further directly overwrites the dataset-file for wikidata.
         """
         text = '''
                 SELECT ?conferences ?conferencesLabel ?title ?countryLabel ?country ?locationLabel 
@@ -118,6 +119,7 @@ class WikidataQuery(object):
             result.append(entry_list)
         
         df = pl.DataFrame(result, schema=col_for_df)
+        df = WikidataQuery.preprocess_dataframe(df)
 
         # also write the csv-file in the datasets folder
         if overwrite_dataset:
@@ -130,7 +132,8 @@ class WikidataQuery(object):
     @staticmethod
     def _how_many_proceedings():
         """
-        How many entries exist in Wikidata that have the property: instance of 'proceedings' (Q1143604)
+        How many entries exist in Wikidata 
+        that have the property: instance of 'proceedings' (Q1143604)
         """
         text = '''
                 SELECT (COUNT (?proceeding) AS ?count)
@@ -145,7 +148,8 @@ class WikidataQuery(object):
     @staticmethod
     def _how_many_academic_conferences():
         """
-        How many entries exist in Wikidata that have the property: instance of 'academic conference' (Q2020153)
+        How many entries exist in Wikidata 
+        that have the property: instance of 'academic conference' (Q2020153)
         """
         text = '''
                 SELECT (COUNT (?conferences) AS ?count)
@@ -156,6 +160,26 @@ class WikidataQuery(object):
         result = output.bindings[0]['count'].value
 
         return result
+    
+    @staticmethod
+    def preprocess_dataframe(df: pl.DataFrame) -> pl.DataFrame:
+        """
+        Returns the preprocessed dataframe, 
+        deleting all duplicates by concatinating all found strings.
+        """
+        df = df.group_by('conf_qid').agg(pl.all().unique().map_elements(WikidataQuery.concatenate_lst))
+
+        return df
+
+    @staticmethod
+    def concatenate_lst(lst: Union[list,datetime,None]) -> str:
+        """
+        Needed for the preprocessing of the Dataframe.
+        Given a unique list returns a concatenated string.
+        """
+        str_lst = [element for element in lst if element is not None]
+        str_lst = [element if not isinstance(element, datetime) else element.strftime("%Y-%m-%d %H:%M:%S") for element in str_lst]
+        return " / ".join(str_lst)        
     
     @staticmethod
     def _write_json_to_results(data: json, name_of_file: str) -> None:
@@ -177,5 +201,5 @@ class WikidataQuery(object):
 
 
 if __name__ == "__main__":
-    cre = WikidataQuery.create_wikidata_dataset(overwrite_dataset=False)
+    cre = WikidataQuery.create_wikidata_dataset(overwrite_dataset=True)
     print(cre.describe())

@@ -75,23 +75,23 @@ class Semantifier:
         # default part for query
         query = """Please convert the following""" + \
         str(entries_count) + \
-        """dictionaries into a json file with the conference signature elements: 
-        -full_title: The full title of the event, often indicating the scope and subject. Please make sure to delete any ordinals or shortnames here. If there is a short_name provided, you can try to validate the full_title by checking if the letters in the short title add up to the first letters of the full_title. 
-        -short_name: The short name of the conference, often in uppercases. If provided closely in the string, you can also add the year of the conference in YYYY format. 
-        -ordinal: The instance number of the event, like 18th or 1st. In some cases it might be given in text-form (e.g. first, second, etc.). However, give this value in number-format (e.g. 1st, 2nd, etc.)
+        """semi-structured dictionaries into a structured json file with the conference signature elements: 
+        -full_title: The full title of the event, often indicating the scope and subject. Please make sure to delete any ordinals or shortnames here.
+        -short_name: The short name of the conference, often in uppercases. If provided closely in the input-dictionary, you can also add the year of the conference in YYYY format. 
+        -ordinal: The instance number of the event (like "18th" or "first"). Give this value with a number and its corresponding ordinal ending (e.g. "12th").
         -part_of_series: The overlying conference-series, often a substring of full_title.
         -country_name: The country in which the conference takes place.
-        -country_short: The unique identifier with respect to the country that is found. Give this identifier using a 2 digit ISO 3166-1 alpha-2 code.
-        -city_name: Give the city with it's english label.
+        -country_short: The unique identifier with respect to the country that is found. Give this identifier using the 2 digit ISO 3166-1 alpha-2 code.
+        -city_name: Give the city with it's english label except when it has special characters, then give its original name stated..
         -year: Give the year of the conference as a 4 digit number.
         -start_time: The start date of the conference in ISO date format.
         -end_time: The end date of the conference in ISO date format.
-        Valid answers for e.g. the query 
+        A valid answer for e.g. the query 
         """
         #individual part for each dataset type
         if self.dataset_name == 'Wikidata':
             query += """
-            {'conf_label': ['Advances in Web Based Learning - ICWL 2007, 6th International Conference, Edinburgh, UK, August 15-17, 2007'], 'title': ['Advances in Web Based Learning - ICWL 2007, 6th International Conference'], 'country': ['United Kingdom'], 'location': ['Edinburgh'], 'main_subject': [None], 'start_time': ['15.08.2007'], 'end_time': ['17.08.2007'], 'series_label': ['International Conference on Advances in Web-Based Learning']}
+            {'conf_label': ['Advances in Web Based Learning - ICWL 2007, sixth International Conference, Edinburgh, UK, August 15-17, 2007'], 'title': ['Advances in Web Based Learning - ICWL 2007, 6th International Conference'], 'country': ['United Kingdom'], 'location': ['Edinburgh'], 'main_subject': [None], 'start_time': ['15.08.2007'], 'end_time': ['17.08.2007'], 'series_label': ['International Conference on Advances in Web-Based Learning']}
              would look like
             {full_title: 'International Conference of Advances in Web Based Learning',
             short_name: 'ICWL 2007',
