@@ -2,6 +2,7 @@ from math import e
 from os import system
 from quopri import encodestring
 from xml.dom.minidom import Entity
+from xml.sax.handler import property_dom_node
 from source.Tokenizer import *
 from source.EventClass import ProceedingsEvent
 from wikibaseintegrator import WikibaseIntegrator
@@ -9,6 +10,7 @@ from wikibaseintegrator.wbi_config import config as wbi_config
 from wikibaseintegrator.datatypes import *
 from wikibaseintegrator.wbi_enums import ActionIfExists
 from wikibaseintegrator.wbi_login import Clientlogin
+from wikibaseintegrator.models import Qualifiers
 from source.UpdateSources import WikidataQuery
 from typing import Optional
 
@@ -38,18 +40,30 @@ class WikidataUpdater:
         if(not event.country_name == None):
                WDid = WikidataQuery.getWDIdfromLabel(event.country_name)
                if(not WDid == None):
-                   entity.claims.add(Item(WDid,prop_nr = "P495"))
+                   qualifiers = Qualifiers() 
+                   if(not event.country_identifier == None):
+                       #add Short name for country (Short name = P1813)
+                       qualifiers.add(String(value = str(event.country_identifier),prop_nr = "P1813"))
+                   entity.claims.add(Item(WDid,prop_nr = "P495", qualifiers = qualifiers))
         #add City (P276 = location)
         if(not event.city_name == None):
             WDid = WikidataQuery.getWDIdfromLabel(event.country_name)
             if(not WDid == None):
                 entity.claims.add(Item(WDid,prop_nr = "P495"))
-        
+                
+        #add short name (Short name = P1813)
+        if(not event.short_name == None):
+            entity.claims.add(String(str(event.short_name), prop_nr = "P1813"))
+            
         #add event series (P179 = part of the series)
         if(not event.part_of_series == None):
+            qualifiers = Qualifiers()
+            if(not event.ordinal == None):
+                #Add ordinal (series ordinal = P1545)
+                qualifiers.add(String(str(event.ordinal), prop_nr = "P1545"))
             WDid = WikidataQuery.getWDIdfromLabel(event.part_of_series)
             if(not WDid == None):
-                entity.claims.add(Item(WDid,prop_nr = "P179"))
+                entity.claims.add(Item(WDid,prop_nr = "P179", qualifiers = qualifiers))
                 
         #Basic information independant of entry
         #origin (proceedings.com currently still missing in WD)
@@ -68,7 +82,7 @@ class WikidataUpdater:
     def editOnWikidata(event: ProceedingsEvent, WDid: string):
         """
         Logs into the account given in the login() Method and performs an edit operation on a Wikidata object.
-        The login only persists in this method
+        The login only persists in this method. Only adds claims for which a claim of that property did not exist yet.
         Parameters: 
         event: The information on the proceeding found in proceedings.com encoded as ProceedingsEvent object
         WBid: The Wikidata identifier of the existing object to modify
@@ -81,13 +95,17 @@ class WikidataUpdater:
         #fill out claims and label
         entity.labels.set('en', event.full_title,action_if_exists=ActionIfExists.KEEP)
         #add year (P571 = inception)
-        if(not event.year == None):
+        if(not event.year == None and entity.claims.get("P571") == None):
             entity.claims.add(Time(str(event.year)+"-01-01T00:00:00Z",precision=9,prop_nr = "P571"))
         #add country (P495 = Country of origin)
         if(not event.country_name == None):
                WDid = WikidataQuery.getWDIdfromLabel(event.country_name)
                if(not WDid == None):
-                   entity.claims.add(Item(WDid,prop_nr = "P495"))
+                   qualifiers = Qualifiers() 
+                   if(not event.country_identifier == None):
+                       #add Short name for country (Short name = P1813)
+                       qualifiers.add(String(value = str(event.country_identifier),prop_nr = "P1813"))
+                   entity.claims.add(Item(WDid,prop_nr = "P495", qualifiers = qualifiers))
         #add City (P276 = location)
         if(not event.city_name == None):
             WDid = WikidataQuery.getWDIdfromLabel(event.country_name)
@@ -96,9 +114,17 @@ class WikidataUpdater:
         
         #add event series (P179 = part of the series)
         if(not event.part_of_series == None):
+            qualifiers = Qualifiers()
+            if(not event.ordinal == None):
+                #Add ordinal (series ordinal = P1545)
+                qualifiers.add(String(str(event.ordinal), prop_nr = "P1545"))
             WDid = WikidataQuery.getWDIdfromLabel(event.part_of_series)
             if(not WDid == None):
-                entity.claims.add(Item(WDid,prop_nr = "P179"))
+                entity.claims.add(Item(WDid,prop_nr = "P179", qualifiers = qualifiers))
+            
+        #add short name (Short name = P1813)
+        if(not event.short_name == None):
+            entity.claims.add(String(str(event.short_name), prop_nr = "P1813"))
                 
         #Basic information independant of entry
         #origin (proceedings.com currently still missing in WD)
