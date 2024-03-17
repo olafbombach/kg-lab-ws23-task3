@@ -55,7 +55,7 @@ def evaluation_v2(sim_measure: str, small_test: bool=False) -> None:
         pe = ProceedingsEvent(input_info=entry)
 
         # searching of events
-        loe = pe.apply_searchengine(se_instance=se_wiki, max_search_hits=10)
+        loe = pe.apply_searchengine(se_instance=se_wiki, max_search_hits=20)
         logging.info(f"Found {len(loe)} wikidata entries for this proceedings.com entry.")
         
         # semantification of events
@@ -96,7 +96,6 @@ def evaluation_v2(sim_measure: str, small_test: bool=False) -> None:
         logging.info(pe)
         logging.info("Optimal WikidataEvent for ProceedingsEvent:")
         logging.info(opt_event)
-        logging.info(f"With similarity measure: {opt_event.similarity}")
         logging.info(f"Real / True labeling: {entry['wikidata_index']}")
 
         print(f"Finished {i+1}. iteration.")

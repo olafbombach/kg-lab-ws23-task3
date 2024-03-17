@@ -1,11 +1,13 @@
 from dataclasses import dataclass, field, asdict
 from typing import Optional, List, Dict, Union
 import numpy as np
+import logging
 
 from source.Tokenizer import TokenSet, Tokenizer
 from source.SearchEngine import SearchEngine
 from source.Semantifier import Semantifier
 from source.Encoder import Encoder
+from source.Cache import CacheManager
 
 import polars as pl
 
@@ -249,12 +251,45 @@ class ListOfEvents:
     def apply_semantifier(self, get_dict: bool = True):
         """
         Takes a list of events (LoE) and semantify them one by one.
+        
+        This method also includes the json cache to check if a Wikidata Event
+        has previously been semantified. 
         """
+        cm = CacheManager()
+        cm.load_cache()
+
         list_of_dicts = []
         for entry in self.list_of_events:
             if type(entry) == WikidataEvent:
-                dictionary = entry.apply_semantifier(get_dict=get_dict)
-                list_of_dicts.append(dictionary)
+                current_qid = entry.qid
+                if cm.get_entry(qid=current_qid) == None:
+                    # cannot find entry, have to create new one.
+                    dictionary = entry.apply_semantifier(get_dict=get_dict)
+                    list_of_dicts.append(dictionary)
+                    # also add entry to cache
+                    cm.add_entry(qid=current_qid, qid_dict=dictionary)
+                else:
+                    # could find entry in cache. Will use this one.
+                    cached_dictionary = cm.get_entry(qid=current_qid)
+
+                    # set Wikidata Entry signatures
+                    entry.full_title = str(cached_dictionary.get('full_title')) if cached_dictionary.get('full_title') != ("" or "None" or None) else None
+                    entry.short_name = str(cached_dictionary.get('short_name')) if cached_dictionary.get('short_name') != ("" or "None" or None) else None
+                    entry.ordinal = str(cached_dictionary.get('ordinal')) if cached_dictionary.get('ordinal') != ("" or "None" or None) else None
+                    entry.part_of_series = str(cached_dictionary.get('part_of_series')) if cached_dictionary.get('part_of_series') != ("" or "None" or None) else None
+                    entry.country_name = str(cached_dictionary.get('country_name')) if cached_dictionary.get('country_name') != ("" or "None" or None) else None
+                    entry.country_short = str(cached_dictionary.get('country_short')) if cached_dictionary.get('country_short') != ("" or "None" or None) else None
+                    entry.city_name = str(cached_dictionary.get('city_name')) if cached_dictionary.get('city_name') != ("" or "None" or None) else None
+                    entry.year = str(cached_dictionary.get('year')) if cached_dictionary.get('year') != ("" or "None" or None) else None
+                    entry.start_time = str(cached_dictionary.get('start_time')) if cached_dictionary.get('start_time') != ("" or "None" or None) else None
+                    entry.end_time = str(cached_dictionary.get('end_time')) if cached_dictionary.get('end_time') != ("" or "None" or None) else None
+
+                    list_of_dicts.append(cached_dictionary)
+                    logging.info(f"Semantified instance {current_qid} taken from Cache.")
+            else:
+                print("This should not be the case!")
+        
+        cm.store_cache()
         self.list_of_dicts = list_of_dicts
 
     def compute_configurations(self, pe: ProceedingsEvent) -> None:
@@ -297,7 +332,8 @@ class ListOfEvents:
                 current_conf = self.configuration[current_qid]
             except:
                 print("Something went wrong here")
-                  # create encodings for unique key list
+            
+            # create encodings for unique key list
             bool_dict = dict()
             for ele in current_conf:
                 bool_dict[ele] = True

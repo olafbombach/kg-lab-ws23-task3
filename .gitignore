@@ -5,6 +5,8 @@ logs/*
 */logs/*
 test/evaluation/log/*
 
+cache/*.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 __pypackages__/
