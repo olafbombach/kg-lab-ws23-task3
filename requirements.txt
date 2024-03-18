@@ -23,5 +23,18 @@ spacy == 3.7.2
 pylookupparser == 0.0.2
 number_parser == 0.3.2
 
+#WikidataUpdate
+WikibaseIntegrator ==  0.12.5
+
 # additionals
 xlrd == 2.0.1
+
+#encoding and semantification
+openai
+transformers
+torch
+scikit-learn
+
+#WikidataUpdate
+WikibaseIntegrator ==  0.12.5
+
