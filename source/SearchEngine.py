@@ -196,6 +196,11 @@ class SearchEngine:
             if tup[1] == "City Identifier":
                 # in 'addition': set all columns expect 6 to False
                 addition[:, np.arange(col_add) != 6] = False
+            if tup[1] == "Year":
+                # in 'addition': set all qid columns to False
+                addition[:, 0] = False
+                addition[:, 4] = False
+                addition[:, 6] = False
 
             hit_mask = hit_mask + addition * tup[2]
 
