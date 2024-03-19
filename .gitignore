@@ -5,6 +5,8 @@ logs/*
 */logs/*
 test/evaluation/log/*
 
+cache/*.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 __pypackages__/
@@ -37,3 +39,9 @@ venv.bak/
 # Jetbrains environments
 /.idea/*
 !/.idea/runConfigurations
+
+# VS Code folders
+.vscode
+
+# Test folder
+.pytest_cache

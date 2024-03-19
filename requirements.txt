@@ -28,6 +28,7 @@ WikibaseIntegrator ==  0.12.5
 
 # additionals
 xlrd == 2.0.1
+nicegui
 
 #encoding and semantification
 openai
@@ -37,4 +38,3 @@ scikit-learn
 
 #WikidataUpdate
 WikibaseIntegrator ==  0.12.5
-
