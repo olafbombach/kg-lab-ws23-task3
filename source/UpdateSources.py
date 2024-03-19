@@ -73,27 +73,6 @@ class WikidataQuery(object):
           return None  
 
     @staticmethod
-    def how_many_proceedings():
-        """
-        The method to query using SPARQLWrapper.
-        """
-        result = WikidataQuery.query.rawQuery(input_text)
-        return result
-
-    @staticmethod
-    def queryExample():
-        """
-        Example query searching for entries in Wikidata that are house cats (property).
-        """
-        text = '''
-                SELECT ?item ?itemLabel
-                WHERE {?item wdt:P31 wd:Q146.
-                SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
-                }'''
-        result = WikidataQuery.queryWikiData(text)
-        return result
-
-    @staticmethod
     def assess_wikidata(write_to_json: bool) -> dict:
         """
         This method calls all Wikidata assessment methods and writes a json-file to results.

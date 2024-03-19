@@ -43,9 +43,9 @@ dependencies = [
   "transformers",
   "torch == 2.2.0",
   # GUI
-  "nicegui"
+  "nicegui",
   # Integrator
-  "WikibaseIntegrator = 0.12.5",
+  "WikibaseIntegrator == 0.12.5"
 ]
 
 [project.optional-dependencies]
