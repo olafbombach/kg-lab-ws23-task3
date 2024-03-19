@@ -44,6 +44,8 @@ dependencies = [
   "torch == 2.2.0",
   # GUI
   "nicegui"
+  # Integrator
+  "WikibaseIntegrator = 0.12.5",
 ]
 
 [project.optional-dependencies]

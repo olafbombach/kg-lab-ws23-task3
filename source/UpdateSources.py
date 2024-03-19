@@ -1,10 +1,21 @@
+
 from typing import Union
 from source.HelperFunctions import find_root_directory
 from datetime import datetime
 import polars as pl
+
+import string  # dont know about this
 import numpy as np
 import json
 from lodstorage.sparql import SPARQL
+
+# Imports for ProceedingsUpdater
+from bs4 import BeautifulSoup
+from urllib.request import urlretrieve, urlopen
+import os
+from os.path import isfile, join
+from source.HelperFunctions import find_root_directory
+
 
 class WikidataQuery(object):
     """
@@ -21,6 +32,48 @@ class WikidataQuery(object):
 
     @staticmethod
     def queryWikiData(input_text: str):
+        """
+        The method to query using SPARQLWrapper.
+        """
+        result = WikidataQuery.query.rawQuery(input_text)
+        return result
+
+    @staticmethod
+    def queryExample():
+        """
+        Example query searching for entries in Wikidata that are house cats (property).
+        """
+        text = '''
+                SELECT ?item ?itemLabel
+                WHERE {?item wdt:P31 wd:Q146.
+                SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+                }'''
+        result = WikidataQuery.queryWikiData(text)
+        return result
+    
+    #for the WikidataUpdater class (currently mostly not finding anything due to HTTP error 500 (could be anything))
+    @staticmethod
+    def getWDIdfromLabel(name: string):
+        wDid = None
+        try:
+            s = name.lower()
+            text = " SELECT ?item WHERE { ?item rdfs:label ?itemLabel. FILTER(CONTAINS(LCASE(?itemLabel), \""+s+"\"@en)).FILTER(CONTAINS(\""+s+"\"@en, LCASE(?itemLabel))).} LIMIT 1"
+            print(text)
+            result = WikidataQuery.queryWikiData(text)
+            WDresults= result["results"]["bindings"]
+            print(WDresults)
+            if(len(WDresults) > 0):
+                uri = WDresults[0]["item"]["value"]
+                WDid = uri[uri.find("entity")+7:]
+        
+            else:
+                WDid = None
+            return WDid
+        except:
+          return None  
+
+    @staticmethod
+    def how_many_proceedings():
         """
         The method to query using SPARQLWrapper.
         """
@@ -200,6 +253,52 @@ class WikidataQuery(object):
         dataframe.write_csv(path_to_file, include_header=True, separator=';')
 
 
-if __name__ == "__main__":
-    cre = WikidataQuery.create_wikidata_dataset(overwrite_dataset=True)
-    print(cre.describe())
+class ProceedingsUpdater:
+
+    def updateProceedings():
+        url = "https://www.proceedings.com/catalog.html"
+        page = urlopen(url)
+        html = page.read().decode("utf-8")
+        soup = BeautifulSoup(html, "html.parser")
+        tables = soup.find_all('table')
+        #Search for correct datarow
+        lineFound=False
+        offset=4
+        #Search for corresponding new dataset
+        for row in tables[0]:
+            if (lineFound):
+                offset-=1
+                if offset==0:
+                    datarow=row
+                    break
+            if (str(type(row))=="<class 'bs4.element.Comment'>"):
+                if ("Cumulative" in row):
+                    lineFound=True
+        #Search for name of latest dataset
+        for string in datarow.strings:
+            if ('.xlsx' in string):
+                newfile=string
+        #Search for name of current dataset
+        path=find_root_directory()
+        path_to_dataset = path / "datasets" / "proceedings.com"
+        oldfile=""
+        files = [f for f in os.listdir(path_to_dataset) if isfile(join(path_to_dataset, f))]
+        for file in files:
+            if ('.xlsx' in file):
+                oldfile=file
+        #Update file
+        #print(newfile)
+        #print(oldfile)
+        if (newfile != oldfile):
+            datalink=""
+            for item in datarow.children:
+                for data in item:
+                    if (str(type(data))=="<class 'bs4.element.Tag'>"):
+                        if (data.attrs['href']!=""):
+                            datalink=data.attrs['href']        
+            fulldatalink='https://www.proceedings.com'+datalink[2:]
+            print("download new file")
+            path, headers = urlretrieve(fulldatalink, path_to_dataset / newfile)
+            if oldfile!="":
+                os.remove(path_to_dataset / oldfile)
+
