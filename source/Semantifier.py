@@ -75,23 +75,23 @@ class Semantifier:
         # default part for query
         query = """Please convert the following""" + \
         str(entries_count) + \
-        """dictionaries into a json file with the conference signature elements: 
-        -full_title: The full title of the event, often indicating the scope and subject. Please make sure to delete any ordinals or shortnames here. If there is a short_name provided, you can try to validate the full_title by checking if the letters in the short title add up to the first letters of the full_title. 
-        -short_name: The short name of the conference, often in uppercases. If provided closely in the string, you can also add the year of the conference.
-        -ordinal: The instance number of the event, like 18th or 1st. Sometimes this is also written as first, second, etc.
+        """semi-structured dictionaries into a structured json file with the conference signature elements: 
+        -full_title: The full title of the event, often indicating the scope and subject. Please make sure to delete any ordinals or shortnames here.
+        -short_name: The short name of the conference, often in uppercases. If provided closely in the input-dictionary, you can also add the year of the conference in YYYY format. 
+        -ordinal: The instance number of the event (like "18th" or "first"). Give this value with a number and its corresponding ordinal ending (e.g. "12th").
         -part_of_series: The overlying conference-series, often a substring of full_title.
         -country_name: The country in which the conference takes place.
-        -country_identifier: The country_identifier with respect to the country that is found. Give this identifier using a 2 digit ISO 3166-1 alpha-2 code.
-        -city_name: Give the city with it's english label.
+        -country_short: The unique identifier with respect to the country that is found. Give this identifier using the 2 digit ISO 3166-1 alpha-2 code.
+        -city_name: Give the city with it's english label except when it has special characters, then give its original name stated..
         -year: Give the year of the conference as a 4 digit number.
         -start_time: The start date of the conference in ISO date format.
         -end_time: The end date of the conference in ISO date format.
-        Valid answers for e.g. the query 
+        A valid answer for e.g. the query 
         """
         #individual part for each dataset type
         if self.dataset_name == 'Wikidata':
             query += """
-            {'conf_label': ['Advances in Web Based Learning - ICWL 2007, 6th International Conference, Edinburgh, UK, August 15-17, 2007'], 'title': ['Advances in Web Based Learning - ICWL 2007, 6th International Conference'], 'country': ['United Kingdom'], 'location': ['Edinburgh'], 'main_subject': [None], 'start_time': ['15.08.2007'], 'end_time': ['17.08.2007'], 'series_label': ['International Conference on Advances in Web-Based Learning']}
+            {'conf_label': ['Advances in Web Based Learning - ICWL 2007, sixth International Conference, Edinburgh, UK, August 15-17, 2007'], 'title': ['Advances in Web Based Learning - ICWL 2007, 6th International Conference'], 'country': ['United Kingdom'], 'location': ['Edinburgh'], 'main_subject': [None], 'start_time': ['15.08.2007'], 'end_time': ['17.08.2007'], 'series_label': ['International Conference on Advances in Web-Based Learning']}
              would look like
             {full_title: 'International Conference of Advances in Web Based Learning',
             short_name: 'ICWL 2007',
@@ -109,7 +109,7 @@ class Semantifier:
             {'Conference Title': 'AMERICAN COLLEGE OF VETERINARY PATHOLOGISTS. ANNUAL MEETING. 65TH 2014. (AND 49TH ANNUAL MEETING OF THE AMERICAN SOCIETY FOR VETERINARY CLINICAL PATHOLOGY, IN PARTNERSHIP WITH ASIP)', 'Book Title': '65th Annual Meeting of the American College of Veterinary Pathologists and the 49th Annual Meeting of the American Society of Veterinary Clinical Pathology (ACVP & ASVCP 2014)', 'Series': None, 'Description': 'Held 8-12 November 2014, Atlanta, Georgia, USA. In Partnership with ASIP.', 'Mtg Year': '2014'} 
             would look like
             {full_title: 'Annual Meeting American College of Veterinary Pathologists',
-            short_name: null,
+            short_name: 'None',
             ordinal: '63rd',
             part_of_series: 'American College of Veterinary Pathologists',
             country_name: 'USA',
@@ -120,12 +120,21 @@ class Semantifier:
             end_time: '2012-12-05'}
             """
         # individual part for given request
-        query += "perform the conversion on the following dictionary: " + data_string + ". If a signature element is not given in the query, fill the corresponding element with 'null'"
-        response=client.chat.completions.create(model=MODEL,
+        query += "perform the conversion on the following dictionary: " + data_string + ". If a signature element is not given in the query, fill the corresponding element with \"None\"."
+        response = client.chat.completions.create(model=MODEL,
                                                 messages=[{"role": "user", "content": query}],
                                                 temperature=self.temperature)
-        
-        return json.loads(response.choices[0].message.content.strip())
+        try:
+            dict_file = json.loads(response.choices[0].message.content.strip())
+
+        except json.decoder.JSONDecodeError:
+            new_query = query + " Please assure that your response is a proper JSON file. The means that each key and each value have to be in quotation marks."
+            altered_response = client.chat.completions.create(model=MODEL,
+                                                messages=[{"role": "user", "content": new_query}],
+                                                temperature=self.temperature)
+            dict_file = json.loads(altered_response.choices[0].message.content.strip())
+
+        return dict_file
     
     def semantifier(self, 
                     conferences: Union[dict, pl.DataFrame],

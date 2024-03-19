@@ -3,7 +3,7 @@ Knowledge Graph Lab 💡 - winter semester 2023 - task 3
 
 <img src="images/RWTH_Logo.png" width="500">
 
-This repository embodies an approach of identifying event series for scientific events such as conferences and workshops. The unstructured event data is queried from [dblp](https://dblp.org/) and assigned to the correct event series using the code provided here. After correctly assigning the event series, the property of event series is added to the KG of Wikidata.
+This repository embodies an approach of identifying scientific events such as conferences and workshops from [proceedings.com](https://www.proceedings.com/) and assign it to its corresponding entry on Wikidata. Missing properties on Wikidata will be added or a new event will be generated if it doesn't exist on Wikidata yet.
 
 [![GitHub last commit](https://img.shields.io/github/last-commit/olafbombach/kg-lab-ws23-task3.svg)](https://github.com/olafbombach/kg-lab-ws23-task3/commits/main)
 [![GitHub issues](https://img.shields.io/github/issues/olafbombach/kg-lab-ws23-task3.svg)](https://github.com/olafbombach/kg-lab-ws23-task3/issues)
@@ -14,27 +14,28 @@ This repository embodies an approach of identifying event series for scientific 
 ## Use Case Scenario
 Situation:
 
-The proceedings of the publication service CEUR-WS (CEUR Workshop Proceedings) already have entries in Wikidata, but the relation between individual proceedings is insufficient specified or missing.
+We want to add the data of a conference from [proceedings.com](https://www.proceedings.com/) to Wikidata, but we don't know if it already has an entry in Wikidata. Furthermore its data format is not always suitable for property generation.
 
 Action:
 <ul>
-<li>Collect missing information from dblp and ceur-spt.
-<li>Identify event series using Large Language Models.
-<li>Validate the resulting event series.
-<li>Update the Knowledge Graph.
+<li>Identify potential entries in Wikidata corresponding to our conference.
+<li>Convert our entry and its potential candidates into a uniform format using Chat-GPT.
+<li>Decide wether or not any of the candidates correspond to our conference using Large Language Models.
+<li>Update or generate the Wikidata entry.
 </ul>
 
 Expected Result:
 
-Proceedings of the same event series are interconnected in a way such that the user is able to access the whole event series.
+Our conference receives a Wikidata entry which contains all its relevant properties.
+
 ## Current status of the project:
 <ul> 
-    <li> Assessment of current KG status &#x2713; </li>
-    <li> Preprocessing of queries &#x1F6E1; </li>
-    <il> (Method for encoding established) &#x1F6E1; </il>
-    <li> Validation of LLM (check for accuracy and precision) ❌ </li>
+    <li> Assessment of current Wikidata status &#x2713; </li>
+    <li> Preprocessing of queries &#x2713; </li>
+    <il> (Method for encoding established) &#x2713; </il>
+    <li> Validation of LLM (check for accuracy and precision) &#x2713; </li>
     <li> (Further methods of assignments established) ❌ </li>
-    <li> Method for data transfer to the KG ❌ </li>
+    <li> Method for data transfer to Wikidata &#x1F6E1; </li>
     <li> Establishment of an automated method &#x1F6E1; </li>
     <li> Validation of the method &#x1F6E1; </li>
 </ul>

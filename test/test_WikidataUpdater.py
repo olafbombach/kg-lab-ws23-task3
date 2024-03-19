@@ -2,6 +2,7 @@ from ast import Dict
 from source.WikidataUpdater import WikidataUpdater
 from source.EventClass import ProceedingsEvent
 from source.Tokenizer import TokenSet
+import pytest
 
 
 #Sanity check

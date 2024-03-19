@@ -20,6 +20,7 @@ class Preprocessor:
         Please make sure that the deletion_columns can be applied, since no errors will occur otherwise.
         """
         if type(self._raw_data) == pl.DataFrame:
+            Preprocessor.filter_CS_entries(self)
             if del_columns is not None:
                 Preprocessor.delete_columns(self, del_columns)
             Preprocessor.delete_duplicates(self)
@@ -50,6 +51,29 @@ class Preprocessor:
     def fill_null(self) -> None:
         self._preprocessed_data = self._preprocessed_data.fill_null("")
         self._preprocessed_data = self._preprocessed_data.fill_nan("")
+
+    def filter_CS_entries(self) -> None:
+        filter_dict = {
+            "Subject1": ["Computer"],
+            "Description": ["online"]
+        }
+        #print(self._preprocessed_data.shape) 
+        self._preprocessed_data=self._preprocessed_data.filter(
+            pl.col("Subject1").str.contains("(?i)Computer")
+            )
+        #print(self._preprocessed_data.shape) 
+        self._preprocessed_data=self._preprocessed_data.filter(
+            pl.col("Description").str.contains("(?i)online").not_()
+            )
+        #print(self._preprocessed_data.shape)
+        self._preprocessed_data=self._preprocessed_data.filter(
+            pl.col("Conference Title").str.contains(".{90}")
+            )
+        #print(self._preprocessed_data.shape)
+        self._preprocessed_data=self._preprocessed_data.filter(
+            pl.col("Conference Title").str.contains(".{100}").not_()
+            )
+        #print(self._preprocessed_data.shape)
 
     @property
     def get_raw_data(self) -> Union[pl.DataFrame, object]:

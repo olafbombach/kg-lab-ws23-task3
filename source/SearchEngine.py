@@ -61,7 +61,7 @@ class SearchEngine:
         elif self._dataset_name == 'Wikidata':
             try:
                 path = self._file_to_root / "datasets" / "wikidata" / "wikidata_conf_data.csv"
-                data = pl.read_csv(path, has_header=True)
+                data = pl.read_csv(path, has_header=True, separator=';')
             except FileNotFoundError(f"Are you sure you are in the right directory? \n ROOT: {self._file_to_root}"):
                 pass
         return data
@@ -94,6 +94,7 @@ class SearchEngine:
         self._data = self._data.with_columns(pl.Series(name="score",
                                                        values=np.sum(self._hit_mask, axis=1),
                                                        dtype=pl.Float64))
+
         return self._data
 
     @get_timer
@@ -132,7 +133,7 @@ class SearchEngine:
                                         if column != 'index'])
             hit_mask = hit_mask + addition * keywords_dict[string]
 
-        self._hit_mask = hit_mask.astype(dtype=int)
+        self._hit_mask = hit_mask.astype(dtype=float)
 
         self._data = self._mask_eval()  # adds score as the last column
 
@@ -182,12 +183,28 @@ class SearchEngine:
         hit_mask = np.zeros((self._data.shape[0], length_hit_mask))
         for tup in keywords_set:
             # setup for tup: (keyword, category, weight)
+            
             addition = np.column_stack([self._data[column].str.contains(r"(?i)" + tup[0], strict=True)
                                        .replace({None: False}) for column in self._columns_sel
                                         if column != 'index'])
+            col_add = addition.shape[1]
+
+            # some kind of logic
+            if tup[1] == "Country Identifier":
+                # in 'addition': set all columns expect 4 to False
+                addition[:, np.arange(col_add) != 4] = False 
+            if tup[1] == "City Identifier":
+                # in 'addition': set all columns expect 6 to False
+                addition[:, np.arange(col_add) != 6] = False
+            if tup[1] == "Year":
+                # in 'addition': set all qid columns to False
+                addition[:, 0] = False
+                addition[:, 4] = False
+                addition[:, 6] = False
+
             hit_mask = hit_mask + addition * tup[2]
 
-        self._hit_mask = hit_mask.astype(dtype=int)
+        self._hit_mask = hit_mask.astype(dtype=float)
 
         self._data = self._mask_eval()  # adds score as the last column
 
@@ -210,3 +227,19 @@ class SearchEngine:
     def get_dataset_name(self):
         return self._dataset_name
     
+
+if __name__ == "__main__":
+    tuples = {('Q155', 'Country Identifier', 0.5), ('14TH 2006', 'Infix', 0.25), ('Fortaleza', 'City', 0.75), 
+              ('Curran Associates, Inc.', 'Publisher', 0.1), ('Q43463', 'City Identifier', 0.5),
+              ('ISMB 2006', 'Acronym with Year', 0.8), ('fourteenth', 'Ordinal', 0.5), 
+              ('INTELLIGENT SYSTEMS FOR MOLECULAR BIOLOGY', 'Infix', 0.25),
+              ('2006', 'Year', 0.82), ('annual international conference', 'Infix', 0.25), 
+              ('ISMB 2006', 'Infix', 0.25), ('INTELLIGENT SYSTEMS FOR MOLECULAR BIOLOGY. ANNUAL INTERNATIONAL CONFERENCE. 14TH 2006. ISMB 2006', 'Full Title', 1), 
+              ('ISMB', 'Acronym', 0.43), ('ANNUAL INTERNATIONAL CONFERENCE', 'Infix', 0.25), 
+              ('intelligent systems for molecular biology', 'Infix', 0.25), 
+              ('intelligent systems molecular biology', 'Infix', 0.25), ('14TH', 'Ordinal', 0.5), 
+              ('INTELLIGENT SYSTEMS FOR MOLECULAR BIOLOGY. ANNUAL INTERNATIONAL CONFERENCE. fourteenth 2006. ISMB 2006', 'Modified Title', 1), 
+              ('Brazil', 'Country', 0.5)}
+    
+    se = SearchEngine('Wikidata', f_search=True)
+    print(se.search_set_of_tuples(tuples))
