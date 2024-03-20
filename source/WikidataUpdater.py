@@ -21,7 +21,7 @@ class WikidataUpdater:
     @staticmethod
     def uploadToWikidata(event: ProceedingsEvent):
         """
-        Logs into the account given in the login() Method and performs an edit operation on a Wikidata object.
+        Static Method. Logs into the account given in the login() Method and performs an edit operation on a Wikidata object.
         The login only persists in this method
         Parameters: 
         event: The information on the proceeding found in proceedings.com encoded as ProceedingsEvent object
@@ -62,8 +62,10 @@ class WikidataUpdater:
                 #Add ordinal (series ordinal = P1545)
                 qualifiers.add(String(str(event.ordinal), prop_nr = "P1545"))
             WDid = WikidataQuery.getWDIdfromLabel(event.part_of_series)
-            if(not WDid == None):
-                entity.claims.add(Item(WDid,prop_nr = "P179", qualifiers = qualifiers))
+            if WDid == None:
+                WDid = WikidataUpdater.create_Series(event.part_of_series)
+            entity.claims.add(Item(WDid,prop_nr = "P179", qualifiers = qualifiers))
+          
                 
         #Basic information independant of entry
         #origin (proceedings.com currently still missing in WD)
@@ -81,7 +83,7 @@ class WikidataUpdater:
     @staticmethod
     def editOnWikidata(event: ProceedingsEvent, WDid: string):
         """
-        Logs into the account given in the login() Method and performs an edit operation on a Wikidata object.
+        Static Method. Logs into the account given in the login() Method and performs an edit operation on a Wikidata object.
         The login only persists in this method. Only adds claims for which a claim for that property did not exist yet.
         Parameters: 
         event: The information on the proceeding found in proceedings.com encoded as ProceedingsEvent object
@@ -119,8 +121,9 @@ class WikidataUpdater:
                 #Add ordinal (series ordinal = P1545)
                 qualifiers.add(String(str(event.ordinal), prop_nr = "P1545"))
             WDid = WikidataQuery.getWDIdfromLabel(event.part_of_series)
-            if(not WDid == None):
-                entity.claims.add(Item(WDid,prop_nr = "P179", qualifiers = qualifiers))
+            if WDid == None:
+                WDid = WikidataUpdater.create_Series(event.part_of_series)
+            entity.claims.add(Item(WDid,prop_nr = "P179", qualifiers = qualifiers))
             
         #add short name (Short name = P1813)
         if(not event.short_name == None and entity.claims.get("P1813") == []):
@@ -143,14 +146,27 @@ class WikidataUpdater:
     @staticmethod
     def login():
         """
-        Method that returns a login object using the encoded credentials (stored in github secrets for this repository)
+        Static Method that returns a login object using the encoded credentials (stored in github secrets for this repository)
         Sets the user agent in wikidata to the username
         Returns a wbi_login Object to be used for write actions with a WikibaseIntegrator instance
         """
-        wbi_config['USER_AGENT'] = 'MyWikibaseBot/1.0 (https://www.wikidata.org/wiki/User:Christophe Haag)'
-        #Remember to change the credentials after testing
+        wbi_config['USER_AGENT'] = 'MyWikibaseBot/1.0 (https://www.wikidata.org/wiki/User:https://github.com/olafbombach/kg-lab-ws23-task3/pull/65)'
         login = Clientlogin("user a", "some secret")
         return login
+    
+    @staticmethod
+    def create_Series(login, label):
+        """
+        Static Method that creates an entry for a proceedings series (label only)
+        It is called if such an object does not exist in uploadToWikidata and editOnWikidata
+        Returns the Wikidata ID of the created object
+        """
+        wbi = WikibaseIntegrator(login = login)
+        entity = wbi.item.new()
+        entity.labels.set('en', label)
+        entity.write()
+        print("Entity ID"+str(entity.id))
+        return entity.id
 
 
 
