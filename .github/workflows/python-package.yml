@@ -40,3 +40,5 @@ jobs:
         pytest test
       env:
           CORE_API_KEY : ${{secrets.CORE_API_KEY}}
+          WIKIDATA_LOGIN_NAME: ${{secrets.WIKIDATA_LOGIN_NAME}}
+          WIKIDATA_LOGIN_PASSWORD: ${{secrets.WIKIDATA_LOGIN_PASSWORD}}
