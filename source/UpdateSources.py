@@ -243,4 +243,5 @@ class ProceedingsUpdater:
             path, headers = urlretrieve(fulldatalink, path_to_dataset / newfile)
             if oldfile!="":
                 os.remove(path_to_dataset / oldfile)
+        return newfile
 
