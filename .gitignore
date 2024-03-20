@@ -7,6 +7,10 @@ test/evaluation/log/*
 
 cache/*.json
 
+datasets/glove/*.txt
+datasets/wikidata/wikidata_conf_data.csv
+datasets/proceedings.com/*.xlsx
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 __pypackages__/
