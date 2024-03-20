@@ -57,8 +57,11 @@ class WikidataQuery(object):
         wDid = None
         try:
             s = name.lower()
-            text = " SELECT ?item WHERE { ?item rdfs:label ?itemLabel. FILTER(CONTAINS(LCASE(?itemLabel), \""+s+"\"@en)).FILTER(CONTAINS(\""+s+"\"@en, LCASE(?itemLabel))).} LIMIT 1"
-            print(text)
+            text = """ SELECT ?item WHERE {
+                        ?item rdfs:label \""""+name+"""\"@en.
+                        } 
+                        LIMIT 1
+                   """
             result = WikidataQuery.queryWikiData(text)
             WDresults= result["results"]["bindings"]
             print(WDresults)
