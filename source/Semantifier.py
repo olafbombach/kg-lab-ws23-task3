@@ -110,7 +110,7 @@ class Semantifier:
             would look like
             {full_title: 'Annual Meeting American College of Veterinary Pathologists',
             short_name: null,
-            ordinal: '63rd',
+            ordinal: '65th',
             part_of_series: 'American College of Veterinary Pathologists',
             country_name: 'USA',
             country_identifier: 'US',
