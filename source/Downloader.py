@@ -22,15 +22,20 @@ class Downloader:
         This function creates:
         Wikidata-file, Proceedings-file and Glove embedding files.
         """
+        print("Downloading Wikidata resources...")
         Downloader.wikidata_downloader()
+        print("Downloading Proceedings.com resources...")
         Downloader.proceedings_downloader()
+        print("Downloading GloVe resources...")
         Downloader.glove_downloader()
 
     def update_datasets():
         """
         Updates the versions of the Wikidata-csv and the Proceedings.com excel file.
         """
+        print("Downloading Wikidata resources...")
         Downloader.wikidata_downloader()
+        print("Downloading Proceedings.com resources...")
         Downloader.proceedings_downloader()
 
     @staticmethod
@@ -50,7 +55,6 @@ class Downloader:
             # Move the downloaded file to the destination directory
             destination_path = find_root_directory() / "datasets" / "glove" 
             shutil.move(filename, destination_path) # Move the file 
-            print(f"File downloaded and moved to {destination_path}")
 
             # Extract the zip file
             zip_filepath = os.path.join(destination_path, filename)
@@ -60,11 +64,9 @@ class Downloader:
                         zf.extract(member, destination_path)
                     except zipfile.error as e:
                         pass
-            print("Zip file contents extracted successfully.")
 
             # Remove zip
             os.remove(zip_filepath)
-            print("Zip file removed.")
 
         except Exception as e:
             print(f"Error: {e}")
@@ -72,9 +74,8 @@ class Downloader:
         for i in range(3):
             try:
                 os.remove(destination_path / f"glove.6B.{i+1}00d.txt")     
-            except FileNotFoundError:
-                print("This should not happen after the download.")
-                print(f"filename: {destination_path} / glove.6B.{i+1}00d.txt")
+            except FileNotFoundError as e:
+                print(f"filename: {destination_path} / glove.6B.{i+1}00d.txt does not exist after download?")
 
     @staticmethod
     def wikidata_downloader():
@@ -89,6 +90,5 @@ class Downloader:
         """
         Scraps the current cumulative entry of Proceedings.com and saves it in excel format.
         """
-        pu = ProceedingsUpdater()
-        pu.updateProceedings()
+        ProceedingsUpdater.updateProceedings()
 
