@@ -49,7 +49,7 @@ class Comparor:
         if metric == "cos":   
             for entry in self.loe.list_of_events:
                 if current_optimal.similarity < entry.similarity:
-                    optimal_val = entry.similariy
+                    optimal_val = entry.similarity
                     current_optimal = entry
         elif metric == "euc":
             for entry in self.loe.list_of_events:
@@ -70,20 +70,20 @@ class Comparor:
         assert metric in {"cos", "euc"}, "Your method is not supported."
 
         if metric == "cos":
-            if self.optimal_val <= 0.6:
+            if self.optimal_val < 0.92:
                 return "Unfound"
-            elif 0.6 < self.optimal_val <= 0.85:
+            elif 0.92 <= self.optimal_val < 0.98:
                 return "Unclear"
-            elif self.optimal_val > 0.85:
+            elif self.optimal_val >= 0.98:
                 return "Found"
             else:
                 "This should not show up.."
         elif metric == "euc":
-            if self.optimal_val >= 4:
+            if self.optimal_val > 3.5:
                 return "Unfound"
-            elif 4 > self.optimal_val >= 2:
+            elif 3.5 >= self.optimal_val > 1.8:
                 return "Unclear"
-            elif self.optimal_val < 2:
+            elif self.optimal_val <= 1.8:
                 return "Found"
             else:
                 "This should not show up.."

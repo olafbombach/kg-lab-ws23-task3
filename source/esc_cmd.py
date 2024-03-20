@@ -45,7 +45,7 @@ def evaluation_v2(sim_measure: str, small_test: bool=False) -> None:
 
     testset = pl.read_csv(testset_file, has_header=True, separator=";")
     pr = Preprocessor(raw_data=testset)
-    pr.apply_preprocessing_pipeline()
+    pr.apply_preprocessing_pipeline(testset=True)
     preproc_testset = pr.get_preprocessed_data
 
     logging.info("Finished reading in the complete testset datafile.")
@@ -55,7 +55,7 @@ def evaluation_v2(sim_measure: str, small_test: bool=False) -> None:
         pe = ProceedingsEvent(input_info=entry)
 
         # searching of events
-        loe = pe.apply_searchengine(se_instance=se_wiki, max_search_hits=20)
+        loe = pe.apply_searchengine(se_instance=se_wiki, max_search_hits=10)
         logging.info(f"Found {len(loe)} wikidata entries for this proceedings.com entry.")
         
         # semantification of events
