@@ -16,14 +16,14 @@ class Encoder:
                          'conference', 'proceeding', 'proceedings', 'or', 
                          'and', '&', 'of', 'on', 'at', 'about']
 
-    def __init__(self, dict_file: dict, source: str):
+    def __init__(self, dict_file: dict, technique: str):
 
-        assert source in ['bert', 'glove'], "Please make sure to use a viable encoding."
+        assert technique in ['bert', 'glove'], "Please make sure to use a viable encoding."
 
         self.dict_data = dict_file
-        self.source = source
+        self.technique = technique
         self.glove_embeddings = None
-        if self.source == "glove":
+        if self.technique == "glove":
             self.glove_embeddings = Encoder.load_glove_embeddings(self)
 
     def load_glove_embeddings(self, file_to_glove_dir: Path = find_root_directory() / "datasets" / "glove") -> dict:

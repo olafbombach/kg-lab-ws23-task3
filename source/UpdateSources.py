@@ -276,8 +276,12 @@ class ProceedingsUpdater:
                         if (data.attrs['href']!=""):
                             datalink=data.attrs['href']        
             fulldatalink='https://www.proceedings.com'+datalink[2:]
-            print("download new file")
+            # download new file
             path, headers = urlretrieve(fulldatalink, path_to_dataset / newfile)
             if oldfile!="":
                 os.remove(path_to_dataset / oldfile)
+            else:
+                pass
+        else:
+            pass
 

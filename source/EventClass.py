@@ -116,7 +116,7 @@ class ProceedingsEvent:
         return att_dict
         
 
-    def apply_encoder(self, dict_file):
+    def apply_encoder(self, dict_file: dict, encoding: str):
         """
         At first creates an encoder map, which maps the QID of the Wikidata event
         to the corresponding proceedings event encoding.
@@ -125,7 +125,7 @@ class ProceedingsEvent:
         These are then appended to the Attribute Encodings.
         """
         encodings = dict()
-        enc = Encoder(dict_file=dict_file)  # initialize
+        enc = Encoder(dict_file=dict_file, technique=encoding)  # initialize
         encoding_set = []  # create unique keys for the creation of encodings
         index = 0
         for item in self.configuration.keys():  # item is QID
@@ -211,8 +211,8 @@ class WikidataEvent:
         else:
             pass
 
-    def apply_encoder(self, dict_file: dict, keyword_args: dict):       
-        enc = Encoder(dict_file=dict_file)
+    def apply_encoder(self, dict_file: dict, encoding: str, keyword_args: dict):       
+        enc = Encoder(dict_file=dict_file, technique=encoding)
         encoding = enc.get_bert_encoding(**keyword_args)
         self.encoding = encoding
 
@@ -225,7 +225,7 @@ class ListOfEvents:
     We need this to save the information output of the SearchEngine.
     """
     source: str
-    list_of_events: Optional[List[Union[ProceedingsEvent, WikidataEvent]]] = field(default_factory=list)
+    list_of_events: Optional[List[WikidataEvent]] = field(default_factory=list)
     list_of_dicts: Optional[List[dict]] = field(default_factory=list)
     configuration: Optional[Dict] = field(default_factory=dict)
 
@@ -319,7 +319,7 @@ class ListOfEvents:
         self.configuration = configuration
         pe.configuration = configuration
         
-    def apply_encoder(self):
+    def apply_encoder(self, encoding: str):
         """
         Applies the Encoder to the full List of Events.
 
@@ -337,7 +337,7 @@ class ListOfEvents:
             bool_dict = dict()
             for ele in current_conf:
                 bool_dict[ele] = True
-            entry.apply_encoder(dict_file=self.list_of_dicts[i], keyword_args=bool_dict)         
+            entry.apply_encoder(dict_file=self.list_of_dicts[i], encoding=encoding, keyword_args=bool_dict)         
 
 @dataclass
 class EventSeries:

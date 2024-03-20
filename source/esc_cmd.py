@@ -1,18 +1,31 @@
 import sys
+import os
 import logging
 import polars as pl
 
-from source.HelperFunctions import find_root_directory
-from source.HelperFunctions import get_arg_parser
+from source.HelperFunctions import find_root_directory, get_arg_parser
 from source.EventClass import WikidataEvent, ProceedingsEvent
 
+from source.Downloader import Downloader
 from source.Preprocessor import Preprocessor
 from source.SearchEngine import SearchEngine
 from source.Comparor import Comparor
 
 
+def download_resources() -> None:
+    """
+    Download all resources to the directory datasets.
+    Further distinguishes between Glove already being downloaded or not.
+    """
+    path_to_check = find_root_directory() / "datasets" / "glove"
 
-def evaluation_v2(sim_measure: str, small_test: bool=False) -> None:
+    if not os.listdir(path_to_check):
+        Downloader.download_all()
+    else:
+        Downloader.update_datasets()
+
+
+def evaluation_v2(sim_measure: str, encoding: str, small_test: bool=False) -> None:
     """
     This function evaluates operation using the Tokenizer, the SearchEngine, 
     the Semantifier and the Encoding.
@@ -26,17 +39,15 @@ def evaluation_v2(sim_measure: str, small_test: bool=False) -> None:
 
     # set up logger
     if small_test:
-        logging.basicConfig(level=logging.INFO,
-                            filemode="w",
-                            format="%(asctime)s %(levelname)s - %(message)s",
-                            datefmt="%m/%d/%Y %I:%M:%S",
-                            filename=root_dir/"results"/"logs"/f"small_test_{sim_measure}.log")
+        filename = root_dir / "results" / "logs" / f"small_test_{encoding}_{sim_measure}.log"
     else:
-        logging.basicConfig(level=logging.INFO,
+        filename = root_dir / "results" / "logs" / f"testset_v2_{encoding}_{sim_measure}.log"
+    
+    logging.basicConfig(level=logging.INFO,
                             filemode="w",
                             format="%(asctime)s %(levelname)s - %(message)s",
                             datefmt="%m/%d/%Y %I:%M:%S",
-                            filename=root_dir/"results"/"logs"/f"testset_v2_{sim_measure}_new_new.log")
+                            filename=filename)
     
     # start with the code
     se_wiki = SearchEngine("Wikidata", f_search=True)
@@ -63,13 +74,13 @@ def evaluation_v2(sim_measure: str, small_test: bool=False) -> None:
         dict_file_pe = pe.apply_semantifier(get_dict=True)
         loe.apply_semantifier(get_dict=True)  # dict saved as class attribute 
 
-        # get key-configurations for the encodings!
+        # get key-configurations for the encodings
         loe.compute_configurations(pe=pe)
 
         # encoding events
         logging.info("Semantification finished. Moving on to encoding...")
-        pe.apply_encoder(dict_file = dict_file_pe)
-        loe.apply_encoder()
+        pe.apply_encoder(dict_file = dict_file_pe, encoding=encoding)
+        loe.apply_encoder(encoding=encoding)
 
         # comparing events
         logging.info("Encoding finished...")
@@ -131,8 +142,11 @@ def main():
     # dummy
     if args.operation == "small_test":
         print("Please check the directory results/logs to find your small_test run.")
-        evaluation_v2(sim_measure=args.s_measure, small_test=True)
+        evaluation_v2(sim_measure=args.s_measure, encoding=args.encoding, small_test=True)
     elif args.operation == "v2":
         print("Please check the directory results/logs to find your run.")
-        evaluation_v2(sim_measure=args.s_measure)
+        evaluation_v2(sim_measure=args.s_measure, encoding=args.encoding)
+    elif args.operation == "resources":
+        print("Downloading all necessary files:")
+        download_resources()
 
