@@ -10,11 +10,11 @@ def test_base():
     w = WikidataUpdater()
     
 
-#Test editing an entry
-def test_WDedit():
-    dicti = {"Conference Title":"LIQUID CRYSTALS XXI","Mtg Year":"2017.0","POD Publisher":"Curran Associates, Inc."}
-    event = ProceedingsEvent(dicti,TokenSet(),"AACE INTERNATIONAL. ANNUAL MEETING. 59TH 2015",None,None,None,"United States of America",None,city_name="San Antonio",year=2015)
-    print(WikidataUpdater.uploadToWikidata(event))
+#Test editing an entry (disabled due to concurrent tests -> Race conditions)
+#def test_WDedit():
+ #   dicti = {"Conference Title":"LIQUID CRYSTALS XXI","Mtg Year":"2017.0","POD Publisher":"Curran Associates, Inc."}
+  #  event = ProceedingsEvent(dicti,TokenSet(),"AACE INTERNATIONAL. ANNUAL MEETING. 59TH 2015",None,None,None,"United States of America",None,city_name="San Antonio",year=2015)
+   # print(WikidataUpdater.editOnWikidata(event,"Q124901747"))
     
 
     
