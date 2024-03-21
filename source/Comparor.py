@@ -20,7 +20,7 @@ class Comparor:
         self.optimal_val = None
         self.current_optimal = None
         self.decision = None
-        self.current_dict = None
+        self.current_dict = dict()
 
     def add_measure_as_attribute(self, metric: str) -> None:
         """
@@ -106,14 +106,18 @@ class Comparor:
         
         # prepare the current_dictionary for the json-upload
         if self.decision == "Unfound":
-            self.current_dict = self.pe.get_dict
+            self.current_dict = self.pe.get_signatures
         elif self.decision == "Unclear":
-            self.current_dict = dict()
-            self.current_dict['proc_event'] = self.pe.get_dict
+            interim_dict = dict()
+            # here we create a dict of dicts, since we have multiple Wikidata entries to look at
+            interim_dict['proc_event'] = self.pe.get_signatures
+            interim_dict['loe'] = self.loe.get_dict_of_signatures
+            self.current_dict = interim_dict
             pass
         elif self.decision == "Found":
-            self.current_dict = self.pe.get_dict
-            self.current_dict['wd_qid'] = self.current_optimal.qid
+            interim_dict = self.pe.get_signatures
+            interim_dict['wd_qid'] = self.current_optimal.qid
+            self.current_dict[self.pe.isbn] = interim_dict
         else:
             print("This should not happen...")
 
@@ -128,25 +132,44 @@ class Comparor:
 
         if self.decision == "Unfound":
             file_path = general_path / "unfound_entries" / "upload.json"
-            
-            try:
-                with open(file_path, 'wb') as f:
-                    json_str = orjson.dumps(self.current_dict,
-                                            option=
-                                            orjson.OPT_INDENT_2 |
-                                            orjson.OPT_NON_STR_KEYS | 
-                                            orjson.OPT_SERIALIZE_NUMPY | 
-                                            orjson.OPT_SERIALIZE_UUID | 
-                                            orjson.OPT_NAIVE_UTC)
-                    f.write(json_str)
-            except Exception as e:
-                raise Exception(str(e))
         elif self.decision == "Unclear":
             file_path = general_path / "unclear_entries" / "manual.json"
         elif self.decision == "Found":
             file_path = general_path / "found_entries" / "upload.json"
         else:
             print("This should not happen...")
+        
+        # first read in current json-file to get cumulated_dict
+        try:
+            with open(file_path, encoding="utf-8") as f:
+                json_str = f.read()
+                if not json_str:
+                    # If the file is empty, set cumulated_dict to an empty dictionary
+                    cumulated_dict = dict()
+                else:
+                    # Load the cache from the existing file
+                    cumulated_dict = orjson.loads(json_str)
+        except FileNotFoundError:
+            # Handle case where file does not exist -> will be created later
+            cumulated_dict = dict()
+        except Exception as e:
+            # Handle other exceptions (e.g., invalid JSON data)
+            print(f"Error loading json-file due to {e}")
+
+        cumulated_dict[self.pe.isbn] = self.current_dict
+
+        try:
+            with open(file_path, 'wb') as f:
+                json_str = orjson.dumps(cumulated_dict,
+                                        option=
+                                        orjson.OPT_INDENT_2 |
+                                        orjson.OPT_NON_STR_KEYS | 
+                                        orjson.OPT_SERIALIZE_NUMPY | 
+                                        orjson.OPT_SERIALIZE_UUID | 
+                                        orjson.OPT_NAIVE_UTC)
+                f.write(json_str)
+        except Exception as e:
+            raise Exception(f"Error updating json-file due to {e}")
 
         
 
