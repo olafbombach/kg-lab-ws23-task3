@@ -9,8 +9,9 @@ cache/*.json
 
 datasets/glove/*d.txt
 datasets/proceedings.com/*.xlsx
-
 datasets/wikidata/*data.csv
+
+results/unfound_entries/*.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
