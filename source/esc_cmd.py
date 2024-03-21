@@ -92,6 +92,8 @@ def evaluation_v2(sim_measure: str, encoding: str, small_test: bool=False) -> No
         decision = co.case_decision(metric=sim_measure)
         logging.info(f"{opt_event.similarity:.3f} -> {decision}")
 
+        co.result_to_json()
+
         # further processing
         if decision == "Unfound":
             pass

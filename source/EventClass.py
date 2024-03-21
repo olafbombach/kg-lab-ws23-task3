@@ -105,18 +105,12 @@ class ProceedingsEvent:
         self.end_time = str(sf_output.get('end_time')) if sf_output.get('end_time') != ("" or "None" or None) else None
 
         if get_dict:  # for encoding
-            att_dict = asdict(self)
-            att_dict.pop('input_info', None)
-            att_dict.pop('keywords', None) 
-            att_dict.pop('configuration', None)
-            att_dict.pop('encode_map', None)
-            att_dict.pop('encodings', None)         
+            att_dict = self.get_dict        
         else:
             pass
 
         return att_dict
         
-
     def apply_encoder(self, dict_file: dict, encoding: str):
         """
         At first creates an encoder map, which maps the QID of the Wikidata event
@@ -149,6 +143,19 @@ class ProceedingsEvent:
             encoding = enc.get_bert_encoding(**bool_dict)  # dict unpacking
             encodings['enc'+str(i)] = encoding
         self.encodings = encodings
+
+    @property
+    def get_dict(self):
+        """
+        Receive the entry as dict of signatures.
+        """
+        att_dict = asdict(self)
+        att_dict.pop('input_info', None)
+        att_dict.pop('keywords', None) 
+        att_dict.pop('configuration', None)
+        att_dict.pop('encode_map', None)
+        att_dict.pop('encodings', None) 
+        return att_dict
 
 @dataclass
 class WikidataEvent:
@@ -202,12 +209,7 @@ class WikidataEvent:
         self.end_time = str(sf_output.get('end_time')) if sf_output.get('end_time') != ("" or "None" or None) else None
 
         if get_dict:  # for encoding
-            att_dict = asdict(self)
-            att_dict.pop('input_info', None)
-            att_dict.pop('keywords_score', None)
-            att_dict.pop('encoding', None)         
-            att_dict.pop('similarity', None)  
-            
+            att_dict = self.get_dict             
             return att_dict
         else:
             pass
@@ -216,6 +218,18 @@ class WikidataEvent:
         enc = Encoder(dict_file=dict_file, technique=encoding)
         encoding = enc.get_bert_encoding(**keyword_args)
         self.encoding = encoding
+
+    @property
+    def get_dict(self):
+        """
+        Receive the entry as dict of signatures.
+        """
+        att_dict = asdict(self)
+        att_dict.pop('input_info', None)
+        att_dict.pop('keywords_score', None)
+        att_dict.pop('encoding', None)         
+        att_dict.pop('similarity', None)  
+        return att_dict
 
 
 @dataclass
@@ -227,7 +241,7 @@ class ListOfEvents:
     """
     source: str
     list_of_events: Optional[List[WikidataEvent]] = field(default_factory=list)
-    list_of_dicts: Optional[List[dict]] = field(default_factory=list)
+    dict_of_signatures: Optional[Dict] = field(default_factory=dict)
     configuration: Optional[Dict] = field(default_factory=dict)
 
     def __add__(self, other):
@@ -259,14 +273,14 @@ class ListOfEvents:
         cm = CacheManager()
         cm.load_cache()
 
-        list_of_dicts = []
+        dict_of_signatures = dict()
         for entry in self.list_of_events:
             if type(entry) == WikidataEvent:
                 current_qid = entry.qid
                 if cm.get_entry(qid=current_qid) == None:
                     # cannot find entry, have to create new one.
                     dictionary = entry.apply_semantifier(get_dict=get_dict)
-                    list_of_dicts.append(dictionary)
+                    dict_of_signatures[current_qid] = dictionary
                     # also add entry to cache
                     cm.add_entry(qid=current_qid, qid_dict=dictionary)
                 else:
@@ -285,13 +299,13 @@ class ListOfEvents:
                     entry.start_time = str(cached_dictionary.get('start_time')) if cached_dictionary.get('start_time') != ("" or "None" or None) else None
                     entry.end_time = str(cached_dictionary.get('end_time')) if cached_dictionary.get('end_time') != ("" or "None" or None) else None
 
-                    list_of_dicts.append(cached_dictionary)
+                    dict_of_signatures[current_qid] = cached_dictionary
                     logging.info(f"Semantified instance {current_qid} taken from Cache.")
             else:
                 print("This should not be the case!")
         
         cm.store_cache()
-        self.list_of_dicts = list_of_dicts
+        self.dict_of_signatures = dict_of_signatures
 
     def compute_configurations(self, pe: ProceedingsEvent) -> None:
         configuration = dict()
@@ -302,7 +316,7 @@ class ListOfEvents:
         available_data.pop('configuration', None)
         available_data.pop('encodings', None)
         # Wikidata element keys
-        for element in self.list_of_dicts:
+        for element in self.dict_of_signatures.values():
             dict_of_entry = element  # copy
             qid = dict_of_entry.get('qid')
             # delete unneeded keys
@@ -338,7 +352,7 @@ class ListOfEvents:
             bool_dict = dict()
             for ele in current_conf:
                 bool_dict[ele] = True
-            entry.apply_encoder(dict_file=self.list_of_dicts[i], encoding=encoding, keyword_args=bool_dict)         
+            entry.apply_encoder(dict_file=self.dict_of_signatures[entry.qid], encoding=encoding, keyword_args=bool_dict)         
 
 @dataclass
 class EventSeries:
