@@ -230,7 +230,7 @@ def full_pipeline(sim_measure: str, encoding: str) -> None:
         
         del pe, loe
 
-    del se_wiki, testset, preproc_testset
+    del se_wiki, dataset, preproc_testset
 
 
 def main():
