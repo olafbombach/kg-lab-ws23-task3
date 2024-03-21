@@ -73,8 +73,8 @@ class CacheManager:
         """
         self.current_dict[qid] = qid_dict
     
-if __name__ == "__main__":
+'''if __name__ == "__main__":
     cm = CacheManager("test")
     dicti = {"full_title": "IIFI 2001", "city": "Göttingen"}
     cm.current_dict = dicti
-    cm.store_cache()
+    cm.store_cache()'''

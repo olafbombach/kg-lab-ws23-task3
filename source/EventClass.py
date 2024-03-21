@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field, asdict
 from typing import Optional, List, Dict, Union
 import numpy as np
+import polars as pl
 import logging
 
 from source.Tokenizer import TokenSet, Tokenizer
@@ -9,7 +10,7 @@ from source.Semantifier import Semantifier
 from source.Encoder import Encoder
 from source.Cache import CacheManager
 
-import polars as pl
+
 
 
 @dataclass

@@ -1,15 +1,14 @@
-from pathlib import Path
 import os
 import polars as pl
 import numpy as np
-from timeit import default_timer as timer
+
 from source.HelperFunctions import find_root_directory
 
 
 class SearchEngine:
     """
     An operator that takes a list as a search filter and then searches for these keywords in a specified dataset.
-    So for you can only specify the datasets Wikidata, Conference Corpus and proceedings.com
+    So for you can only specify the datasets Wikidata and proceedings.com
     """
 
     def __init__(self, dataset_name: str, f_search: bool = False):
@@ -18,9 +17,9 @@ class SearchEngine:
         It takes the dataset_name and a boolean value that determines if we should use fastsearch.
         Caution: f_search=True restricts the columns and thus could lead to false results.
         """
-        assert dataset_name in ['Conference Corpus', 'proceedings.com', 'Wikidata'],\
+        assert dataset_name in ['proceedings.com', 'Wikidata'],\
             "Please specify a dataset which is part of " \
-            "[\'Conference Corpus\', \'proceedings.com\', \'Wikidata\']"
+            "[\'proceedings.com\', \'Wikidata\']"
 
         self._file_to_root = find_root_directory()
         self._dataset_name = dataset_name
@@ -35,13 +34,7 @@ class SearchEngine:
         This method reads in data of the different sources and projects it in polars.
         (It is meant to be a private method since it is called in the __init__ method.)
         """
-        if self._dataset_name == 'Conference Corpus':
-            try:
-                path = self._file_to_root / "datasets" / ".conferencecorpus" / "conf_corpus_data.csv"
-                data = pl.read_csv(path, has_header=True)
-            except FileNotFoundError(f"Are you sure you are in the right directory? \n ROOT: {self._file_to_root}"):
-                pass
-        elif self._dataset_name == 'proceedings.com':
+        if self._dataset_name == 'proceedings.com':
             try:
                 path = self._file_to_root / "datasets" / "proceedings.com"
                 all_files = os.listdir(path)
@@ -49,12 +42,16 @@ class SearchEngine:
                 data = pl.read_excel(path / xlsx_file, engine='openpyxl')
             except FileNotFoundError(f"Are you sure you are in the right directory? \n ROOT: {self._file_to_root}"):
                 pass
+            except Exception as e:
+                print(f"Unexpected error: {e}")
         elif self._dataset_name == 'Wikidata':
             try:
                 path = self._file_to_root / "datasets" / "wikidata" / "wikidata_conf_data.csv"
                 data = pl.read_csv(path, has_header=True, separator=';')
             except FileNotFoundError(f"Are you sure you are in the right directory? \n ROOT: {self._file_to_root}"):
                 pass
+            except Exception as e:
+                print(f"Unexpected error: {e}")
         return data
 
     def _get_columns_sel(self) -> list[str]:
@@ -66,10 +63,8 @@ class SearchEngine:
         if not self._fastsearch:
             columns_sel = self._data.columns
         else:
-            if self._dataset_name == 'Conference Corpus':
-                columns_sel = ['name', 'acronym', 'title', 'sponsor']
-            elif self._dataset_name == 'proceedings.com':
-                columns_sel = ['Publisher', 'Conference Title', 'Book Title', 'Series', 'Mtg Year', 'Publ Year', 'Subject1']
+            if self._dataset_name == 'proceedings.com':
+                columns_sel = ['Publisher', 'Conference Title', 'Book Title', 'Series', 'Mtg Year', 'Publ Year', 'Subject1', 'Description']
             elif self._dataset_name == 'Wikidata':
                 dont_include = {"WikiCFP_identifier", "DBLP_identifier"}
                 columns_sel = [col for col in self._data.columns if col not in dont_include]
@@ -104,8 +99,8 @@ class SearchEngine:
             "This threshold method, does not exist. Please select one of the following: " \
             "[\"three quarter\", \"half\", \"top 5\"]."
 
-        self._hit_mask = None  # reset self._hit_mask
-        self._filtered_data = None  # reset self._filtered_data
+        self._hit_mask = None  # reset self._hit_mask after multiple iterations
+        self._filtered_data = None  # reset self._filtered_data after multiple iterations
 
         if set(self._data[self._columns_sel].dtypes) != {pl.String}:
             mapper_for_cols = {key: pl.String for key in self._columns_sel}
@@ -119,7 +114,6 @@ class SearchEngine:
         hit_mask = np.zeros((self._data.shape[0], length_hit_mask))
         for tup in keywords_set:
             # setup for tup: (keyword, category, weight)
-            
             addition = np.column_stack([self._data[column].str.contains(r"(?i)" + tup[0], strict=True)
                                        .replace({None: False}) for column in self._columns_sel
                                         if column != 'index'])
@@ -164,7 +158,7 @@ class SearchEngine:
         return self._dataset_name
     
 
-if __name__ == "__main__":
+'''if __name__ == "__main__":
     tuples = {('Q155', 'Country Identifier', 0.5), ('14TH 2006', 'Infix', 0.25), ('Fortaleza', 'City', 0.75), 
               ('Curran Associates, Inc.', 'Publisher', 0.1), ('Q43463', 'City Identifier', 0.5),
               ('ISMB 2006', 'Acronym with Year', 0.8), ('fourteenth', 'Ordinal', 0.5), 
@@ -178,4 +172,4 @@ if __name__ == "__main__":
               ('Brazil', 'Country', 0.5)}
     
     se = SearchEngine('proceedings.com', f_search=True)
-    print(se.search_set_of_tuples(tuples))
+    print(se.search_set_of_tuples(tuples))'''

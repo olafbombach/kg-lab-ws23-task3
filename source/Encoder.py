@@ -1,10 +1,9 @@
-from source.HelperFunctions import find_root_directory
-from transformers import BertTokenizer, BertModel
-#from transformers import BertForSequenceClassification, Trainer, TrainingArguments
-import torch
 import numpy as np
 from pathlib import Path
+from transformers import BertTokenizer, BertModel
+import torch
 
+from source.HelperFunctions import find_root_directory
 class Encoder:
     """
     Creates an Encoding based on a dictionary. 

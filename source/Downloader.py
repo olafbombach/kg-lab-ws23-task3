@@ -4,6 +4,7 @@ import urllib.request
 from tqdm import tqdm
 from urllib.parse import urlparse
 import zipfile
+
 from source.HelperFunctions import find_root_directory
 from source.UpdateSources import WikidataQuery, ProceedingsUpdater
 
@@ -15,6 +16,12 @@ class DownloadProgressBar(tqdm):
         self.update(b * bsize - self.n)
 
 class Downloader:
+    """
+    The class to download all necessary files.
+
+    You should either call download_all() or update_datsets()
+    depending on if the Glove dataset is already updated.
+    """
 
     def download_all():
         """

@@ -1,12 +1,18 @@
-from source.EventClass import ProceedingsEvent, ListOfEvents, WikidataEvent
-
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy.spatial.distance import euclidean
 import numpy as np
 
-class Comparor:
+from source.EventClass import ProceedingsEvent, ListOfEvents, WikidataEvent
 
+class Comparor:
+    """
+    The class to compare the Proceedings.com event with the found Wikidata events
+    of the ListOfEvents.
+    """
     def __init__(self, pe: ProceedingsEvent, loe: ListOfEvents):
+        """
+        Initialize by feeding in the Proceedings.com event and the ListOfEvents instances.
+        """
         self.pe = pe
         self.loe = loe
         self.optimal_val = None

@@ -89,11 +89,11 @@ class Preprocessor:
         return self._preprocessed_data
 
 
-if __name__ == "__main__":
+'''if __name__ == "__main__":
 
     repo_path = Path(__file__).parent.parent.resolve()
     test_frame = pl.read_csv(repo_path / "datasets" / "wikidata" / "testset_v1.csv", separator=';')
     pr = Preprocessor(test_frame)
     pr.apply_preprocessing_pipeline()
-    print(pr.get_preprocessed_data)
+    print(pr.get_preprocessed_data)'''
 

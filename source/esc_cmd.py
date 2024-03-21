@@ -4,7 +4,7 @@ import logging
 import polars as pl
 
 from source.HelperFunctions import find_root_directory, get_arg_parser
-from source.EventClass import WikidataEvent, ProceedingsEvent
+from source.EventClass import ProceedingsEvent
 
 from source.Downloader import Downloader
 from source.Preprocessor import Preprocessor
@@ -19,7 +19,7 @@ def download_resources() -> None:
     """
     path_to_check = find_root_directory() / "datasets" / "glove"
 
-    if not os.listdir(path_to_check):
+    if len(os.listdir(path_to_check)) <= 1:  # due to .gitignore
         Downloader.download_all()
     else:
         Downloader.update_datasets()
@@ -139,7 +139,7 @@ def main():
         print("Keyboard interruption was triggered.")
         return sys.exit(0)
 
-    # dummy
+    # logic
     if args.operation == "small_test":
         print("Please check the directory results/logs to find your small_test run.")
         evaluation_v2(sim_measure=args.s_measure, encoding=args.encoding, small_test=True)
