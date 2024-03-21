@@ -147,6 +147,11 @@ class WikidataUpdater:
         
     @staticmethod
     def login():
+        """
+        Static method that uses the credentials stored either locally in "home/.WDCredentials.json" as json or as environment 
+        variables. 
+        Returns a login object.
+        """
         credentialsPath = Path.home()
         credentialsPath = credentialsPath.joinpath(".WDCredentials.json")
         wdName = os.getenv("WIKIDATA_LOGIN_NAME")
