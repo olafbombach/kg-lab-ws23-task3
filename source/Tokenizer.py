@@ -141,7 +141,7 @@ class Tokenizer:
         based on certain conditions (explained in the method).
 
         Input: String to generate synonymes with
-        Output: Dictionary: Keys:Synonymes Values:Scores of the synonymes (How important)
+        Output: Dictionary: Keys:Synonymes Type: String for identification Values:Scores of the synonymes (How important)
         """
        
         # Plane Title
@@ -262,8 +262,7 @@ class Tokenizer:
     
     def analyzeDesciption(self, input_string: str) -> None:
         """
-        (Not implemented)
-        Checks the description in proceedings.com for country, city (not implemented) and date (not implemented) using pyLookupParser.
+        Checks the description in proceedings.com for country, city and date using pyLookupParser.
         Input: string representing the description
         """
 
@@ -326,11 +325,12 @@ class Tokenizer:
         """
 
         Tokenizer.analyzeTitle(self, input_string = input_dict['Conference Title'])
-          
+        if 'Description' in input_dict:
+            Tokenizer.analyzeDesciption(self, input_string = input_dict['Description']) 
+            
         if 'Publisher' in input_dict:
             self.tokenset += Token(str(input_dict['Publisher']),"Publisher", 0.1)        
-        if 'Description' in input_dict:
-            Tokenizer.analyzeDesciption(self, input_string = input_dict['Description'])
+        
 
         # add short_name with year if year and short_name is found:
         found_acronym = False

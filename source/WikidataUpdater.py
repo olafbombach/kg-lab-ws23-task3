@@ -13,6 +13,8 @@ from wikibaseintegrator.wbi_login import Clientlogin
 from wikibaseintegrator.models import Qualifiers
 from source.UpdateSources import WikidataQuery
 from typing import Optional
+from pathlib import Path
+import os,json
 
 
 class WikidataUpdater:
@@ -145,13 +147,19 @@ class WikidataUpdater:
         
     @staticmethod
     def login():
-        """
-        Static Method that returns a login object using the encoded credentials (stored in github secrets for this repository)
-        Sets the user agent in wikidata to the username
-        Returns a wbi_login Object to be used for write actions with a WikibaseIntegrator instance
-        """
-        wbi_config['USER_AGENT'] = 'MyWikibaseBot/1.0 (https://www.wikidata.org/wiki/User:https://github.com/olafbombach/kg-lab-ws23-task3/pull/65)'
-        login = Clientlogin("user a", "some secret")
+        credentialsPath = Path.home()
+        credentialsPath = credentialsPath.joinpath(".WDCredentials.json")
+        wdName = os.getenv("WIKIDATA_LOGIN_NAME")
+        wdPassword = os.getenv("WIKIDATA_LOGIN_PASSWORD")
+        json_file = Path.home() / ".WDCredentials.json"
+        if os.path.exists(credentialsPath) and (wdName == None or wdPassword == None):
+           with open(credentialsPath, "r") as json_file:
+                data = json.load(json_file)
+                wdName = data["user"]
+                wdPassword = data["password"]
+        wbi_config['USER_AGENT'] = 'MyWikibaseBot/1.0 (https://www.wikidata.org/wiki/"+wdname")'
+        print('MyWikibaseBot/1.0 (https://www.wikidata.org/wiki/"+wdname")')
+        login = Clientlogin(wdName, wdPassword)
         return login
     
     @staticmethod
