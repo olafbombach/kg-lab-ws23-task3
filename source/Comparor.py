@@ -1,15 +1,26 @@
-from source.EventClass import ProceedingsEvent, ListOfEvents, WikidataEvent
-
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy.spatial.distance import euclidean
 import numpy as np
+import orjson
+
+from source.HelperFunctions import find_root_directory
+from source.EventClass import ProceedingsEvent, ListOfEvents, WikidataEvent
 
 class Comparor:
-
+    """
+    The class to compare the Proceedings.com event with the found Wikidata events
+    of the ListOfEvents.
+    """
     def __init__(self, pe: ProceedingsEvent, loe: ListOfEvents):
+        """
+        Initialize by feeding in the Proceedings.com event and the ListOfEvents instances.
+        """
         self.pe = pe
         self.loe = loe
         self.optimal_val = None
+        self.current_optimal = None
+        self.decision = None
+        self.current_dict = dict()
 
     def add_measure_as_attribute(self, metric: str) -> None:
         """
@@ -49,7 +60,7 @@ class Comparor:
         if metric == "cos":   
             for entry in self.loe.list_of_events:
                 if current_optimal.similarity < entry.similarity:
-                    optimal_val = entry.similariy
+                    optimal_val = entry.similarity
                     current_optimal = entry
         elif metric == "euc":
             for entry in self.loe.list_of_events:
@@ -59,36 +70,108 @@ class Comparor:
         else:
             pass
         self.optimal_val = optimal_val
+        self.current_optimal = current_optimal
         return current_optimal   
     
-    def case_decision(self, metric: str) -> str:
+    def case_decision(self, metric: str):
         """
         This method determines whether this ProceedingsEvent could be found in
         the Wikidata Database. 
+        It further creates the dictionary that will get uploaded to the
+        corresponding json-file.
         Keep in mind, that this function highly depends on hyperparameters.
         """
         assert metric in {"cos", "euc"}, "Your method is not supported."
 
         if metric == "cos":
-            if self.optimal_val <= 0.6:
-                return "Unfound"
-            elif 0.6 < self.optimal_val <= 0.85:
-                return "Unclear"
-            elif self.optimal_val > 0.85:
-                return "Found"
+            if self.optimal_val < 0.92:
+                self.decision = "Unfound"
+            elif 0.92 <= self.optimal_val < 0.98:
+                self.decision = "Unclear"
+            elif self.optimal_val >= 0.98:
+                self.decision = "Found"
             else:
-                "This should not show up.."
+                print("This should not show up...")
         elif metric == "euc":
-            if self.optimal_val >= 4:
-                return "Unfound"
-            elif 4 > self.optimal_val >= 2:
-                return "Unclear"
-            elif self.optimal_val < 2:
-                return "Found"
+            if self.optimal_val > 3.5:
+                self.decision = "Unfound"
+            elif 3.5 >= self.optimal_val > 1.8:
+                self.decision = "Unclear"
+            elif self.optimal_val <= 1.8:
+                self.decision = "Found"
             else:
-                "This should not show up.."
+                print("This should not show up...")
         else:
             pass
+        
+        # prepare the current_dictionary for the json-upload
+        if self.decision == "Unfound":
+            self.current_dict = self.pe.get_signatures
+        elif self.decision == "Unclear":
+            interim_dict = dict()
+            # here we create a dict of dicts, since we have multiple Wikidata entries to look at
+            interim_dict['proc_event'] = self.pe.get_signatures
+            interim_dict['loe'] = self.loe.get_dict_of_signatures
+            self.current_dict = interim_dict
+            pass
+        elif self.decision == "Found":
+            interim_dict = self.pe.get_signatures
+            interim_dict['wd_qid'] = self.current_optimal.qid
+            self.current_dict[self.pe.isbn] = interim_dict
+        else:
+            print("This should not happen...")
+
+        return self.decision
+
+    def result_to_json(self):
+        """
+        Writes the result to the corresponding directory in results/.
+        Further distinguishes between the cases.
+        """
+        general_path = find_root_directory() / "results"
+
+        if self.decision == "Unfound":
+            file_path = general_path / "unfound_entries" / "upload.json"
+        elif self.decision == "Unclear":
+            file_path = general_path / "unclear_entries" / "manual.json"
+        elif self.decision == "Found":
+            file_path = general_path / "found_entries" / "upload.json"
+        else:
+            print("This should not happen...")
+        
+        # first read in current json-file to get cumulated_dict
+        try:
+            with open(file_path, encoding="utf-8") as f:
+                json_str = f.read()
+                if not json_str:
+                    # If the file is empty, set cumulated_dict to an empty dictionary
+                    cumulated_dict = dict()
+                else:
+                    # Load the cache from the existing file
+                    cumulated_dict = orjson.loads(json_str)
+        except FileNotFoundError:
+            # Handle case where file does not exist -> will be created later
+            cumulated_dict = dict()
+        except Exception as e:
+            # Handle other exceptions (e.g., invalid JSON data)
+            print(f"Error loading json-file due to {e}")
+
+        cumulated_dict[self.pe.isbn] = self.current_dict
+
+        try:
+            with open(file_path, 'wb') as f:
+                json_str = orjson.dumps(cumulated_dict,
+                                        option=
+                                        orjson.OPT_INDENT_2 |
+                                        orjson.OPT_NON_STR_KEYS | 
+                                        orjson.OPT_SERIALIZE_NUMPY | 
+                                        orjson.OPT_SERIALIZE_UUID | 
+                                        orjson.OPT_NAIVE_UTC)
+                f.write(json_str)
+        except Exception as e:
+            raise Exception(f"Error updating json-file due to {e}")
+
+        
 
     @staticmethod
     def cos_similarity(emb_1: np.ndarray, emb_2: np.ndarray) -> float:

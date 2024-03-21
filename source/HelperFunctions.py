@@ -28,13 +28,15 @@ def get_arg_parser(description: str) -> ArgumentParser:
                             formatter_class=RawTextHelpFormatter)
     # add arguments
     parser.add_argument("operation",
-                        choices=["small_test", "v2"],
-                        help="Set the operation for the evaluation.")
-    parser.add_argument("s_measure",
+                        choices=["small_test", "v2", "full", "resources"],
+                        help="Define the operation being performed.")
+    parser.add_argument("--s_measure",
                         choices=["euc", "cos"],
-                        help="Determine the similarity measure to compare the encodings.")    
-    parser.add_argument('--set_testset',
-                        type=str,
-                        help="Set the testset that you want to evaluate")
+                        default="euc",
+                        help="Determine the similarity measure to compare the encodings. \n Default: \"euc\"")    
+    parser.add_argument("--encoding",
+                        choices=["bert", "glove"],
+                        default="bert",
+                        help="Determine the encoding technique being applied to the signatures. \n Default: \"bert\"")
 
     return parser

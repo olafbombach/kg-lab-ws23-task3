@@ -14,19 +14,24 @@ class Preprocessor:
         self._raw_data = raw_data
         self._preprocessed_data = raw_data
 
-    def apply_preprocessing_pipeline(self, del_columns: Optional[list] = None) -> None:
+    def apply_preprocessing_pipeline(self, testset: bool = False, del_columns: Optional[list] = None) -> None:
         """
         Applies the preprocessing pipeline for the specified data.
         Please make sure that the deletion_columns can be applied, since no errors will occur otherwise.
         """
-        if type(self._raw_data) == pl.DataFrame:
+
+        assert type(self._raw_data) == pl.DataFrame, "Please verify that you are using a dataframe here."
+
+        if not testset:
             Preprocessor.filter_CS_entries(self)
-            if del_columns is not None:
-                Preprocessor.delete_columns(self, del_columns)
-            Preprocessor.delete_duplicates(self)
-            Preprocessor.to_string(self)
-            Preprocessor.preproc_years(self)
-            Preprocessor.fill_null(self)
+
+        if del_columns is not None:
+            Preprocessor.delete_columns(self, del_columns)
+            
+        Preprocessor.delete_duplicates(self)
+        Preprocessor.to_string(self)
+        Preprocessor.preproc_years(self)
+        Preprocessor.fill_null(self)
 
     def delete_columns(self, columns: list) -> None:
         for string in columns:
@@ -84,11 +89,11 @@ class Preprocessor:
         return self._preprocessed_data
 
 
-if __name__ == "__main__":
+'''if __name__ == "__main__":
 
     repo_path = Path(__file__).parent.parent.resolve()
     test_frame = pl.read_csv(repo_path / "datasets" / "wikidata" / "testset_v1.csv", separator=';')
     pr = Preprocessor(test_frame)
     pr.apply_preprocessing_pipeline()
-    print(pr.get_preprocessed_data)
+    print(pr.get_preprocessed_data)'''
 

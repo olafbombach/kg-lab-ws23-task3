@@ -1,19 +1,15 @@
 
 from typing import Union
-from source.HelperFunctions import find_root_directory
 from datetime import datetime
-import polars as pl
-
-import string  # dont know about this
-import numpy as np
 import json
-from lodstorage.sparql import SPARQL
-
-# Imports for ProceedingsUpdater
-from bs4 import BeautifulSoup
-from urllib.request import urlretrieve, urlopen
 import os
 from os.path import isfile, join
+import polars as pl
+
+from bs4 import BeautifulSoup
+from urllib.request import urlretrieve, urlopen
+from lodstorage.sparql import SPARQL
+
 from source.HelperFunctions import find_root_directory
 
 
@@ -24,7 +20,6 @@ class WikidataQuery(object):
         It further creates the dataset used for the data synchronization.
     """
 
-    # From https://www.wikidata.org/wiki/Wikidata:SPARQL_query_service/queries/examples#Cats
     query = SPARQL("https://query.wikidata.org/sparql")
     root_dir = find_root_directory()
     path_to_results = root_dir / "results"
@@ -60,6 +55,7 @@ class WikidataQuery(object):
         In case of a timeout or a false label, None is returned.
         """
         try: 
+
             s = name.lower()
             text = """
                     SELECT DISTINCT ?item ?label
@@ -237,7 +233,7 @@ class WikidataQuery(object):
         return " / ".join(str_lst)        
     
     @staticmethod
-    def _write_json_to_results(data: json, name_of_file: str) -> None:
+    def _write_json_to_results(data: object, name_of_file: str) -> None:
         if name_of_file.endswith('.json'):
             raise ValueError("Just name the file without the datatype (\'.json\').")
         full_file_name = name_of_file+".json"
@@ -256,8 +252,14 @@ class WikidataQuery(object):
 
 
 class ProceedingsUpdater:
+    """
+    An object that is able to scrape the current Proceedings.com excel file.
+    """
 
     def updateProceedings():
+        """
+        The method to update the Proceedings.com excel file.
+        """
         url = "https://www.proceedings.com/catalog.html"
         page = urlopen(url)
         html = page.read().decode("utf-8")
@@ -289,8 +291,6 @@ class ProceedingsUpdater:
             if ('.xlsx' in file):
                 oldfile=file
         #Update file
-        #print(newfile)
-        #print(oldfile)
         if (newfile != oldfile):
             datalink=""
             for item in datarow.children:
@@ -299,8 +299,12 @@ class ProceedingsUpdater:
                         if (data.attrs['href']!=""):
                             datalink=data.attrs['href']        
             fulldatalink='https://www.proceedings.com'+datalink[2:]
-            print("download new file")
+            # download new file
             path, headers = urlretrieve(fulldatalink, path_to_dataset / newfile)
             if oldfile!="":
                 os.remove(path_to_dataset / oldfile)
+            else:
+                pass
+        else:
+            pass
 
