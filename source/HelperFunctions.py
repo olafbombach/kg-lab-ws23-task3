@@ -28,7 +28,7 @@ def get_arg_parser(description: str) -> ArgumentParser:
                             formatter_class=RawTextHelpFormatter)
     # add arguments
     parser.add_argument("operation",
-                        choices=["small_test", "v2", "resources"],
+                        choices=["small_test", "v2", "full", "resources"],
                         help="Define the operation being performed.")
     parser.add_argument("--s_measure",
                         choices=["euc", "cos"],

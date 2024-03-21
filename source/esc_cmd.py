@@ -71,8 +71,8 @@ def evaluation_v2(sim_measure: str, encoding: str, small_test: bool=False) -> No
         
         # semantification of events
         logging.info("Semantification of entries started.")
-        dict_file_pe = pe.apply_semantifier(get_dict=True)
-        loe.apply_semantifier(get_dict=True)  # dict saved as class attribute 
+        dict_file_pe = pe.apply_semantifier(get_signatures=True)
+        loe.apply_semantifier(get_signatures=True)  # dict saved as class attribute 
 
         # get key-configurations for the encodings
         loe.compute_configurations(pe=pe)
@@ -92,18 +92,6 @@ def evaluation_v2(sim_measure: str, encoding: str, small_test: bool=False) -> No
         decision = co.case_decision(metric=sim_measure)
         logging.info(f"{opt_event.similarity:.3f} -> {decision}")
 
-        co.result_to_json()
-
-        # further processing
-        if decision == "Unfound":
-            pass
-        elif decision == "Unclear":
-            pass
-        elif decision == "Found":
-            pass
-        else:
-            print("This should not happen...")
-
         # presentation of fit
         logging.info("Finding optimal value for the following ProceedingsEvent:")
         logging.info(pe)
@@ -116,6 +104,122 @@ def evaluation_v2(sim_measure: str, encoding: str, small_test: bool=False) -> No
         if small_test:  # only one item for small test
             break
 
+        del pe, loe
+
+    del se_wiki, testset, preproc_testset
+
+def full_pipeline(sim_measure: str, encoding: str) -> None:
+    """
+    Full pipeline to find matches between proceedings.com events and Wikidata events.
+    Depending on the outcome creates an entry.
+    """
+    print("Start reading in dataset...")
+    root_dir = find_root_directory()
+    file_dir = root_dir / "datasets" / "proceedings.com"
+    all_files = os.listdir(file_dir)
+    
+    try:
+        # this assumes that there exist one and only one excel-file in this dir
+        excel_file = [f for f in all_files if f.startswith('all-') and f.endswith('.xlsx')][0]
+    except FileNotFoundError:
+        print("Please make sure that you downloaded all the necessary data.")
+    except Exception as e:
+        print("Unexpected error due to: ", e)
+
+    # set up logger
+    process_log_filename = root_dir / "results" / "logs" / f"full_{encoding}_{sim_measure}.log"
+    history_filename = root_dir / "results" / "logs" / f"history.log"
+    formatter = logging.Formatter(fmt="%(asctime)s %(levelname)s - %(message)s",
+                                  datefmt="%m/%d/%Y %I:%M:%S")
+
+    process_logger = logging.getLogger('process_logger')
+    process_logger.setLevel(logging.INFO)
+    process_handler = logging.FileHandler(process_log_filename, mode='w')
+    process_handler.setFormatter(formatter)
+    process_logger.addHandler(process_handler)
+
+    history_logger = logging.getLogger('history_logger')
+    history_logger.setLevel(logging.INFO)
+    history_handler = logging.FileHandler(history_filename, mode='a')
+    history_logger.addHandler(history_handler)
+
+    console_logger = logging.getLogger('console_logger')
+    console_logger.setLevel(logging.WARNING)
+    console_handler = logging.StreamHandler()
+    console_logger.addHandler(console_handler)
+    
+    # start with the code
+    se_wiki = SearchEngine("Wikidata", f_search=True)
+
+    process_logger.info("Start reading and preprocessing the datafile.")
+
+    dataset = pl.read_excel(file_dir / excel_file, engine="openpyxl")
+    pr = Preprocessor(raw_data=dataset)
+    deletion_columns = ["Editor", "Pages", "Format", "POD Publisher", 
+                        "Publ Year", "Subject2", "Subject3", "Subject4", 
+                        "List Price"]
+    pr.apply_preprocessing_pipeline(testset=False, del_columns=deletion_columns)
+    preproc_testset = pr.get_preprocessed_data
+
+    print("Start iteration...")
+    process_logger.info("Finished reading and preprocessing the complete datafile.")
+
+    # get previous history
+    with open(history_filename, mode="r") as f:
+        history = f.readlines()
+        history = [num.replace("\n", "") for num in history]
+
+    # start iteration
+    for i, entry in enumerate(preproc_testset.iter_rows(named=True)):
+        # logic if proceedings.com entry already has been uploaded!
+        current_isbn = entry.get("ISBN")  # isbn as unique identifier for proceedings.com
+        if current_isbn in history:
+            process_logger.info("This proceedings.com entry was already used in this pipeline. Moving on to the next...")
+            continue
+        else:
+            pass
+
+        pe = ProceedingsEvent(input_info=entry)
+
+        # searching of events
+        loe = pe.apply_searchengine(se_instance=se_wiki, max_search_hits=10)
+        process_logger.info(f"Found {len(loe)} wikidata entries for this proceedings.com entry.")
+        
+        # semantification of events
+        process_logger.info("Semantification of entries started.")
+        dict_file_pe = pe.apply_semantifier(get_signatures=True)
+        loe.apply_semantifier(logger=process_logger, get_signatures=True)  # dict saved as class attribute 
+
+        # get key-configurations for the encodings
+        loe.compute_configurations(pe=pe)
+
+        # encoding events
+        process_logger.info("Semantification finished. Moving on to encoding...")
+        pe.apply_encoder(dict_file = dict_file_pe, encoding=encoding)
+        loe.apply_encoder(encoding=encoding)
+
+        # comparing events
+        process_logger.info("Encoding finished...")
+        co = Comparor(pe=pe, loe=loe)
+        co.add_measure_as_attribute(sim_measure)
+
+        # get optimal value and receive decision
+        opt_event = co.get_optimal_similarity(metric=sim_measure)
+        decision = co.case_decision(metric=sim_measure)
+        process_logger.info(f"{opt_event.similarity:.3f} -> {decision}")
+
+        co.result_to_json()
+
+        # presentation of fit
+        process_logger.info("Finding optimal value for the following ProceedingsEvent:")
+        process_logger.info(pe)
+        process_logger.info("Optimal WikidataEvent for ProceedingsEvent:")
+        process_logger.info(opt_event)
+
+        print(f"Finished {i+1}. iteration for entry {current_isbn}.")
+        history_logger.info(current_isbn)
+        history.append(current_isbn)
+        
         del pe, loe
 
     del se_wiki, testset, preproc_testset
@@ -145,9 +249,15 @@ def main():
     if args.operation == "small_test":
         print("Please check the directory results/logs to find your small_test run.")
         evaluation_v2(sim_measure=args.s_measure, encoding=args.encoding, small_test=True)
+
     elif args.operation == "v2":
         print("Please check the directory results/logs to find your run.")
-        evaluation_v2(sim_measure=args.s_measure, encoding=args.encoding)
+        evaluation_v2(sim_measure=args.s_measure, encoding=args.encoding, small_test=False)
+
+    elif args.operation == "full":
+        print("Please check the directory results/logs to find your run.")
+        full_pipeline(sim_measure=args.s_measure, encoding=args.encoding)
+
     elif args.operation == "resources":
         print("Downloading all necessary files:")
         download_resources()
