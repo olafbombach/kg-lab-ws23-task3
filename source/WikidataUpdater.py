@@ -162,8 +162,7 @@ class WikidataUpdater:
                 data = json.load(json_file)
                 wdName = data["user"]
                 wdPassword = data["password"]
-        wbi_config['USER_AGENT'] = 'MyWikibaseBot/1.0 (https://www.wikidata.org/wiki/"+wdname")'
-        print('MyWikibaseBot/1.0 (https://www.wikidata.org/wiki/"+wdname")')
+        wbi_config['USER_AGENT'] = 'MyWikibaseBot/1.0 (https://www.wikidata.org/wiki/https://github.com/olafbombach/kg-lab-ws23-task3/actions/runs/8364288152/job/22899251617)'
         login = Clientlogin(wdName, wdPassword)
         return login
     
