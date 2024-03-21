@@ -43,23 +43,31 @@ def evaluation_v2(sim_measure: str, encoding: str, small_test: bool=False) -> No
     else:
         filename = root_dir / "results" / "logs" / f"testset_v2_{encoding}_{sim_measure}.log"
     
-    logging.basicConfig(level=logging.INFO,
-                            filemode="w",
-                            format="%(asctime)s %(levelname)s - %(message)s",
-                            datefmt="%m/%d/%Y %I:%M:%S",
-                            filename=filename)
+    formatter = logging.Formatter(fmt="%(asctime)s %(levelname)s - %(message)s",
+                                  datefmt="%m/%d/%Y %I:%M:%S")
+
+    process_logger = logging.getLogger('process_logger')
+    process_logger.setLevel(logging.INFO)
+    process_handler = logging.FileHandler(filename, mode='w')
+    process_handler.setFormatter(formatter)
+    process_logger.addHandler(process_handler)
+
+    console_logger = logging.getLogger('console_logger')
+    console_logger.setLevel(logging.WARNING)
+    console_handler = logging.StreamHandler()
+    console_logger.addHandler(console_handler)
     
     # start with the code
     se_wiki = SearchEngine("Wikidata", f_search=True)
 
-    logging.info("Start reading and preprocessing the testset datafile.")
+    process_logger.info("Start reading and preprocessing the testset datafile.")
 
     testset = pl.read_csv(testset_file, has_header=True, separator=";")
     pr = Preprocessor(raw_data=testset)
     pr.apply_preprocessing_pipeline(testset=True)
     preproc_testset = pr.get_preprocessed_data
 
-    logging.info("Finished reading in the complete testset datafile.")
+    process_logger.info("Finished reading in the complete testset datafile.")
 
     # create tokens and apply SearchEngine
     for i, entry in enumerate(preproc_testset.iter_rows(named=True)):
@@ -67,37 +75,37 @@ def evaluation_v2(sim_measure: str, encoding: str, small_test: bool=False) -> No
 
         # searching of events
         loe = pe.apply_searchengine(se_instance=se_wiki, max_search_hits=10)
-        logging.info(f"Found {len(loe)} wikidata entries for this proceedings.com entry.")
+        process_logger.info(f"Found {len(loe)} wikidata entries for this proceedings.com entry.")
         
         # semantification of events
-        logging.info("Semantification of entries started.")
+        process_logger.info("Semantification of entries started.")
         dict_file_pe = pe.apply_semantifier(get_signatures=True)
-        loe.apply_semantifier(get_signatures=True)  # dict saved as class attribute 
+        loe.apply_semantifier(logger=process_logger, get_signatures=True)  # dict saved as class attribute 
 
         # get key-configurations for the encodings
         loe.compute_configurations(pe=pe)
 
         # encoding events
-        logging.info("Semantification finished. Moving on to encoding...")
-        pe.apply_encoder(dict_file = dict_file_pe, encoding=encoding)
+        process_logger.info("Semantification finished. Moving on to encoding...")
+        pe.apply_encoder(dict_file=dict_file_pe, encoding=encoding)
         loe.apply_encoder(encoding=encoding)
 
         # comparing events
-        logging.info("Encoding finished...")
+        process_logger.info("Encoding finished...")
         co = Comparor(pe=pe, loe=loe)
         co.add_measure_as_attribute(sim_measure)
 
         # get optimal value and receive decision
         opt_event = co.get_optimal_similarity(metric=sim_measure)
         decision = co.case_decision(metric=sim_measure)
-        logging.info(f"{opt_event.similarity:.3f} -> {decision}")
+        process_logger.info(f"{opt_event.similarity:.3f} -> {decision}")
 
         # presentation of fit
-        logging.info("Finding optimal value for the following ProceedingsEvent:")
-        logging.info(pe)
-        logging.info("Optimal WikidataEvent for ProceedingsEvent:")
-        logging.info(opt_event)
-        logging.info(f"Real / True labeling: {entry['wikidata_index']}")
+        process_logger.info("Finding optimal value for the following ProceedingsEvent:")
+        process_logger.info(pe)
+        process_logger.info("Optimal WikidataEvent for ProceedingsEvent:")
+        process_logger.info(opt_event)
+        process_logger.info(f"Real / True labeling: {entry['wikidata_index']}")
 
         print(f"Finished {i+1}. iteration.")
         
@@ -195,7 +203,7 @@ def full_pipeline(sim_measure: str, encoding: str) -> None:
 
         # encoding events
         process_logger.info("Semantification finished. Moving on to encoding...")
-        pe.apply_encoder(dict_file = dict_file_pe, encoding=encoding)
+        pe.apply_encoder(dict_file=dict_file_pe, encoding=encoding)
         loe.apply_encoder(encoding=encoding)
 
         # comparing events

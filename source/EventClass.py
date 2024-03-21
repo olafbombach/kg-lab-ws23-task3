@@ -51,7 +51,10 @@ class ProceedingsEvent:
 
     def __post_init__(self):
         tok = Tokenizer()
-        self.isbn = self.input_info['ISBN']
+        try:
+            self.isbn = self.input_info['ISBN']
+        except KeyError:
+            pass  # in case of using the testset, we do not need the isbn
         
         self.keywords = tok.tokenizeProceedings(self.input_info)
         for keyword in self.keywords:
