@@ -8,7 +8,7 @@ test/evaluation/log/*
 cache/*.json
 
 datasets/glove/*.txt
-datasets/wikidata/*data.csv
+datasets/wikidata/wikidata_conf_data.csv
 datasets/proceedings.com/*.xlsx
 
 # Byte-compiled / optimized / DLL files
