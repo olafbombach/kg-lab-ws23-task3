@@ -47,28 +47,49 @@ class WikidataQuery(object):
         return result
     
     @staticmethod
-    def getWDIdfromLabel(name: str):
+    def getWDIdfromLabel(name:string):
         """
-        For the WikidataUpdater.
-        (currently mostly not finding anything due to HTTP error 500 (could be anything))
+        Find the entry in Wikidata that has a certain label.
+        Input: The label (string)
+        Returns: The QID of the item or None if it does not exist.
+        In case of a timeout or a false label, None is returned.
         """
-        wDid = None
-        try:
+        try: 
+
             s = name.lower()
-            text = " SELECT ?item WHERE { ?item rdfs:label ?itemLabel. FILTER(CONTAINS(LCASE(?itemLabel), \""+s+"\"@en)).FILTER(CONTAINS(\""+s+"\"@en, LCASE(?itemLabel))).} LIMIT 1"
-            print(text)
+            text = """
+                    SELECT DISTINCT ?item ?label
+                    WHERE
+                    {
+                    SERVICE wikibase:mwapi
+                        {
+                        bd:serviceParam wikibase:endpoint "www.wikidata.org";
+                                        wikibase:api "Generator";
+                                        mwapi:generator "search";
+                                        mwapi:gsrsearch "inlabel:"""+s+"""\"@en;
+                                        mwapi:gsrlimit "max".
+                        ?item wikibase:apiOutputItem mwapi:title.
+                    }
+                    ?item rdfs:label ?label. FILTER( LANG(?label)="en" )
+                     ?item rdfs:label ?label. FILTER(CONTAINS(LCASE(?label), \""""+s+"""\") )
+
+                    }
+                    order by strlen(str(?label)) desc(?item)
+                    LIMIT 1
+                   """
             result = WikidataQuery.queryWikiData(text)
-            WDresults= result["results"]["bindings"]
-            print(WDresults)
+            WDresults= result.getValues("item")
             if(len(WDresults) > 0):
-                uri = WDresults[0]["item"]["value"]
-                WDid = uri[uri.find("entity")+7:]
+                for w in WDresults:
+                    uri = w.value
+                    WDid = uri[uri.find("entity")+7:]
         
             else:
                 WDid = None
             return WDid
-        except:
-          return None  
+        except  Exception as e:
+          print(e)
+          return None   
 
     @staticmethod
     def assess_wikidata(write_to_json: bool) -> dict:
