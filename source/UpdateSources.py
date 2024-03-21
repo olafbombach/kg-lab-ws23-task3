@@ -51,20 +51,39 @@ class WikidataQuery(object):
         result = WikidataQuery.queryWikiData(text)
         return result
     
-    #for the WikidataUpdater class (currently mostly not finding anything due to HTTP error 500 (could be anything))
     @staticmethod
-    def getWDIdfromLabel(name: string):
-        wDid = None
-        try:
+    def getWDIdfromLabel(name:string):
+        """
+        Find the entry in Wikidata that has a certain label.
+        Input: The label (string)
+        Returns: The QID of the item or None if it does not exist.
+        In case of a timeout or a false label, None is returned.
+        """
+        try: 
             s = name.lower()
-            text = """ SELECT ?item WHERE {
-                        ?item rdfs:label \""""+name+"""\"@en.
-                        } 
-                        LIMIT 1
+            text = """
+                    SELECT DISTINCT ?item ?label
+                    WHERE
+                    {
+                    SERVICE wikibase:mwapi
+                        {
+                        bd:serviceParam wikibase:endpoint "www.wikidata.org";
+                                        wikibase:api "Generator";
+                                        mwapi:generator "search";
+                                        mwapi:gsrsearch "inlabel:"""+s+"""\"@en;
+                                        mwapi:gsrlimit "max".
+                        ?item wikibase:apiOutputItem mwapi:title.
+                    }
+                    ?item rdfs:label ?label. FILTER( LANG(?label)="en" )
+                     ?item rdfs:label ?label. FILTER(CONTAINS(LCASE(?label), \""""+s+"""\") )
+
+                    }
+                    order by strlen(str(?label)) ?item
+                    LIMIT 1
                    """
+            print(text)
             result = WikidataQuery.queryWikiData(text)
             WDresults= result["results"]["bindings"]
-            print(WDresults)
             if(len(WDresults) > 0):
                 uri = WDresults[0]["item"]["value"]
                 WDid = uri[uri.find("entity")+7:]
@@ -73,7 +92,7 @@ class WikidataQuery(object):
                 WDid = None
             return WDid
         except:
-          return None  
+          return None   
 
     @staticmethod
     def assess_wikidata(write_to_json: bool) -> dict:
