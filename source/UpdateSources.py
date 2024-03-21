@@ -78,20 +78,21 @@ class WikidataQuery(object):
                      ?item rdfs:label ?label. FILTER(CONTAINS(LCASE(?label), \""""+s+"""\") )
 
                     }
-                    order by strlen(str(?label)) ?item
+                    order by strlen(str(?label)) desc(?item)
                     LIMIT 1
                    """
-            print(text)
             result = WikidataQuery.queryWikiData(text)
-            WDresults= result["results"]["bindings"]
+            WDresults= result.getValues("item")
             if(len(WDresults) > 0):
-                uri = WDresults[0]["item"]["value"]
-                WDid = uri[uri.find("entity")+7:]
+                for w in WDresults:
+                    uri = w.value
+                    WDid = uri[uri.find("entity")+7:]
         
             else:
                 WDid = None
             return WDid
-        except:
+        except  Exception as e:
+          print(e)
           return None   
 
     @staticmethod
