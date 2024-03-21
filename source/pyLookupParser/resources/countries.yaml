@@ -467,21 +467,27 @@ Ukraine:
 United Kingdom:
   type: country
   value: Q145
+United States of America:
+  type: country
+  value: Q30
+UK:
+  type: country
+  value: Q145
 Uruguay:
   gpdPerCapita: 16245
   isocode: UY
   population: 3456750
   type: country
   value: Q77
+USA:
+  type: country
+  value: Q30
 Vietnam:
   gpdPerCapita: 2342
   isocode: VN
   population: 94660000
   type: country
   value: Q881
-ireland:
-  type: country
-  value: Q27
 Österreich:
   type: country
   value: Q40
