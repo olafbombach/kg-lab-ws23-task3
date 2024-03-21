@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field, asdict
 from typing import Optional, List, Dict, Union
 import numpy as np
-import polars as pl
 import logging
+from logging import Logger
 
 from source.Tokenizer import TokenSet, Tokenizer
 from source.SearchEngine import SearchEngine
@@ -20,6 +20,7 @@ class ProceedingsEvent:
     In this all information can be stored during one process run.
     """
     input_info: dict
+    isbn: str = None
     keywords: TokenSet = None
 
     full_title: str = None
@@ -28,7 +29,9 @@ class ProceedingsEvent:
     part_of_series: Optional[str] = None
     country_name: Optional[str] = None
     country_short: Optional[str] = None
+    country_qid: Optional[str] = None
     city_name: Optional[str] = None
+    city_qid: Optional[str] = None
     year: Optional[str] = None
     start_time: Optional[str] = None
     end_time: Optional[str] = None
@@ -48,7 +51,14 @@ class ProceedingsEvent:
 
     def __post_init__(self):
         tok = Tokenizer()
+        self.isbn = self.input_info['ISBN']
+        
         self.keywords = tok.tokenizeProceedings(self.input_info)
+        for keyword in self.keywords:
+            if keyword[1] == 'Country Identifier':
+                self.country_qid = keyword[0]
+            if keyword[1] == 'City Identifier':
+                self.city_qid = keyword[0]
 
     def apply_searchengine(self, se_instance: SearchEngine, max_search_hits: int = 5):
         """
@@ -85,7 +95,7 @@ class ProceedingsEvent:
 
         return loe
 
-    def apply_semantifier(self, get_dict: bool = True):
+    def apply_semantifier(self, get_signatures: bool = True):
         """
         Applies the Semantifier to the Proceedings Event.
         For this it takes the attribute input_info which is given from the data sources.
@@ -104,8 +114,8 @@ class ProceedingsEvent:
         self.start_time = str(sf_output.get('start_time')) if sf_output.get('start_time') != ("" or "None" or None) else None
         self.end_time = str(sf_output.get('end_time')) if sf_output.get('end_time') != ("" or "None" or None) else None
 
-        if get_dict:  # for encoding
-            att_dict = self.get_dict        
+        if get_signatures:  # for encoding
+            att_dict = self.get_signatures        
         else:
             pass
 
@@ -145,7 +155,7 @@ class ProceedingsEvent:
         self.encodings = encodings
 
     @property
-    def get_dict(self):
+    def get_signatures(self):
         """
         Receive the entry as dict of signatures.
         """
@@ -189,7 +199,7 @@ class WikidataEvent:
         attributes['encoding'] = 'Filled' if isinstance(self.encoding, np.ndarray) else 'Unfilled'
         return f"WikidataEvent({attributes})"
     
-    def apply_semantifier(self, get_dict: bool = True):
+    def apply_semantifier(self, get_signatures: bool = True):
         """
         Applies the Semantifier to the Wikidata Event.
         For this it takes the attribute input_info which is given from the data sources.
@@ -208,8 +218,8 @@ class WikidataEvent:
         self.start_time = str(sf_output.get('start_time')) if sf_output.get('start_time') != ("" or "None" or None) else None
         self.end_time = str(sf_output.get('end_time')) if sf_output.get('end_time') != ("" or "None" or None) else None
 
-        if get_dict:  # for encoding
-            att_dict = self.get_dict             
+        if get_signatures:  # for encoding
+            att_dict = self.get_signatures          
             return att_dict
         else:
             pass
@@ -220,7 +230,7 @@ class WikidataEvent:
         self.encoding = encoding
 
     @property
-    def get_dict(self):
+    def get_signatures(self):
         """
         Receive the entry as dict of signatures.
         """
@@ -263,7 +273,7 @@ class ListOfEvents:
         """
         return len(self.list_of_events)
 
-    def apply_semantifier(self, get_dict: bool = True):
+    def apply_semantifier(self, logger: Logger, get_signatures: bool = True):
         """
         Takes a list of events (LoE) and semantify them one by one.
         
@@ -279,7 +289,8 @@ class ListOfEvents:
                 current_qid = entry.qid
                 if cm.get_entry(qid=current_qid) == None:
                     # cannot find entry, have to create new one.
-                    dictionary = entry.apply_semantifier(get_dict=get_dict)
+                    dictionary = entry.apply_semantifier(get_signatures=get_signatures)
+                    logger.info(f"Semantification of the instance {current_qid} using the OpenAI API.")
                     dict_of_signatures[current_qid] = dictionary
                     # also add entry to cache
                     cm.add_entry(qid=current_qid, qid_dict=dictionary)
@@ -300,7 +311,7 @@ class ListOfEvents:
                     entry.end_time = str(cached_dictionary.get('end_time')) if cached_dictionary.get('end_time') != ("" or "None" or None) else None
 
                     dict_of_signatures[current_qid] = cached_dictionary
-                    logging.info(f"Semantified instance {current_qid} taken from Cache.")
+                    logger.info(f"Semantified instance {current_qid} taken from Cache.")
             else:
                 print("This should not be the case!")
         
@@ -310,14 +321,10 @@ class ListOfEvents:
     def compute_configurations(self, pe: ProceedingsEvent) -> None:
         configuration = dict()
         # Proceedings keys
-        available_data = asdict(pe)
-        available_data.pop('input_info', None)
-        available_data.pop('keywords', None)
-        available_data.pop('configuration', None)
-        available_data.pop('encodings', None)
+        available_data = pe.get_signatures
         # Wikidata element keys
         for element in self.dict_of_signatures.values():
-            dict_of_entry = element  # copy
+            dict_of_entry = element.copy()  # copy
             qid = dict_of_entry.get('qid')
             # delete unneeded keys
             dict_of_entry.pop('qid', None)
@@ -333,6 +340,14 @@ class ListOfEvents:
         # set configuration to class attributes
         self.configuration = configuration
         pe.configuration = configuration
+
+    @property
+    def get_dict_of_signatures(self):
+        """
+        Returns the dictionary of signatures created in the semantification step.
+        Entries are based on the class attributes.
+        """
+        return self.dict_of_signatures
         
     def apply_encoder(self, encoding: str):
         """
