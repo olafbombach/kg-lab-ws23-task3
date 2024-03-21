@@ -12,6 +12,8 @@ datasets/proceedings.com/*.xlsx
 datasets/wikidata/*data.csv
 
 results/unfound_entries/*.json
+results/unclear_entries/*.json
+results/found_entries/*.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
