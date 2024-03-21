@@ -45,7 +45,7 @@ class SearchEngine:
             try:
                 path = self._file_to_root / "datasets" / "proceedings.com"
                 all_files = os.listdir(path)
-                xlsx_file = [f for f in all_files if f.startswith("all-") and f.endswith(".xlsx")][0]  # this assumes that only one xlsx file is in this directory!
+                xlsx_file = [f for f in all_files if f.startswith("all-") and f.endswith(".xlsx")][0]  # this assumes that only one xlsx file exists in this directory!
                 data = pl.read_excel(path / xlsx_file, engine='openpyxl')
             except FileNotFoundError(f"Are you sure you are in the right directory? \n ROOT: {self._file_to_root}"):
                 pass
