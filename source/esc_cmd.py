@@ -165,7 +165,7 @@ def full_pipeline(sim_measure: str, encoding: str) -> None:
 
     dataset = pl.read_excel(file_dir / excel_file, engine="openpyxl")
     pr = Preprocessor(raw_data=dataset)
-    deletion_columns = ["Editor", "Pages", "Format", "POD Publisher", 
+    deletion_columns = ["Editor", "Pages", "Format", "POD Publisher", "Series",
                         "Publ Year", "Subject2", "Subject3", "Subject4", 
                         "List Price"]
     pr.apply_preprocessing_pipeline(testset=False, del_columns=deletion_columns)
