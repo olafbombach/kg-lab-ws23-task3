@@ -47,7 +47,7 @@ class WikidataQuery(object):
         return result
     
     @staticmethod
-    def getWDIdfromLabel(name:string):
+    def getWDIdfromLabel(name: str):
         """
         Find the entry in Wikidata that has a certain label.
         Input: The label (string)
