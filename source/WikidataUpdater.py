@@ -252,13 +252,12 @@ class WikidataUpdater:
         entity.labels.set('en', label)
         entity.claims.add(Item("Q27785883",prop_nr = "P31"))
         entity.write()
-        print("Entity ID"+str(entity.id))
         return entity.id
     
     @staticmethod
     def login(wd_username: str, wd_password: str):
         """
-        Static method that uses the credentials stored either locally in "home/.WDCredentials.json" as json or as environment 
+        Static method that uses the credentials stored either locally in "home/.wd_credentials/wd_credentials.json" as json or as environment 
         variables. 
         Returns a login object.
         """
