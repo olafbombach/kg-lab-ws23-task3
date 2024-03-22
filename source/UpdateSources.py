@@ -47,15 +47,14 @@ class WikidataQuery(object):
         return result
     
     @staticmethod
-    def getWDIdfromLabel(name:string):
+    def getWDIdfromLabel(name: str):
         """
         Find the entry in Wikidata that has a certain label.
-        Input: The label (string)
+        Input: label (type: str)
         Returns: The QID of the item or None if it does not exist.
         In case of a timeout or a false label, None is returned.
         """
         try: 
-
             s = name.lower()
             text = """
                     SELECT DISTINCT ?item ?label
@@ -77,17 +76,19 @@ class WikidataQuery(object):
                     order by strlen(str(?label)) desc(?item)
                     LIMIT 1
                    """
+            
             result = WikidataQuery.queryWikiData(text)
             WDresults= result.getValues("item")
-            if(len(WDresults) > 0):
+
+            if len(WDresults) > 0:
                 for w in WDresults:
                     uri = w.value
-                    WDid = uri[uri.find("entity")+7:]
-        
+                    WDid = uri[uri.find("entity")+7:]        
             else:
                 WDid = None
             return WDid
-        except  Exception as e:
+        
+        except Exception as e:
           print(e)
           return None   
 

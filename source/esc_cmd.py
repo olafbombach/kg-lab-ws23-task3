@@ -182,7 +182,7 @@ def full_pipeline(sim_measure: str, encoding: str) -> None:
         # logic if proceedings.com entry already has been uploaded!
         current_isbn = entry.get("ISBN")  # isbn as unique identifier for proceedings.com
         if current_isbn in history:
-            process_logger.info("This proceedings.com entry was already used in this pipeline. Moving on to the next...")
+            process_logger.info(f"Proceedings.com event {current_isbn} was already used in this pipeline. Moving on to the next...")
             continue
         else:
             pass

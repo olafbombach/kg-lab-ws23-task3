@@ -117,7 +117,7 @@ class Comparor:
         elif self.decision == "Found":
             interim_dict = self.pe.get_signatures
             interim_dict['wd_qid'] = self.current_optimal.qid
-            self.current_dict[self.pe.isbn] = interim_dict
+            self.current_dict = interim_dict
         else:
             print("This should not happen...")
 
