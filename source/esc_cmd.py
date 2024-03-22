@@ -10,6 +10,8 @@ from source.Downloader import Downloader
 from source.Preprocessor import Preprocessor
 from source.SearchEngine import SearchEngine
 from source.Comparor import Comparor
+from source.WikidataUpdater import WikidataUpdater
+from source.gui import GUI
 
 
 def download_resources() -> None:
@@ -232,6 +234,28 @@ def full_pipeline(sim_measure: str, encoding: str) -> None:
 
     del se_wiki, dataset, preproc_testset
 
+def resolve_unclear_entries():
+    """
+    Start GUI for visualization of unclear entries. 
+    Manual resolving necessary.
+    """
+    gui = GUI()
+    gui.gui_main()
+
+def upload_entries():
+    """
+    Upload all found and unfound entries that can be found in the json files of
+    \"results/\" to Wikidata. 
+    """
+    
+    wu_found = WikidataUpdater(found=True)
+    wu_found.update_all_entries()
+    del wu_found
+
+    wu_unfound = WikidataUpdater(found=False)
+    wu_unfound.update_all_entries()
+    del wu_unfound
+
 
 def main():
     """ main program """
@@ -265,6 +289,20 @@ def main():
     elif args.operation == "full":
         print("Please check the directory results/logs to find your run.")
         full_pipeline(sim_measure=args.s_measure, encoding=args.encoding)
+
+    elif args.operation == "solve":
+        print("Start GUI...")
+        print("After you solved this instance, make sure to use keyword interruption.")
+        resolve_unclear_entries()
+
+    elif args.operation == "upload":
+        print("Will upload or update the found new entries to Wikidata...")
+        try:
+            upload_entries()
+        except FileNotFoundError:
+            print("First make sure that you generate new entries using the full_pipeline.")
+        except Exception as e:
+            print("Unexpected error due to: ", e)
 
     elif args.operation == "resources":
         print("Downloading all necessary files:")

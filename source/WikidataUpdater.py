@@ -37,14 +37,14 @@ class WikidataUpdater:
         for key, value in self.data_dict.copy().items():
             if self.found:  # found_entries (has wd_qid as attribute)
                 try:
-                    self.editOnWikidata(dictionary=value)
+                    self.uploadToWikidata(dictionary=value, edit=True)
                     self.delete_item_of_dict(key)
                 except Exception as e:
                     print("Error has occured.", e)
                     continue
             else:  # unfound_entries
                 try:
-                    self.uploadToWikidata(dictionary=value)
+                    self.uploadToWikidata(dictionary=value, edit=False)
                     self.delete_item_of_dict(key)
                 except Exception as e:
                     print("Error has occured.", e)
@@ -58,17 +58,21 @@ class WikidataUpdater:
         """
         self.data_dict.pop(key)
 
-    def uploadToWikidata(self, dictionary: dict):
+    def uploadToWikidata(self, dictionary: dict, edit: bool):
         """
-        Static Method. Logs into the account given in the login() Method and performs an edit operation on a Wikidata object.
-        The login only persists in this method
+        Performs an edit operation on a Wikidata object.
         Parameters: 
-        event: The information on the proceeding found in proceedings.com encoded as ProceedingsEvent object
+        dictionary: The information on the proceeding found in proceedings.com as dict
+        edit: boolean if it is a edit-case or not
         Output:
         A WikibaseIntegrator Entity (base-entity class) describing the created object
         """
         wbi = WikibaseIntegrator(login = self.login)
-        entity = wbi.item.new()
+        if edit:
+            WDid = dictionary.get("wd_qid")
+            entity = wbi.item.get(WDid)
+        else:
+            entity = wbi.item.new()
 
         # get attributes
         full_title = dictionary.get("full_title")
@@ -129,6 +133,17 @@ class WikidataUpdater:
             entity.claims.add(Time(start_time+"T00:00:00Z", precision=11, prop_nr="P580"))
         if end_time:
             entity.claims.add(Time(end_time+"T00:00:00Z", precision=11, prop_nr="P582"))
+ 
+        #add event series (P179 = part of the series)
+        if part_of_series:
+            qualifiers = Qualifiers()
+            if ordinal:
+                # Add ordinal (series ordinal = P1545)
+                qualifiers.add(String(ordinal, prop_nr = "P1545"))
+            WDid = WikidataQuery.getWDIdfromLabel(part_of_series)
+            if WDid is None:
+                WDid = WikidataUpdater.create_Series(self.login, part_of_series)
+            entity.claims.add(Item(WDid, prop_nr="P179", qualifiers=qualifiers)) 
 
         #Instance of academic conference and proceeding
         entity.claims.add([Item("Q2020153", prop_nr="P31"),
@@ -136,109 +151,12 @@ class WikidataUpdater:
         
         #entity.write()
         print(entity)
-        
-        '''   
-        #add event series (P179 = part of the series)
-        if(not event.part_of_series == None):
-            qualifiers = Qualifiers()
-            if(not event.ordinal == None):
-                #Add ordinal (series ordinal = P1545)
-                qualifiers.add(String(str(event.ordinal), prop_nr = "P1545"))
-            WDid = WikidataQuery.getWDIdfromLabel(event.part_of_series)
-            if WDid == None:
-                WDid = WikidataUpdater.create_Series(login,event.part_of_series)
-            entity.claims.add(Item(WDid,prop_nr = "P179", qualifiers = qualifiers)) 
-                
+   
         #Basic information independant of entry
-        #origin (proceedings.com currently still missing in WD)
         #reference = References()
         #proceedingscom = Reference()
 
-        return entity'''
-
-    def editOnWikidata(self, dictionary: dict, WDid: string, countryID = None, cityID = None):
-        """
-        Static Method. Logs into the account given in the login() Method and performs an edit operation on a Wikidata object.
-        The login only persists in this method. Only adds claims for which a claim for that property did not exist yet.
-        Parameters: 
-        event: The information on the proceeding found in proceedings.com encoded as ProceedingsEvent object
-        WBid: The Wikidata identifier of the existing object to modify
-        Output:
-        A WikibaseIntegrator Entity (base-entity class) describing the edited object after the edit
-        """
-        wbi = WikibaseIntegrator(login = self.login)
-
-        WDid = dictionary.get("wd_qid")
-        entity = wbi.item.get(WDid)
-
-        # get attributes
-        full_title = dictionary.get("full_title")
-        short_name = dictionary.get("short_name")
-        ordinal = dictionary.get("ordinal")
-        part_of_series = dictionary.get("part_of_series")
-        country_name = dictionary.get("country_name")
-        country_short = dictionary.get("country_short")
-        country_qid = dictionary.get("country_qid")
-        city_name = dictionary.get("city_name")
-        city_qid = dictionary.get("city_qid")
-        year = dictionary.get("year")
-        start_time = dictionary.get("start_time")
-        end_time = dictionary.get("end_time")
-
-        # create and set label
-        label = full_title
-        if ordinal is not None:
-            label = ordinal + " " + label
-        if city_name is not None:
-            label = label + ", " + city_name
-            if country_name is not None:
-                label = label + ", " + country_name
-        if year is not None:
-            label = label + f" ({year})"
-
-        label = re.sub(r'\s{2,}', ' ', label)
-        label = label.rstrip()
-        
-        entity.labels.set('en', label, action_if_exists=ActionIfExists.KEEP) 
-
-        # add country (property P17 = country)
-        if country_qid:
-            pass
-        else:
-            country_qid = WikidataQuery.getWDIdfromLabel(country_name)
-        entity.claims.add(Item(country_qid, prop_nr="P17"))
-
-        # add city (property P276 = location)
-        if city_qid:
-            pass
-        else:
-            city_qid = WikidataQuery.getWDIdfromLabel(city_name)
-        entity.claims.add(Item(city_qid, prop_nr="P276"))
-        
-        # add short_name (property P1813 = Short Name)
-        if short_name:
-            entity.claims.add(MonolingualText(short_name, prop_nr="P1813"))
-        else:
-            pass
-
-        # add event series (property P179)
-        if part_of_series:
-            pass
-
-        # add start_time and end_time (property P580 and P582)
-        if start_time:
-            entity.claims.add(Time(start_time+"T00:00:00Z", precision=11, prop_nr="P580"))
-        if end_time:
-            entity.claims.add(Time(end_time+"T00:00:00Z", precision=11, prop_nr="P582"))
-
-        #Instance of academic conference and proceeding
-        entity.claims.add([Item("Q2020153", prop_nr="P31"),
-                           Item("Q1143604", prop_nr="P31")])
-        
-        #entity.write()
-        print(entity)
-
-        '''return entity'''
+        return entity
     
     @staticmethod
     def create_Series(login, label):

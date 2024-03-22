@@ -1,6 +1,7 @@
-from nicegui import ui
+from nicegui import ui, app
 from typing import Union
 from pathlib import Path
+import orjson
 
 from source.HelperFunctions import find_root_directory
 
@@ -9,16 +10,57 @@ class GUI:
     """
     Setup for the GUI that compares critical events.
     """
-    def __init__(self, files_directory: Path=find_root_directory() / "results" / "t.b.d."):
-        self.f_dir = files_directory
-        
-        # design of the GUI here:
+    TABLE_COLUMNS = [
+        {"name": "qid", "label": "QID", "field": "qid", "align": "mid", "required": True, "sortable": False},
+        {"name": "full_title", "label": "Full Title", "field": "full_title", "align": "left", "required": True, "sortable": False},
+        {"name": "short_name", "label": "Short Name", "field": "short_name", "align": "center", "required": True, "sortable": False},
+        {"name": "ordinal", "label": "Ordinal", "field": "ordinal", "align": "center", "required": True, "sortable": False},
+        {"name": "part_of_series", "label": "Part of the Series", "field": "part_of_series", "align": "center", "required": True, "sortable": False},
+        {"name": "country_name", "label": "Country", "field": "country_name", "align": "center", "required": True, "sortable": False},
+        {"name": "countr_short", "label": "Country ID", "field": "country_short", "align": "center", "required": True, "sortable": False},
+        {"name": "city_name", "label": "City", "field": "city_name", "align": "center", "required": True, "sortable": False},
+        {"name": "year", "label": "Year", "field": "year", "align": "center", "required": True, "sortable": False},
+        {"name": "start_time", "label": "Start Date", "field": "start_time", "align": "center", "required": True, "sortable": False},
+        {"name": "end_time", "label": "End Time", "field": "end_time", "align": "center", "required": True, "sortable": False}     
+    ]
+    FINAL_COLUMNS = [
+        {'name': 'feature', 'label': 'Feature', 'field': 'feature', 'align': 'left', 'required': True},
+        {'name': 'proc_event', 'label': 'Proceedings Event', 'field': 'proc_event', 'align': 'center', 'required': True},
+        {'name': 'your_choice', 'label': 'Your choice', 'field': 'your_choice', 'align': 'center', 'required': True}
+    ]
 
+    def __init__(self, files_directory: Path=find_root_directory() / "results" / "unclear_entries" / "manual.json"):
+        self.f_dir = files_directory
+        self.data_dict = self._read_json()  
+        self.current_selected = None      
+    
+    def gui_main(self):
+        """
+        Take the up-most entry and starts the GUI.
+        """
+        key, info = list(self.data_dict.items())[0]
+        
+        proceed_data = [info['proc_event']]
+        wikidata_data = list(info["loe"].values())
+        entries_left = len(self.data_dict)
+
+        self.GUI_design(proceedings_data=proceed_data, 
+                        wikidata_entries=wikidata_data, 
+                        entries_left=entries_left,
+                        current_key=key)
+        self.run()
+
+
+    def GUI_design(self, proceedings_data: list, wikidata_entries: list, entries_left: int, current_key: str):    
+        """
+        design of the GUI here.
+        """
         ui.markdown("# For this case, supervision is needed.")
+        ui.markdown(f"Still {entries_left} entries left.")
         ui.html("<b>Proceedings Event:</b>")
-        self.proc_table = ui.table(columns=table_columns[1:], rows=example_row_proceeding)
+        self.proc_table = ui.table(columns=GUI.TABLE_COLUMNS[1:], rows=proceedings_data)
         ui.html("<b>Wikidata Events that were the best hits:</b>")
-        self.hit_table = ui.table(columns=table_columns, rows=example_rows_wikidata, row_key="full_title")  # maybe qid would be better here
+        self.hit_table = ui.table(columns=GUI.TABLE_COLUMNS, rows=wikidata_entries, row_key="qid")
 
         ui.markdown("## Your choice in comparison to the Proceedings Event:")
 
@@ -30,15 +72,89 @@ class GUI:
                 ui.button(text="Clear", color="blue", on_click=lambda: self.choice_table.refresh(selected_item=None))
                 ui.space()
                 ui.space()
-                ui.button(text="This is the correct hit!", color="green", on_click=lambda: ui.notify("Good hit."))
-                ui.button(text="There is no good hit!", color="red", on_click=lambda: ui.notify("Alright."))
+                ui.button(text="This is the correct hit!", color="green", on_click=lambda: self.change_to_found(current_key))
+                ui.button(text="There is no good hit!", color="red", on_click=lambda: self.change_to_unfound(current_key))
 
     @staticmethod
     def run():
         """
         Creates and calls the GUI that is designed in the initialization.
         """
-        ui.run()
+        ui.run(reload=False)
+
+    def change_to_found(self, current_key: str):
+        """
+        When correct QID can be found:
+        Take the current proceedings.com entry and delete it from this data_dict.
+        Add QID and append it to results/found
+        """
+        selected_item = self.hit_table.rows[self.current_selected]
+        qid_of_found = selected_item.get('qid')
+        proc_entry = self.proc_table.rows[0]
+
+        proc_entry['wd_qid'] = qid_of_found
+
+        # delete from unclear_dataset
+        self.data_dict.pop(current_key)
+
+        # upload to found_dataset
+        file_to_found = find_root_directory() / "results" / "found_entries" / "upload.json"
+
+        with open(file_to_found, "r", encoding="utf-8") as json_file:
+            json_str = json_file.read()
+            found_dict = orjson.loads(json_str)
+
+        found_dict[current_key] = proc_entry
+
+        with open(file_to_found, "wb") as json_file:
+            json_str = orjson.dumps(found_dict,
+                                        option=
+                                        orjson.OPT_INDENT_2 |
+                                        orjson.OPT_NON_STR_KEYS | 
+                                        orjson.OPT_SERIALIZE_NUMPY | 
+                                        orjson.OPT_SERIALIZE_UUID | 
+                                        orjson.OPT_NAIVE_UTC)
+            json_file.write(json_str)
+        
+        ui.notify(f"Changed position of found entry {current_key} to results/found_entries.")
+
+        self._update_json()
+        app.shutdown
+
+    def change_to_unfound(self, current_key: str):
+        """
+        When correct QID can not be found:
+        Take the current proceedings.com entry and delete it from data_dict.
+        Append it to results/unfound
+        """
+        proc_entry = self.proc_table.rows[0]
+
+        # delete from unclear_dataset
+        self.data_dict.pop(current_key)
+
+        # upload to unfound_dataset
+        file_to_unfound = find_root_directory() / "results" / "unfound_entries" / "upload.json"
+
+        with open(file_to_unfound, "r", encoding="utf-8") as json_file:
+            json_str = json_file.read()
+            found_dict = orjson.loads(json_str)
+
+        found_dict[current_key] = proc_entry
+
+        with open(file_to_unfound, "wb") as json_file:
+            json_str = orjson.dumps(found_dict,
+                                        option=
+                                        orjson.OPT_INDENT_2 |
+                                        orjson.OPT_NON_STR_KEYS | 
+                                        orjson.OPT_SERIALIZE_NUMPY | 
+                                        orjson.OPT_SERIALIZE_UUID | 
+                                        orjson.OPT_NAIVE_UTC)
+            json_file.write(json_str)
+        
+        ui.notify(f"Changed position of unfound entry {current_key} to results/unfound_entries.")
+
+        self._update_json()
+        app.shutdown
 
     def get_your_choice(self, sel_item: Union[None, int]) -> list:
         """
@@ -62,138 +178,34 @@ class GUI:
                 new_rows.append({"feature": item[0],
                                  "proc_event": item[1],
                                  "your_choice": "-"})
+        self.current_selected = sel_item
         return new_rows
     
     @ui.refreshable
     def choice_table(self, selected_item: Union[None, int]) -> None:
         my_rows = GUI.get_your_choice(self, sel_item = selected_item)
-        ui.table(columns=final_columns, rows=my_rows)
+        ui.table(columns=GUI.FINAL_COLUMNS, rows=my_rows)
+    
+    def _read_json(self):
+        """
+        Read in data-file of unclear_data.
+        """
+        with open(self.f_dir, "r", encoding="utf-8") as json_file:
+            json_str = json_file.read()
+            data_dict = orjson.loads(json_str)
 
-table_columns = [
-    {"name": "similarity",  # end_time
-     "label": "Similarity", 
-     "field": "similarity", 
-     "align": "mid", 
-     "required": True,
-     "sortable": True},
-    {"name": "full_title",  # full_title
-     "label": "Full Title", 
-     "field": "full_title",
-     "align": "left",
-     "required": True,
-     "sortable": True},
-    {"name": "short_name",  # short_name
-     "label": "Short Name", 
-     "field": "short_name",
-     "align": "center", 
-     "required": True,
-     "sortable": True},
-    {"name": "ordinal",  # ordinal
-     "label": "Ordinal", 
-     "field": "ordinal", 
-     "align": "center", 
-     "required": True,
-     "sortable": True},
-    {"name": "part_of_series",  # part_of_series
-     "label": "Part of the Series", 
-     "field": "part_of_series", 
-     "align": "center", 
-     "required": True,
-     "sortable": True},
-    {"name": "country_name",  # country_name
-     "label": "Country", 
-     "field": "country_name", 
-     "align": "center", 
-     "required": True,
-     "sortable": True},
-    {"name": "country_identifier",  # country_identifier
-     "label": "Country ID", 
-     "field": "country_identifier", 
-     "align": "center", 
-     "required": True,
-     "sortable": True},
-    {"name": "city_name",  # city_name
-     "label": "City", 
-     "field": "city_name", 
-     "align": "center", 
-     "required": True,
-     "sortable": True},
-    {"name": "year",  # year
-     "label": "Year", 
-     "field": "year", 
-     "align": "center", 
-     "required": True,
-     "sortable": True},
-    {"name": "start_time",  # start_time
-     "label": "Start Date", 
-     "field": "start_time", 
-     "align": "center", 
-     "required": True,
-     "sortable": True},
-    {"name": "end_time",  # end_time
-     "label": "End Time", 
-     "field": "end_time", 
-     "align": "center", 
-     "required": True,
-     "sortable": True}     
-]
-
-final_columns = [
-    {'name': 'feature', 
-     'label': 'Feature', 
-     'field': 'feature', 
-     'align': 'left', 
-     'required': True},
-     {'name': 'proc_event', 
-      'label': 'Proceedings Event', 
-      'field': 'proc_event', 
-      'align': 'center', 
-      'required': True},
-      {'name': 'your_choice', 
-      'label': 'Your choice', 
-      'field': 'your_choice', 
-      'align': 'center', 
-      'required': True}
-]
-
-example_row_proceeding = [
-    {'full_title': 'International Conference Telecommunications', 
-     'short_name': 'ICT 2012', 
-     'ordinal': '19th', 
-     'part_of_series': None, 
-     'country_name': 'Lebanon', 
-     'country_identifier': 'LB', 
-     'city_name': 'Jounieh', 
-     'year': 2012, 
-     'start_time': '2012-04-23', 
-     'end_time': '2012-04-25'}
-]
-example_rows_wikidata = [
-    {'similarity': 2.27,
-     'full_title': 'International Conference on Telecommunications', 
-     'short_name': 'ICT 2012', 
-     'ordinal': '19th', 
-     'part_of_series': 'International Conference on Telecommunications', 
-     'country_name': 'Lebanon', 
-     'country_identifier': 'LB', 
-     'city_name': 'Jounieh', 
-     'year': '2012', 
-     'start_time': '2012-04-23',
-     'end_time': '2012-04-25'},
-     {'similarity': 8.25,
-      'full_title': 'IEEE Virtual Reality Conference', 
-      'short_name': 'VR 2011', 
-      'ordinal': 'null', 
-      'part_of_series': 'Virtual Reality and 3D User Interfaces', 
-      'country_name': 'Singapore', 
-      'country_identifier': 'SG', 
-      'city_name': 'Singapore', 
-      'year': '2011', 
-      'start_time': '2011-03-19', 
-      'end_time': '2011-03-23'}
-]
-
-
-
-gui = GUI()
-gui.run()
+        return data_dict
+    
+    def _update_json(self):
+        """
+        Write data-file of unclear_data after deletion of item.
+        """
+        with open(self.f_dir, "wb") as json_file:
+            json_str = orjson.dumps(self.data_dict,
+                                        option=
+                                        orjson.OPT_INDENT_2 |
+                                        orjson.OPT_NON_STR_KEYS | 
+                                        orjson.OPT_SERIALIZE_NUMPY | 
+                                        orjson.OPT_SERIALIZE_UUID | 
+                                        orjson.OPT_NAIVE_UTC)
+            json_file.write(json_str)
