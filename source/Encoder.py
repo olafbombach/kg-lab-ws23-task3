@@ -1,43 +1,49 @@
-import json
-from transformers import BertTokenizer, BertModel
-#from transformers import BertForSequenceClassification, Trainer, TrainingArguments
-import torch
 import numpy as np
-from scipy import spatial
+from pathlib import Path
+from transformers import BertTokenizer, BertModel
+import torch
 
+from source.HelperFunctions import find_root_directory
 class Encoder:
     """
     Creates an Encoding based on a dictionary. 
     Can create the encoding using BERT or Glove.
     """
     # keywords that are redundant for the encoding
-    REDUNDANT_STRINGS = ['ieee', 'iop', 'ieee/acm', 'edp', 'elsevier', 'spie', 'annual', 'yearly', 'meeting', 'symposium', 'workshop', 'conference', 'proceeding', 'proceedings', 'or', 'and', '&', 'of', 'on', 'at', 'about']
+    REDUNDANT_STRINGS = ['ieee', 'iop', 'ieee/acm', 'edp', 'elsevier', 'spie', 
+                         'annual', 'yearly', 'meeting', 'symposium', 'workshop', 
+                         'conference', 'proceeding', 'proceedings', 'or', 
+                         'and', '&', 'of', 'on', 'at', 'about']
 
-    def __init__(self, dict_file: dict):
+    def __init__(self, dict_file: dict, technique: str):
+
+        assert technique in ['bert', 'glove'], "Please make sure to use a viable encoding."
+
         self.dict_data = dict_file
-        # TODO create a downloader class that gets the required datasets from their source, unpack in the working directory
-        # the path should then point to the said directory. 
-        """glove_path = "/home/efeboz/Desktop/glove.6B/glove.6B.50d.txt"
-        self.glove_embeddings = self.load_glove_embeddings(glove_path)"""
+        self.technique = technique
+        self.glove_embeddings = None
+        if self.technique == "glove":
+            self.glove_embeddings = Encoder.load_glove_embeddings(self)
 
-    # Read GloVe dataset
-    def load_glove_embeddings(self, file_path):
-        glove_embeddings = {}
-        with open(file_path, 'r') as file:
+    def load_glove_embeddings(self, file_to_glove_dir: Path = find_root_directory() / "datasets" / "glove") -> dict:
+        """
+        Loads the necessary embedding to create encodings with Glove.
+        """
+        txt_file = file_to_glove_dir / "glove.6B.50d.txt"
+        assert txt_file.exists(), "Please make sure, that the embedding of Glove is already downloaded locally!"
+
+        glove_embeddings = dict()
+        with open(txt_file, 'r', encoding='utf8') as file:
             for line in file:
                 values = line.split()
                 word = values[0]
                 vector = np.array(values[1:], dtype='float32')
                 glove_embeddings[word] = vector
-        self.glove_embeddings = glove_embeddings
         return glove_embeddings
 
-    def get_bert_embedding(self, value):
+    def get_bert_embedding(self, value: str):
         """
-        Load pre-trained BERT model and tokenizer.
-
-        Function to get BERT embedding for a value.
-        Only to make a prediction, no actual training.
+        Method to get BERT embedding for a specific value.
         """
         # Load pre-trained BERT model and tokenizer
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -49,19 +55,17 @@ class Encoder:
             # mean across the tokens for each sequence to get a fixed size representation
             # squeeze() for 1 dimensional tensor
         return outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
-    
         
-    # Get embedding for word from GloVe dataset
-    def get_glove_word_embedding(self, word): 
+    def get_glove_word_embedding(self, value: str): 
+        """
+        Method to get Glove embedding for a specific value.
+        """
         if not self.glove_embeddings:
             raise ValueError("GloVe word embeddings not loaded, call load_embeddings")
-        return self.glove_embeddings.get(word, None)
+        else:
+            return self.glove_embeddings.get(value, None)
     
-    # Apply for a set of string
-    # entry_no: integer value for selecting the JSON element for computation
-    # optional parameters title, abbreviation, date, year, location of type boolean. Passing these parameters indicate which elements are going to be calculated
-    # TODO empty string "" has also an embedding value, find a solution to not calculate it
-    #def get_glove_encoding(self, entry_no: int, title: bool=None, abbreviation: bool=None, date: bool=None, year: bool=None, location: bool=None):
+
     def get_glove_encoding(self, **kwargs):
         """
         Specify the attributs you want to include in your encoding as boolean kwargs.
@@ -84,9 +88,11 @@ class Encoder:
         words = text_to_evaluate.split()
         embeddings = [self.get_glove_word_embedding(word) for word in words]
         embeddings = [emb for emb in embeddings if emb is not None]
+        
         if not embeddings:
             return None
-        return np.mean(embeddings, axis=0)
+        else:
+            return np.mean(embeddings, axis=0)
     
     def get_bert_encoding(self, **kwargs):
         """
@@ -132,6 +138,7 @@ class Encoder:
                 pass
         return current_string.strip()  
     
+    @staticmethod
     def _separate_into_list(addition: str):
         """
         Separate string into list.

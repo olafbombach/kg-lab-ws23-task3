@@ -32,7 +32,7 @@ class CacheManager:
                 json_str = f.read()
                 if not json_str:
                     # If the file is empty, set self.current_dict to an empty dictionary
-                    self.current_dict = {}
+                    self.current_dict = dict()
                 else:
                     # Load the cache from the existing file
                     self.current_dict = orjson.loads(json_str)
@@ -73,8 +73,8 @@ class CacheManager:
         """
         self.current_dict[qid] = qid_dict
     
-if __name__ == "__main__":
+'''if __name__ == "__main__":
     cm = CacheManager("test")
     dicti = {"full_title": "IIFI 2001", "city": "Göttingen"}
     cm.current_dict = dicti
-    cm.store_cache()
+    cm.store_cache()'''

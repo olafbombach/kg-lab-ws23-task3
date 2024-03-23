@@ -1,14 +1,73 @@
 from nicegui import ui
 from typing import Union
+from pathlib import Path
+
+from source.HelperFunctions import find_root_directory
 
 
 class GUI:
     """
     Setup for the GUI that compares critical events.
     """
-    def __init__(self, files_directory):
+    def __init__(self, files_directory: Path=find_root_directory() / "results" / "t.b.d."):
         self.f_dir = files_directory
+        
+        # design of the GUI here:
+
+        ui.markdown("# For this case, supervision is needed.")
+        ui.html("<b>Proceedings Event:</b>")
+        self.proc_table = ui.table(columns=table_columns[1:], rows=example_row_proceeding)
+        ui.html("<b>Wikidata Events that were the best hits:</b>")
+        self.hit_table = ui.table(columns=table_columns, rows=example_rows_wikidata, row_key="full_title")  # maybe qid would be better here
+
+        ui.markdown("## Your choice in comparison to the Proceedings Event:")
+
+        with ui.row():
+            self.choice_table(selected_item=None)
+            self.hit_table.on(type="rowClick", handler=lambda event: self.choice_table.refresh(selected_item=event.args[2]))
+
+            with ui.card():
+                ui.button(text="Clear", color="blue", on_click=lambda: self.choice_table.refresh(selected_item=None))
+                ui.space()
+                ui.space()
+                ui.button(text="This is the correct hit!", color="green", on_click=lambda: ui.notify("Good hit."))
+                ui.button(text="There is no good hit!", color="red", on_click=lambda: ui.notify("Alright."))
+
+    @staticmethod
+    def run():
+        """
+        Creates and calls the GUI that is designed in the initialization.
+        """
+        ui.run()
+
+    def get_your_choice(self, sel_item: Union[None, int]) -> list:
+        """
+        Method to define the current rows after selecting one specific item 
+        The outcome of this method is a list with all new rows as dictionary.
+        """
+        new_rows = []
+
+        if sel_item is not None:  # we have a selection
+            for item in self.hit_table.rows[sel_item].items():
+                if item[0] in self.proc_table.rows[0]:  # check wheter the item is also part of the Proceedings.com event or not
+                    new_rows.append({"feature": item[0], 
+                                     "proc_event": self.proc_table.rows[0][item[0]], 
+                                     "your_choice": item[1]})
+                else:  # this case is good for the signature of similarity (not part of Proceedings.com event)
+                    new_rows.append({"feature": item[0],
+                                     "proc_event": "-",
+                                     "your_choice": item[1]})
+        else:  # we have no selection yet
+            for item in self.proc_table.rows[0].items():
+                new_rows.append({"feature": item[0],
+                                 "proc_event": item[1],
+                                 "your_choice": "-"})
+        return new_rows
     
+    @ui.refreshable
+    def choice_table(self, selected_item: Union[None, int]) -> None:
+        my_rows = GUI.get_your_choice(self, sel_item = selected_item)
+        ui.table(columns=final_columns, rows=my_rows)
 
 table_columns = [
     {"name": "similarity",  # end_time
@@ -134,41 +193,7 @@ example_rows_wikidata = [
       'end_time': '2011-03-23'}
 ]
 
-def get_your_choice(sel_item: Union[None, int]) -> list:
-    new_rows = []
-    if sel_item != None:
-        for item in hit_table.rows[sel_item].items():
-            new_rows.append({"feature": item[0], 
-                            "proc_event": table.rows[0][item[0]], 
-                            "your_choice": item[1]})
-    elif sel_item == None:
-        for item in table.rows[0].items():
-            new_rows.append({"feature": item[0],
-                             "proc_event": item[1],
-                             "your_choice": "-"})
-    return new_rows
 
-@ui.refreshable
-def choice_table(selected_item: Union[None, int]) -> None:
-    my_rows = get_your_choice(sel_item = selected_item)
-    ui.table(columns=final_columns, rows=my_rows)
 
-ui.markdown("# For this case, supervision is needed.")
-
-ui.html("<b>Proceedings Event:</b>")
-table = ui.table(columns=table_columns[1:], rows=example_row_proceeding)
-    
-ui.html("<b>Wikidata Events that were the best hits:</b>")
-hit_table = ui.table(columns=table_columns, rows=example_rows_wikidata, row_key="full_title")
-
-ui.markdown("## Your choice in comparison to the Proceedings Event:")
-
-with ui.row():
-    choice_table(selected_item=None)
-    hit_table.on(type="rowClick", handler=lambda event: choice_table.refresh(selected_item=event.args[2]))
-
-    with ui.card():
-        ui.button(text="This is the \n correct hit!", color="green", on_click=lambda: ui.notify("Good hit."))
-        ui.button(text=f"There is \n no good hit!", color="red", on_click=lambda: ui.notify("Alright."))
-
-ui.run()
+gui = GUI()
+gui.run()
