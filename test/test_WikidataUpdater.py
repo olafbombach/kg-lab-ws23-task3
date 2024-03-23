@@ -11,6 +11,7 @@ import pytest
 #Disabled until addition of the required folders
 def test_base():
     #w = WikidataUpdater(True)
+    #w.update_all_entries()
     i = 1
     
 
