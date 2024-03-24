@@ -244,7 +244,7 @@ def full_pipeline(sim_measure: str, encoding: str) -> None:
         
         del pe, loe, co, decision, opt_event, dict_file_pe, current_isbn
 
-    del se_wiki, dataset, preproc_testset
+    del se_wiki, dataset, preproc_dataset
 
 def resolve_unclear_entries():
     """
