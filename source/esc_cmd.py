@@ -177,7 +177,7 @@ def full_pipeline(sim_measure: str, encoding: str) -> None:
                         "Publ Year", "Subject2", "Subject3", "Subject4", 
                         "List Price"]
     pr.apply_preprocessing_pipeline(testset=False, del_columns=deletion_columns)
-    preproc_testset = pr.get_preprocessed_data
+    preproc_dataset = pr.get_preprocessed_data
 
     print("Start iteration...")
     process_logger.info("Finished reading and preprocessing the complete datafile.")
@@ -188,7 +188,7 @@ def full_pipeline(sim_measure: str, encoding: str) -> None:
         history = [num.replace("\n", "") for num in history]
 
     # start iteration
-    for i, entry in enumerate(preproc_testset.iter_rows(named=True)):
+    for i, entry in enumerate(preproc_dataset.iter_rows(named=True)):
         # logic if proceedings.com entry already has been uploaded!
         current_isbn = entry.get("ISBN")  # isbn as unique identifier for proceedings.com
         if current_isbn in history:
@@ -231,14 +231,18 @@ def full_pipeline(sim_measure: str, encoding: str) -> None:
         # presentation of fit
         process_logger.info("Finding optimal value for the following ProceedingsEvent:")
         process_logger.info(pe)
+        
         process_logger.info("Optimal WikidataEvent for ProceedingsEvent:")
-        process_logger.info(opt_event)
+        try:
+            process_logger.info(opt_event)
+        except UnicodeEncodeError as e:
+            process_logger.info("Visualization of Wikidata event omitted due to {e}.")
 
-        print(f"Finished {i+1}. iteration for entry {current_isbn}.")
+        print(f"Finished {i+1}. iteration for entry {current_isbn}. Went to -> {decision}")
         history_logger.info(current_isbn)
         history.append(current_isbn)
         
-        del pe, loe
+        del pe, loe, co, decision, opt_event, dict_file_pe, current_isbn
 
     del se_wiki, dataset, preproc_testset
 
