@@ -211,7 +211,7 @@ class Gui:
                 with content:
                     ui.spinner(size="10em")
                     ui.markdown("Get new data...")
-                    ui.timer(5, lambda: ui.notify("Something is not correct! :( Please check your prompt!"), once=True)
+                    ui.timer(5, lambda: ui.notify("Something is not correct! :( Please check your cmd!"), once=True)
 
                 await load(first_iter=False, action=action)
 
@@ -249,7 +249,7 @@ class Gui:
         with ui.card() as content:
             ui.spinner(size="10em")
             ui.markdown("Fetching data...")
-            ui.timer(5, lambda: ui.notify("Something is not correct! :( Please check your prompt!"), once=True)
+            ui.timer(5, lambda: ui.notify("Something is not correct! :( Please check your cmd!"), once=True)
             background_tasks.create(load(first_iter=True))
 
     @ui.refreshable
@@ -288,7 +288,8 @@ class Gui:
 
 
 if __name__ in { '__main__', '__mp_main__' } :
-    dh = DataHandler()
     
+    dh =DataHandler()
+
     gui = Gui()
     ui.run()

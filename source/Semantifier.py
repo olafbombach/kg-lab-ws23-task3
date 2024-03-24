@@ -147,7 +147,7 @@ class Semantifier:
         elif self.dataset_name == 'proceedings.com':
             # datatype: dictionary
             # df= conferences.select("Conference Title","Book Title","Series","Description","Mtg Year")
-            df = {key: conferences[key] for key in ("Conference Title","Book Title","Series","Description","Mtg Year")}
+            df = {key: conferences[key] for key in ("Publisher","Conference Title","Book Title","Description")}
         # semantify with openai
         data = Semantifier.open_ai_semantification(self,
                                                    df, 

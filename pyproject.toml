@@ -38,6 +38,7 @@ dependencies = [
   "spacy == 3.7.2",
   "pylookupparser == 0.0.2",
   "number_parser == 0.3.2",
+  "bs4",
   # NLP stuff
   "openai == 1.12.0",
   "transformers",

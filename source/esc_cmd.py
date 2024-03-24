@@ -2,6 +2,8 @@ import sys
 import os
 import logging
 import polars as pl
+from nicegui import ui
+import subprocess
 
 from source.HelperFunctions import find_root_directory, get_arg_parser
 from source.EventClass import ProceedingsEvent
@@ -11,7 +13,6 @@ from source.Preprocessor import Preprocessor
 from source.SearchEngine import SearchEngine
 from source.Comparor import Comparor
 from source.WikidataUpdater import WikidataUpdater
-from source.gui import GUI
 
 
 def download_resources() -> None:
@@ -60,7 +61,13 @@ def evaluation_v2(sim_measure: str, encoding: str, small_test: bool=False) -> No
     console_logger.addHandler(console_handler)
     
     # start with the code
-    se_wiki = SearchEngine("Wikidata", f_search=True)
+    try:
+        se_wiki = SearchEngine("Wikidata", f_search=True)
+    except FileNotFoundError:
+        raise FileNotFoundError("Please make sure that you downloaded all the necessary data. \n"
+                                "Check \"esc resources\" or \"scripts/resources.sh\".")
+    except Exception as e:
+        raise Exception("Unexpected error due to: ", e)
 
     process_logger.info("Start reading and preprocessing the testset datafile.")
 
@@ -131,10 +138,11 @@ def full_pipeline(sim_measure: str, encoding: str) -> None:
     try:
         # this assumes that there exist one and only one excel-file in this dir
         excel_file = [f for f in all_files if f.startswith('all-') and f.endswith('.xlsx')][0]
-    except FileNotFoundError:
-        print("Please make sure that you downloaded all the necessary data.")
+    except IndexError:
+        raise FileNotFoundError("Please make sure that you downloaded all the necessary data. \n"
+                                "Check \"esc resources\" or \"scripts/resources.sh\".")
     except Exception as e:
-        print("Unexpected error due to: ", e)
+        raise Exception("Unexpected error due to: ", e)
 
     # set up logger
     process_log_filename = root_dir / "results" / "logs" / f"full_{encoding}_{sim_measure}.log"
@@ -239,8 +247,8 @@ def resolve_unclear_entries():
     Start GUI for visualization of unclear entries. 
     Manual resolving necessary.
     """
-    gui = GUI()
-    gui.gui_main()
+    # I know this is not how you should do it, but I did not see another way...
+    subprocess.run(['venv/Scripts/python', 'source/Gui.py'])
 
 def upload_entries():
     """
@@ -292,7 +300,6 @@ def main():
 
     elif args.operation == "solve":
         print("Start GUI...")
-        print("After you solved this instance, make sure to use keyword interruption.")
         resolve_unclear_entries()
 
     elif args.operation == "upload":
@@ -300,9 +307,9 @@ def main():
         try:
             upload_entries()
         except FileNotFoundError:
-            print("First make sure that you generate new entries using the full_pipeline.")
+            raise FileNotFoundError("First make sure that you generate data using the full_pipeline. \n\"esc full\"")
         except Exception as e:
-            print("Unexpected error due to: ", e)
+            raise e("Unexpected error due to: ", e)
 
     elif args.operation == "resources":
         print("Downloading all necessary files:")
