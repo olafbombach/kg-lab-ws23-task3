@@ -154,7 +154,8 @@ class WikidataUpdater:
         
         
         #Add ISBN-13 number
-        entity.claims.add(String(str(isbn),prop_nr = "P212"))
+        references = [Item("Q108267044",prop_nr = "P248")]
+        entity.claims.add(String(str(isbn),prop_nr = "P212", references = references))
         
         #entity.write()
         print(entity)
