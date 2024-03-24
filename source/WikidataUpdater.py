@@ -93,7 +93,7 @@ class WikidataUpdater:
 
         # create and set label
         label = full_title
-        if ordinal is not None:
+        if ordinal is not None and WikidataUpdater.count_digits_loop(ordinal) < 3:
             label = ordinal + " " + label
         if city_name is not None:
             label = label + ", " + city_name
@@ -141,8 +141,10 @@ class WikidataUpdater:
         if part_of_series:
             qualifiers = Qualifiers()
             if ordinal:
-                # Add ordinal (series ordinal = P1545)
-                qualifiers.add(String(ordinal, prop_nr = "P1545"))
+                #add only ordinals containing at most 2 digits
+                if WikidataUpdater.count_digits_loop(ordinal) < 3:
+                    # Add ordinal (series ordinal = P1545)
+                    qualifiers.add(String(ordinal, prop_nr = "P1545"))
             WDid = WikidataQuery.getWDIdfromLabel(part_of_series)
             if WDid is None:
                 WDid = WikidataUpdater.create_Series(self.login, part_of_series)
@@ -154,9 +156,10 @@ class WikidataUpdater:
         
         
         #Add ISBN-13 number
-        entity.claims.add(String(str(isbn),prop_nr = "P212"))
+        references = [Item("Q108267044",prop_nr = "P248")]
+        entity.claims.add(String(str(isbn),prop_nr = "P212", references = references))
         
-        entity.write()
+        #entity.write()
         print(entity)
    
         #Basic information independant of entry
@@ -164,6 +167,16 @@ class WikidataUpdater:
         #proceedingscom = Reference()
 
         return entity
+    
+    #Helperfunction count number of digits
+    
+    @staticmethod
+    def count_digits_loop(s):
+        count = 0
+        for char in s:
+            if char.isdigit():
+                count += 1
+        return count
     
     @staticmethod
     def create_Series(login, label):
@@ -262,3 +275,5 @@ class WikidataUpdater:
 if __name__ == "__main__":
     wu = WikidataUpdater(found=False)
     wu.update_all_entries()
+    
+            
