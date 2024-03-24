@@ -16,6 +16,9 @@ Abu Dhabi:
 Adelaide:
   type: city
   value: Q5112
+Agadir:
+  type: city
+  value: Q170525
 Albuquerque:
   type: city
   value: Q34804
@@ -67,9 +70,15 @@ Atlantic City:
 Auckland:
   type: city
   value: Q37100
+Aurangabad:
+  type: city
+  value: Q200713
 Austin:
   type: city
   value: Q16559
+Avignon:
+  type: city
+  value: Q6397
 Bali:
   type: city
   value: Q60437836
@@ -163,6 +172,9 @@ Brno:
 Bucharest:
   type: city
   value: Q19660
+Budapest:
+  type: city
+  value: Q1781
 Buenos Aires:
   type: city
   value: Q1486
@@ -175,6 +187,9 @@ Burlingame:
 Busan:
   type: city
   value: Q16520
+Bydgoszcz:
+  type: city
+  value: Q41252
 Cairo:
   type: city
   value: Q85
@@ -202,18 +217,27 @@ Cape Town:
 Capri:
   type: city
   value: Q71902
+Casablanca:
+  type: city
+  value: Q7903
 Catania:
   type: city
   value: Q1903
 Changsha:
   type: city
   value: Q174091
+Charleston:
+  type: city
+  value: Q47716
 Charlotte:
   type: city
   value: Q16565
 Charlottesville:
   type: city
   value: Q123766
+Chelyabinsk:
+  type: city
+  value: Q906
 Chengdu:
   type: city
   value: Q30002
@@ -232,6 +256,9 @@ China:
 Chongqing:
   type: city
   value: Q11725
+Christchurch:
+  type: city
+  value: Q79990
 Cincinnati:
   type: city
   value: Q43196
@@ -397,6 +424,9 @@ Guangzhou:
 Guilin:
   type: city
   value: Q189633
+Gyeongju:
+  type: city
+  value: Q42097
 Haifa:
   type: city
   value: Q41621
@@ -508,6 +538,15 @@ Karlskrona:
 Karlsruhe:
   type: city
   value: Q1040
+Kazan:
+  type: city
+  value: Q900
+Kemerovo:
+  type: city
+  value: Q6066
+Kiev:
+  type: city
+  value: Q1899
 "Kitaky\u016Bsh\u016B":
   type: city
   value: Q188806
@@ -586,6 +625,9 @@ Long Beach:
 Los Angeles:
   type: city
   value: Q65
+Lublin:
+  type: city
+  value: Q37333
 Lugano:
   type: city
   value: Q7024
@@ -628,6 +670,9 @@ Medan:
 Melbourne:
   type: city
   value: Q3141
+Metz:
+  type: city
+  value: Q22690
 Mexico City:
   type: city
   value: Q1489
@@ -697,6 +742,9 @@ New Orleans:
 New Paltz:
   type: city
   value: Q3709293
+New York:
+  type: city
+  value: Q60
 New York City:
   type: city
   value: Q60
@@ -712,6 +760,9 @@ Noida:
 Noordwijkerhout:
   type: city
   value: Q848988
+Northampton:
+  type: city
+  value: Q192240
 Novi Sad:
   type: city
   value: Q55630
@@ -766,6 +817,9 @@ Paris:
 Pattaya:
   type: city
   value: Q170919
+Pekanbaru:
+  type: city
+  value: Q7786
 Penang:
   type: city
   value: Q20584173
@@ -800,6 +854,9 @@ Potsdam:
   type: city
   value: Q1711
 "Pozna\u0144":
+  type: city
+  value: Q268
+Poznan:
   type: city
   value: Q268
 Prague:
@@ -838,6 +895,9 @@ Republic:
 "Reykjav\xEDk":
   type: city
   value: Q1764
+Reykjavik:
+  type: city
+  value: Q1764
 Riga:
   type: city
   value: Q1773
@@ -868,6 +928,9 @@ Salvador:
 Salzburg:
   type: city
   value: Q34713
+Samara:
+  type: city
+  value: Q894
 San Antonio:
   type: city
   value: Q975
@@ -997,9 +1060,15 @@ Tempe:
 Thessaloniki:
   type: city
   value: Q17151
+Thiruvananthapuram:
+  type: city
+  value: Q167715
 Tianjin:
   type: city
   value: Q11736
+Tilburg:
+  type: city
+  value: Q26430
 "Timi\u0219oara":
   type: city
   value: Q83404
@@ -1018,6 +1087,9 @@ Trento:
 Trieste:
   type: city
   value: Q546
+Trivandrum:
+  type: city
+  value: Q167715
 Tsukuba:
   type: city
   value: Q273863
@@ -1030,6 +1102,9 @@ Turin:
 Turku:
   type: city
   value: Q38511
+Umea:
+  type: city
+  value: Q25579
 Uppsala:
   type: city
   value: Q25286
@@ -1063,7 +1138,7 @@ Waltham:
 Warsaw:
   type: city
   value: Q270
-Washington, D.C.:
+Washington:
   type: city
   value: Q61
 Williamsburg:
@@ -1084,7 +1159,10 @@ Xi'an:
 Xiamen:
   type: city
   value: Q68744
-Yogyakarta City:
+Yekaterinburg:
+  type: city
+  value: Q887
+Yogyakarta:
   type: city
   value: Q7568
 Yokohama:
@@ -1097,5 +1175,8 @@ Zhuhai:
   type: city
   value: Q59095
 "Z\xFCrich":
+  type: city
+  value: Q72
+Zurich:
   type: city
   value: Q72

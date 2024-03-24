@@ -1,22 +1,19 @@
-from ast import Dict
-from source.WikidataUpdater import WikidataUpdater
-from source.EventClass import ProceedingsEvent
-from source.Tokenizer import TokenSet
 from source.UpdateSources import WikidataQuery
-import pytest
 
-
-#Sanity check
 #With the new init method, it adds all results onto Wikidata (result folder)
 #Disabled until addition of the required folders
 def test_base():
+    """
+    Sanity check.
+    """
     #w = WikidataUpdater(True)
     #w.update_all_entries()
     i = 1
-    
 
-#Test query
 def test_query():
+    """
+    Test the query
+    """
     print(WikidataQuery.getWDIdfromLabel("USA"))
 
 #Test editing an entry (disabled due to concurrent tests -> Race conditions)

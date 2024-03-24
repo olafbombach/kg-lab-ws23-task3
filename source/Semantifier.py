@@ -77,7 +77,7 @@ class Semantifier:
         str(entries_count) + \
         """semi-structured dictionaries into a structured json file with the conference signature elements: 
         -full_title: The full title of the event, often indicating the scope and subject. Please make sure to delete any ordinals or shortnames here.
-        -short_name: The short name of the conference, often in uppercases. If provided closely in the input-dictionary, you can also add the year of the conference in YYYY format. 
+        -short_name: The short name of the conference, often in uppercases. If provided closely in the input-dictionary, you can also add the year of the conference in YYYY format. Please verify that the short_name in general is not longer than 25 characters.
         -ordinal: The instance number of the event (like "18th" or "first"). Give this value with a number and its corresponding ordinal ending (e.g. "12th").
         -part_of_series: The overlying conference-series, often a substring of full_title.
         -country_name: The country in which the conference takes place.
@@ -147,7 +147,7 @@ class Semantifier:
         elif self.dataset_name == 'proceedings.com':
             # datatype: dictionary
             # df= conferences.select("Conference Title","Book Title","Series","Description","Mtg Year")
-            df = {key: conferences[key] for key in ("Conference Title","Book Title","Series","Description","Mtg Year")}
+            df = {key: conferences[key] for key in ("Publisher","Conference Title","Book Title","Description")}
         # semantify with openai
         data = Semantifier.open_ai_semantification(self,
                                                    df, 

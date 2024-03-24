@@ -40,18 +40,18 @@ class SearchEngine:
                 all_files = os.listdir(path)
                 xlsx_file = [f for f in all_files if f.startswith("all-") and f.endswith(".xlsx")][0]  # this assumes that only one xlsx file exists in this directory!
                 data = pl.read_excel(path / xlsx_file, engine='openpyxl')
-            except FileNotFoundError(f"Are you sure you are in the right directory? \n ROOT: {self._file_to_root}"):
-                pass
+            except FileNotFoundError:
+                raise FileNotFoundError(f"Are you sure you are in the right directory? \n ROOT: {self._file_to_root}")
             except Exception as e:
-                print(f"Unexpected error: {e}")
+                raise e(f"Unexpected error: {e}")
         elif self._dataset_name == 'Wikidata':
             try:
                 path = self._file_to_root / "datasets" / "wikidata" / "wikidata_conf_data.csv"
                 data = pl.read_csv(path, has_header=True, separator=';')
-            except FileNotFoundError(f"Are you sure you are in the right directory? \n ROOT: {self._file_to_root}"):
-                pass
+            except FileNotFoundError:
+                raise FileNotFoundError(f"Are you sure you are in the right directory? \n ROOT: {self._file_to_root}")
             except Exception as e:
-                print(f"Unexpected error: {e}")
+                raise e(f"Unexpected error: {e}")
         return data
 
     def _get_columns_sel(self) -> list[str]:
