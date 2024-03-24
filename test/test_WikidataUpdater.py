@@ -7,6 +7,7 @@ def test_base():
     Sanity check.
     """
     #w = WikidataUpdater(True)
+    #w.update_all_entries()
     i = 1
 
 def test_query():
