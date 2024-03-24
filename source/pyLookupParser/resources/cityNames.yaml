@@ -70,6 +70,9 @@ Auckland:
 Austin:
   type: city
   value: Q16559
+Avignon:
+  type: city
+  value: Q6397
 Bali:
   type: city
   value: Q60437836
@@ -397,6 +400,9 @@ Guangzhou:
 Guilin:
   type: city
   value: Q189633
+Gyeongju:
+  type: city
+  value: Q42097
 Haifa:
   type: city
   value: Q41621
@@ -628,6 +634,9 @@ Medan:
 Melbourne:
   type: city
   value: Q3141
+Metz:
+  type: city
+  value: Q22690
 Mexico City:
   type: city
   value: Q1489
@@ -697,6 +706,9 @@ New Orleans:
 New Paltz:
   type: city
   value: Q3709293
+New York:
+  type: city
+  value: Q60
 New York City:
   type: city
   value: Q60
@@ -836,6 +848,9 @@ Republic:
   type: city
   value: Q267220
 "Reykjav\xEDk":
+  type: city
+  value: Q1764
+Reykjavik:
   type: city
   value: Q1764
 Riga:
@@ -1000,6 +1015,9 @@ Thessaloniki:
 Tianjin:
   type: city
   value: Q11736
+Tilburg:
+  type: city
+  value: Q26430
 "Timi\u0219oara":
   type: city
   value: Q83404
@@ -1030,6 +1048,9 @@ Turin:
 Turku:
   type: city
   value: Q38511
+Umea:
+  type: city
+  value: Q25579
 Uppsala:
   type: city
   value: Q25286
