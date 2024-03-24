@@ -156,7 +156,7 @@ class WikidataUpdater:
         #Add ISBN-13 number
         entity.claims.add(String(str(isbn),prop_nr = "P212"))
         
-        entity.write()
+        #entity.write()
         print(entity)
    
         #Basic information independant of entry
