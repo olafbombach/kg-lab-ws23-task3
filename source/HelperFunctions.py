@@ -38,5 +38,8 @@ def get_arg_parser(description: str) -> ArgumentParser:
                         choices=["bert", "glove"],
                         default="bert",
                         help="Determine the encoding technique being applied to the signatures. \n Default: \"bert\"")
+    parser.add_argument("--max_limit",
+                        default=10,
+                        help="Determine the maximum limit to update entries to Wikidata. \n Default: 10") 
 
     return parser

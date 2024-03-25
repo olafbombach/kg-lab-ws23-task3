@@ -154,9 +154,6 @@ Boulder:
 Braga:
   type: city
   value: Q614230
-Brasil:
-  type: city
-  value: Q20274905
 Bremen:
   type: city
   value: Q24879
@@ -193,15 +190,9 @@ Bydgoszcz:
 Cairo:
   type: city
   value: Q85
-California:
-  type: city
-  value: Q754623
 Cambridge:
   type: city
   value: Q49111
-Canada:
-  type: city
-  value: Q1031917
 Canberra:
   type: city
   value: Q3114
@@ -250,9 +241,6 @@ Chiang Mai:
 Chicago:
   type: city
   value: Q1297
-China:
-  type: city
-  value: Q932423
 Chongqing:
   type: city
   value: Q11725
@@ -391,9 +379,6 @@ Geneva:
 Genoa:
   type: city
   value: Q1449
-Germany:
-  type: city
-  value: Q15221573
 Ghent:
   type: city
   value: Q1296
@@ -412,9 +397,6 @@ Granada:
 Graz:
   type: city
   value: Q13298
-Greece:
-  type: city
-  value: Q2610369
 Grenoble:
   type: city
   value: Q1289
@@ -505,9 +487,6 @@ Jaipur:
 Jakarta:
   type: city
   value: Q3630
-Japan:
-  type: city
-  value: Q25258897
 Jeju:
   type: city
   value: Q42142
@@ -702,7 +681,7 @@ Mumbai:
   value: Q1156
 Munich:
   type: city
-  value: Q1300313
+  value: Q1726
 "M\xE1laga":
   type: city
   value: Q8851
@@ -743,9 +722,6 @@ New Paltz:
   type: city
   value: Q3709293
 New York:
-  type: city
-  value: Q60
-New York City:
   type: city
   value: Q60
 Newark:
@@ -898,6 +874,9 @@ Republic:
 Reykjavik:
   type: city
   value: Q1764
+Rhodes:
+  type: city
+  value: Q43048
 Riga:
   type: city
   value: Q1773

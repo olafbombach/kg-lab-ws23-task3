@@ -2,6 +2,7 @@ import os
 import re
 import orjson, json
 from pathlib import Path
+from tqdm import tqdm
 
 from wikibaseintegrator import WikibaseIntegrator
 from wikibaseintegrator.wbi_config import config as wbi_config
@@ -16,17 +17,19 @@ from source.HelperFunctions import find_root_directory
 
 class WikidataUpdater:
     """
-    Adds the entries stored in the result/found_entries and result/unfound_entries folders onto Wikidata, by edit and upload respectively
+    Adds the entries stored in the result/found_entries and result/unfound_entries folders 
+    onto Wikidata, by edit and upload (respectively).
     """
     def __init__(self, found: bool, wd_username: str = None, wd_password: str = None):
         """
         Initialize whether we look at the found or the not found entries here.
+        Further specify credentials if it does not lie in home-dir or env.
         """
         self.found = found
         self.data_dict = self._read_json()
         self.login = self.login(wd_username, wd_password)
 
-    def update_all_entries(self):
+    def update_all_entries(self, current_limit: int = 8):
         """
         Applies the loop over all current Events in the specified results-file.
         If an entry is created, deletes the item from the stored dictionary.
@@ -34,24 +37,29 @@ class WikidataUpdater:
         
         Note: This might lead to an empty json-file.
         """
-        
-        for key, value in self.data_dict.copy().items():
+        i = 0
+        for key, value in tqdm(self.data_dict.copy().items()):  # set copy for adapting self.data_dict
+            i += 1 
+
             if self.found:  # found_entries (has wd_qid as attribute)
                 try:
                     self.uploadToWikidata(dictionary=value, edit=True)
                     self.delete_item_of_dict(key)
                 except Exception as e:
-                    print("Error has occured.", e)
+                    print("Upload error has occured.", e)
                     continue
             else:  # unfound_entries
                 try:
                     self.uploadToWikidata(dictionary=value, edit=False)
                     self.delete_item_of_dict(key)
                 except Exception as e:
-                    print("Error has occured.", e)
+                    print("Upload error has occured.", e)
                     continue
-            self._restore_json()
-            break
+            if i >= current_limit:
+
+                break
+        self._restore_json()
+        
 
     def delete_item_of_dict(self, key: str):
         """
@@ -68,10 +76,10 @@ class WikidataUpdater:
         Output:
         A WikibaseIntegrator Entity (base-entity class) describing the created object
         """
-        wbi = WikibaseIntegrator(login = self.login)
+        wbi = WikibaseIntegrator(login=self.login)
         if edit:
-            WDid = dictionary.get("wd_qid")
-            entity = wbi.item.get(WDid)
+            WDid_entry = dictionary.get("wd_qid")
+            entity = wbi.item.get(WDid_entry)
         else:
             entity = wbi.item.new()
 
@@ -81,7 +89,7 @@ class WikidataUpdater:
         ordinal = dictionary.get("ordinal")
         part_of_series = dictionary.get("part_of_series")
         country_name = dictionary.get("country_name")
-        country_short = dictionary.get("country_short")
+        country_short = dictionary.get("country_short")  # not needed..
         country_qid = dictionary.get("country_qid")
         city_name = dictionary.get("city_name")
         city_qid = dictionary.get("city_qid")
@@ -137,8 +145,8 @@ class WikidataUpdater:
         if end_time:
             entity.claims.add(Time(end_time+"T00:00:00Z", precision=11, prop_nr="P582"))
  
-        #a dd event series (P179 = part of the series)
-        if part_of_series:
+        # add event series (P179 = part of the series)
+        '''if part_of_series:
             qualifiers = Qualifiers()
             if ordinal:
                 #add only ordinals containing at most 2 digits
@@ -149,38 +157,33 @@ class WikidataUpdater:
             WDid = WikidataQuery.getWDIdfromLabel(part_of_series)
             if WDid is None:
                 WDid = WikidataUpdater.create_Series(self.login, part_of_series)
-            entity.claims.add(Item(WDid, prop_nr="P179", qualifiers=qualifiers)) 
+            entity.claims.add(Item(WDid, prop_nr="P179", qualifiers=qualifiers))'''
 
         #Instance of academic conference and proceeding
         entity.claims.add([Item("Q2020153", prop_nr="P31"),
                            Item("Q1143604", prop_nr="P31")])
         
         
-        #Add ISBN-13 number
-        references = [Item("Q108267044",prop_nr = "P248")]
-        entity.claims.add(String(str(isbn),prop_nr = "P212", references = references))
+        #Add ISBN-13 number (in viable format)
+        references = [Item("Q108267044", prop_nr="P248")]
+        correct_isbn = isbn[0:3]+"-"+isbn[3]+"-"+isbn[4:7]+"-"+isbn[7:12]+"-"+isbn[12]
+        entity.claims.add(String(correct_isbn, prop_nr="P212", references=references))
+
+        # KD10+ identifier
         
 
-        #entity.write()
-        print(entity)
+        entity.write()
    
-        #Basic information independant of entry
-        #reference = References()
-        #proceedingscom = Reference()
-
-        return entity
-
-    
-    #Helperfunction count number of digits
-    
     @staticmethod
     def count_digits_loop(s):
+        """
+        Helperfunction to check whether the ordinal is correct or not.
+        """
         count = 0
         for char in s:
             if char.isdigit():
                 count += 1
         return count
-
     
     @staticmethod
     def create_Series(login, label):
