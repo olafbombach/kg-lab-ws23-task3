@@ -13,6 +13,7 @@ from wikibaseintegrator.models import Qualifiers
 
 from source.UpdateSources import WikidataQuery
 from source.HelperFunctions import find_root_directory
+from source.PPNIdentifier import ppnidentifier
 
 
 class WikidataUpdater:
@@ -170,7 +171,11 @@ class WikidataUpdater:
         entity.claims.add(String(correct_isbn, prop_nr="P212", references=references))
 
         # KD10+ identifier
-        
+        current_ppn = ppnidentifier(isbn=isbn, output_type_k10plus=False)[0]
+        if type(current_ppn) == str:
+            entity.claims.add(String(current_ppn, prop_nr="P6721"))
+        else:
+            pass
 
         entity.write()
    

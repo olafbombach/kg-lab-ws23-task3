@@ -1,32 +1,32 @@
-import requests
+import lxml 
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
 import polars as pl
 
-def ppnidentifier(isbn, output_type_k10plus=False):
+def ppnidentifier(isbn: str, output_type_k10plus: bool = False):
     """
-    returns (PPN or k10plus URL: String, record found: bool, PPN found: bool)
+    Returns (PPN or k10plus URL: String, record found: bool, PPN found: bool)
     """
     #query tib with sru
-    SRU_query_prefix="https://www.tib.eu/sru/tibkat?"
+    SRU_query_prefix = "https://www.tib.eu/sru/tibkat?"
     #since we assume a full isbn is given, this query type is sufficient
-    query_type="query="
-    url=SRU_query_prefix+query_type+isbn
+    query_type = "query="
+    url = SRU_query_prefix + query_type + isbn
     page = urlopen(url)
     xml_file = page.read().decode("utf-8")
     soup = BeautifulSoup(xml_file, "xml")
-    records=soup.find_all('numberOfRecords')
-    if len(records)>0:
-        if records[0].string=="0":
+    records = soup.find_all('numberOfRecords')
+    if len(records) > 0:
+        if records[0].string == "0":
             return (None, False, False)
-    identifier=soup.find_all('dc:identifier')
-    if len(identifier)>0:
+    identifier = soup.find_all('dc:identifier')
+    if len(identifier) > 0:
         ppn = identifier[0].string.replace("TIBKAT:", "")
     else:
         return (None, True, False)
     if output_type_k10plus:
-        k10plus_prefix="https://opac.k10plus.de/DB=2.299/CMD?ACT=SRCHA&IKT=1016&TRM=$"
-        return (k10plus_prefix+ppn, True, True)
+        k10plus_prefix = "https://opac.k10plus.de/DB=2.299/CMD?ACT=SRCHA&IKT=1016&TRM=$"
+        return (k10plus_prefix + ppn, True, True)
     else:
         return (ppn, True, True)
     
@@ -53,4 +53,3 @@ def iter_ppnidentifier(isbns, output_type_k10plus=False):
     f.close()
     print(str(DataProcessed) +" out of "+ str(datalength) +" items processed")
     return
-
