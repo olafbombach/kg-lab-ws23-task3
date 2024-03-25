@@ -25,4 +25,4 @@ else
     fi
 fi
 
-python source/Gui.py
+esc solve
