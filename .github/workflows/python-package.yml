@@ -37,7 +37,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        pytest test
+        pytest -rP test
       env:
           CORE_API_KEY : ${{secrets.CORE_API_KEY}}
           WIKIDATA_LOGIN_NAME: ${{secrets.WIKIDATA_LOGIN_NAME}}
