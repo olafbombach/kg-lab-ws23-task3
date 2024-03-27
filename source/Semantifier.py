@@ -91,7 +91,7 @@ class Semantifier:
         #individual part for each dataset type
         if self.dataset_name == 'Wikidata':
             query += """
-            {'conf_label': ['Advances in Web Based Learning - ICWL 2007, sixth International Conference, Edinburgh, UK, August 15-17, 2007'], 'title': ['Advances in Web Based Learning - ICWL 2007, 6th International Conference'], 'country': ['United Kingdom'], 'location': ['Edinburgh'], 'main_subject': [None], 'start_time': ['15.08.2007'], 'end_time': ['17.08.2007'], 'series_label': ['International Conference on Advances in Web-Based Learning']}
+            {'conf_label': ['Advances in Web Based Learning - ICWL 2007, sixth International Conference, Edinburgh, UK, August 15-17, 2007'], 'title': ['Advances in Web Based Learning - ICWL 2007, 6th International Conference'], 'country': 'United Kingdom', 'location': 'Edinburgh', 'main_subject': None, 'start_time': '15.08.2007', 'end_time': '17.08.2007', 'series_label': 'International Conference on Advances in Web-Based Learning'}
              would look like
             {full_title: 'International Conference of Advances in Web Based Learning',
             short_name: 'ICWL 2007',
@@ -112,7 +112,7 @@ class Semantifier:
             short_name: 'None',
             ordinal: '63rd',
             part_of_series: 'American College of Veterinary Pathologists',
-            country_name: 'USA',
+            country_name: 'United States of America',
             country_identifier: 'US',
             city_name: 'Seattle',
             year: '2012',
@@ -141,13 +141,15 @@ class Semantifier:
                     max_entries: int  = 0):
         # disambiguate the different datasets and filter the desired columns
         if self.dataset_name == 'Wikidata':
-            # datatype: polars data frame
-            df = {key: conferences[key] for key in ("conf_label","title","country","location","main_subject","start_time","end_time","series_label")}
-            #df = conferences.select("conf_label","title","country","location","main_subject","start_time","end_time","series_label")
+            df = {key: conferences[key] for key in ("conf_label","title","country","location","short_name","start_time","end_time","series_label")}
+            
         elif self.dataset_name == 'proceedings.com':
-            # datatype: dictionary
-            # df= conferences.select("Conference Title","Book Title","Series","Description","Mtg Year")
-            df = {key: conferences[key] for key in ("Publisher","Conference Title","Book Title","Description")}
+            try:
+                df = {key: conferences[key] for key in ("Publisher","Conference Title","Book Title","Description")}
+            except KeyError:
+                # for testset
+                df = {key: conferences[key] for key in ("Conference Title","Book Title","Description")}
+                
         # semantify with openai
         data = Semantifier.open_ai_semantification(self,
                                                    df, 

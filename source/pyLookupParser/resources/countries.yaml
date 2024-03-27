@@ -2,6 +2,15 @@
 #
 #  Country dictionary
 #
+Albania:
+  type: country
+  value: Q222
+Algeria:
+  type: country
+  value: Q262
+Azerbaijan:
+  type: country
+  value: Q227
 America:
   type: country
   value: Q30
@@ -221,6 +230,9 @@ Kenya:
 Korea:
   type: country
   value: Q884
+Kosovo:
+  type: country
+  value: Q1246
 Kuwait:
   gpdPerCapita: 29040
   isocode: KW
@@ -386,6 +398,9 @@ Russia:
   population: 146804372
   type: country
   value: Q159
+Saudi Arabia:
+  type: country
+  value: Q851
 Scotland:
   type: country
   value: Q22

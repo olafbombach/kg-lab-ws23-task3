@@ -13,6 +13,7 @@ from source.Preprocessor import Preprocessor
 from source.SearchEngine import SearchEngine
 from source.Comparor import Comparor
 from source.WikidataUpdater import WikidataUpdater
+from wikibaseintegrator import wbi_exceptions
 
 
 def download_resources() -> None:
@@ -252,21 +253,65 @@ def resolve_unclear_entries():
     Manual resolving necessary.
     """
     # I know this is not how you should do it, but I did not see another way...
-    subprocess.run(['venv/Scripts/python', 'source/Gui.py'])
+    
+    root = find_root_directory()
+    # chech if venv is downloaded
+    if not os.path.isdir(root / "venv"):
+        raise FileNotFoundError("Virtual environment directory not found.")
+    
+    # get python executable
+    folders_in_venv = os.listdir(root / "venv")
+    if 'bin' in folders_in_venv:
+        scripts_folder = root / "venv" / "bin"
+        executable = scripts_folder / "python"
+        executable3 = scripts_folder / "python3"
+    elif 'Scripts' in folders_in_venv:
+        scripts_folder = root / "venv" / "Scripts"
+        executable = scripts_folder / "python"
+        executable3 = scripts_folder / "python3"
+    else:
+        raise FileExistsError("Could not find executable.")
 
-def upload_entries():
+    # gui file
+    gui_file = root / "source" / "Gui.py"
+
+    # execute program
+    try:
+        subprocess.run([executable3, gui_file])
+    except FileNotFoundError:
+        try:
+            subprocess.run([executable, gui_file])
+        except FileExistsError:
+            raise FileNotFoundError("Executable of python not viable.")
+        except Exception as e:
+            raise Exception(e)
+    except Exception as e:
+        raise Exception(e)
+
+
+def upload_entries(limit: int):
     """
     Upload all found and unfound entries that can be found in the json files of
     \"results/\" to Wikidata. 
     """
     
     wu_found = WikidataUpdater(found=True)
-    wu_found.update_all_entries()
-    del wu_found
+    try:
+        wu_found.update_all_entries(current_limit=limit)
+    except wbi_exceptions.MWApiError:
+        raise Exception("Iteration stopped due to reached limit!")
+    except Exception as e:
+        raise Exception(f"Error due to: {e}")
 
     wu_unfound = WikidataUpdater(found=False)
-    wu_unfound.update_all_entries()
-    del wu_unfound
+    try:
+        wu_unfound.update_all_entries(current_limit=limit)
+    except wbi_exceptions.MWApiError:
+        raise Exception("Iteration stopped due to reached limit!")
+    except Exception as e:
+        raise Exception(f"Error due to: {e}")
+
+    del wu_unfound, wu_found
 
 
 def main():
@@ -309,7 +354,7 @@ def main():
     elif args.operation == "upload":
         print("Will upload or update the found new entries to Wikidata...")
         try:
-            upload_entries()
+            upload_entries(limit=int(args.max_limit))
         except FileNotFoundError:
             raise FileNotFoundError("First make sure that you generate data using the full_pipeline. \n\"esc full\"")
         except Exception as e:

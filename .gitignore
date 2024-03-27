@@ -4,6 +4,8 @@
 logs/*
 */logs/*
 test/evaluation/log/*
+# Except for history.log
+!results/logs/history.log
 
 cache/*.json
 
