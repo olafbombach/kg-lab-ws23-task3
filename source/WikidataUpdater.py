@@ -21,6 +21,24 @@ class WikidataUpdater:
     Adds the entries stored in the result/found_entries and result/unfound_entries folders 
     onto Wikidata, by edit and upload (respectively).
     """
+    # lookup table for publishers that captures roughly 85 percent of proceedings.com
+    PUBLISHER_DICT = {
+        'Institute of Electrical and Electronics Engineers (IEEE)': 'Q131566', 'SPIE - International Society for Optics and Photonics': 'Q2140443',
+        'Institute of Physics Publishing (IOP)': 'Q2915886', 'Atlantis Press': 'Q52660748', 'Elsevier Procedia': 'Q746413', 'EDP Sciences': 'Q114404',
+        'Association for Computational Linguistics (ACL)': 'Q4346375', 'Electrochemical Society (ECS)': 'Q3721278', 
+        'American Institute of Chemical Engineers (AIChE)': 'Q465184', 'International Academy, Research, and Industry Association (IARIA)': 'Q10850977',
+        'American Institute for Aeronautics and Astronautics (AIAA)': 'Q465165', 'Cambridge University Press (CUP) / Materials Research Society (MRS)': 'Q912887',
+        'Society of Petroleum Engineers (SPE)': 'Q2249890', 'American Society of Civil Engineers (ASCE)': 'Q466880',
+        'American Society of Mechanical Engineers (ASME)': 'Q466950', 'Institution of Engineering and Technology (IET)': 'Q1164410',
+        'European Association of Geoscientists and Engineers (EAGE)': 'Q1750463', 'Elsevier Science Direct - IFAC PapersOnline': 'Q2571518',
+        'Schloss Dagstuhl': 'Q52663531', 'USENIX Association': 'Q2141768', 'American Institute of Physics (AIP)': 'Q465230',
+        'Academic Conferences Ltd': 'Q52636351', 'Trans Tech Publications Ltd': 'Q30289413', 'Scientific Research Publishing Inc.': 'Q7433770',
+        'Society for Imaging Science and Technology (IS&T)': 'Q3963258', 'Association for the Advancement of Artificial Intelligence (AAAI)': 'Q2739680',
+        'Society for Modeling & Simulation International (SCS)': 'Q7552176', 'Science and Technology Publications, LDA (SciTePress)': 'Q106714378',
+        'International Astronautical Federation (IAF)': 'Q1634011'
+        }
+
+
     def __init__(self, found: bool, wd_username: str = None, wd_password: str = None):
         """
         Initialize whether we look at the found or the not found entries here.
@@ -28,7 +46,7 @@ class WikidataUpdater:
         """
         self.found = found
         self.data_dict = self._read_json()
-        self.login = self.login(wd_username, wd_password)
+        self._login = self.login(wd_username, wd_password)
 
     def update_all_entries(self, current_limit: int = 8):
         """
@@ -57,7 +75,7 @@ class WikidataUpdater:
                     print("Upload error has occured.", e)
                     continue
             if i >= current_limit:
-
+                print(f"\nMax-Limit of {current_limit} reached.")
                 break
         self._restore_json()
         
@@ -77,7 +95,7 @@ class WikidataUpdater:
         Output:
         A WikibaseIntegrator Entity (base-entity class) describing the created object
         """
-        wbi = WikibaseIntegrator(login=self.login)
+        wbi = WikibaseIntegrator(login=self._login)
         if edit:
             WDid_entry = dictionary.get("wd_qid")
             entity = wbi.item.get(WDid_entry)
@@ -95,6 +113,7 @@ class WikidataUpdater:
         city_name = dictionary.get("city_name")
         city_qid = dictionary.get("city_qid")
         year = dictionary.get("year")
+        publisher = dictionary.get("publisher")
         start_time = dictionary.get("start_time")
         end_time = dictionary.get("end_time")
         isbn = dictionary.get("isbn")
@@ -146,7 +165,7 @@ class WikidataUpdater:
         if end_time:
             entity.claims.add(Time(end_time+"T00:00:00Z", precision=11, prop_nr="P582"))
  
-        # add event series (P179 = part of the series)
+        # this is still problematic ...
         '''if part_of_series:
             qualifiers = Qualifiers()
             if ordinal:
@@ -164,7 +183,16 @@ class WikidataUpdater:
         entity.claims.add([Item("Q2020153", prop_nr="P31"),
                            Item("Q1143604", prop_nr="P31")])
         
-        
+        # Add publisher
+        if publisher:
+            pub_qid = WikidataUpdater.PUBLISHER_DICT.get(publisher)
+            if pub_qid:
+                entity.claims.add(Item(pub_qid, prop_nr="P123"))
+            else:
+                pass
+        else: 
+            pass
+
         #Add ISBN-13 number (in viable format)
         references = [Item("Q108267044", prop_nr="P248")]
         correct_isbn = isbn[0:3]+"-"+isbn[3]+"-"+isbn[4:7]+"-"+isbn[7:12]+"-"+isbn[12]
@@ -177,7 +205,7 @@ class WikidataUpdater:
         else:
             pass
 
-        entity.write()
+        entity.write(login=self._login)
    
     @staticmethod
     def count_digits_loop(s):

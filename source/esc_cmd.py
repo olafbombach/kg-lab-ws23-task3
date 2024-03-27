@@ -295,19 +295,27 @@ def upload_entries(limit: int):
     \"results/\" to Wikidata. 
     """
     
-    '''wu_found = WikidataUpdater(found=True)
-    wu_found.update_all_entries()
-    del wu_found'''
+    wu_found = WikidataUpdater(found=True)
+    try:
+        wu_found.update_all_entries(current_limit=limit)
+    except wbi_exceptions.MWApiError:
+        del wu_found
+        raise Exception("Iteration stopped due to reached limit!")
+    except Exception as e:
+        del wu_found
+        raise Exception(f"Error due to: {e}")
 
     wu_unfound = WikidataUpdater(found=False)
     try:
         wu_unfound.update_all_entries(current_limit=limit)
     except wbi_exceptions.MWApiError:
+        del wu_unfound
         raise Exception("Iteration stopped due to reached limit!")
     except Exception as e:
+        del wu_unfound
         raise Exception(f"Error due to: {e}")
 
-    del wu_unfound
+    del wu_unfound, wu_found
 
 
 def main():
@@ -350,7 +358,7 @@ def main():
     elif args.operation == "upload":
         print("Will upload or update the found new entries to Wikidata...")
         try:
-            upload_entries(limit=args.max_limit)
+            upload_entries(limit=int(args.max_limit))
         except FileNotFoundError:
             raise FileNotFoundError("First make sure that you generate data using the full_pipeline. \n\"esc full\"")
         except Exception as e:
