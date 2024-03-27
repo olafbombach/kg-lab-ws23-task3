@@ -299,20 +299,16 @@ def upload_entries(limit: int):
     try:
         wu_found.update_all_entries(current_limit=limit)
     except wbi_exceptions.MWApiError:
-        del wu_found
         raise Exception("Iteration stopped due to reached limit!")
     except Exception as e:
-        del wu_found
         raise Exception(f"Error due to: {e}")
 
     wu_unfound = WikidataUpdater(found=False)
     try:
         wu_unfound.update_all_entries(current_limit=limit)
     except wbi_exceptions.MWApiError:
-        del wu_unfound
         raise Exception("Iteration stopped due to reached limit!")
     except Exception as e:
-        del wu_unfound
         raise Exception(f"Error due to: {e}")
 
     del wu_unfound, wu_found
