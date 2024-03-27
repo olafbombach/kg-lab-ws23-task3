@@ -34,16 +34,16 @@ Our conference receives a Wikidata entry which contains all its relevant propert
     <li> Preprocessing of queries &#x2713; </li>
     <il> (Method for encoding established) &#x2713; </il>
     <li> Validation of LLM (check for accuracy and precision) &#x2713; </li>
-    <li> (Further methods of assignments established) ❌ </li>
-    <li> Method for data transfer to Wikidata &#x1F6E1; </li>
-    <li> Establishment of an automated method &#x1F6E1; </li>
-    <li> Validation of the method &#x1F6E1; </li>
+    <li> (Further methods of assignments established) &#x2713; </li>
+    <li> Method for data transfer to Wikidata &#x2713; </li>
+    <li> Establishment of an semi-automated method &#x2713; </li>
+    <li> Validation of the method &#x2713; </li>
 </ul>
 
 ## Deadlines
 
 - 2024-01-19: Midterm coordination &#x2713;
-- 2024-03-22: Project result delivery
+- 2024-03-22: Project result delivery &#x2713;
 - 2024-03-29: Final presentation
 
 ## Usage
@@ -70,7 +70,7 @@ Thank you for your interest in contributing to this project! We welcome all kind
 In this regard, please follow our [Code of Conduct](.github/CONTRIBUTION.md)
 
 ## Considered pipeline
-<img src="images/Pipeline_v2.png">
+<img src="images/Pipeline_v3.png">
 
-## Code workflow (v2)
+## Code workflow (DataClass handling)
 <img src="images/code_workflow.png">
