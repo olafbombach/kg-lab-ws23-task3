@@ -2,6 +2,8 @@ import sys
 import os
 import logging
 import polars as pl
+from nicegui import ui
+import subprocess
 
 from source.HelperFunctions import find_root_directory, get_arg_parser
 from source.EventClass import ProceedingsEvent
@@ -10,6 +12,8 @@ from source.Downloader import Downloader
 from source.Preprocessor import Preprocessor
 from source.SearchEngine import SearchEngine
 from source.Comparor import Comparor
+from source.WikidataUpdater import WikidataUpdater
+from wikibaseintegrator import wbi_exceptions
 
 
 def download_resources() -> None:
@@ -58,7 +62,13 @@ def evaluation_v2(sim_measure: str, encoding: str, small_test: bool=False) -> No
     console_logger.addHandler(console_handler)
     
     # start with the code
-    se_wiki = SearchEngine("Wikidata", f_search=True)
+    try:
+        se_wiki = SearchEngine("Wikidata", f_search=True)
+    except FileNotFoundError:
+        raise FileNotFoundError("Please make sure that you downloaded all the necessary data. \n"
+                                "Check \"esc resources\" or \"scripts/resources.sh\".")
+    except Exception as e:
+        raise Exception("Unexpected error due to: ", e)
 
     process_logger.info("Start reading and preprocessing the testset datafile.")
 
@@ -129,10 +139,11 @@ def full_pipeline(sim_measure: str, encoding: str) -> None:
     try:
         # this assumes that there exist one and only one excel-file in this dir
         excel_file = [f for f in all_files if f.startswith('all-') and f.endswith('.xlsx')][0]
-    except FileNotFoundError:
-        print("Please make sure that you downloaded all the necessary data.")
+    except IndexError:
+        raise FileNotFoundError("Please make sure that you downloaded all the necessary data. \n"
+                                "Check \"esc resources\" or \"scripts/resources.sh\".")
     except Exception as e:
-        print("Unexpected error due to: ", e)
+        raise Exception("Unexpected error due to: ", e)
 
     # set up logger
     process_log_filename = root_dir / "results" / "logs" / f"full_{encoding}_{sim_measure}.log"
@@ -163,11 +174,11 @@ def full_pipeline(sim_measure: str, encoding: str) -> None:
 
     dataset = pl.read_excel(file_dir / excel_file, engine="openpyxl")
     pr = Preprocessor(raw_data=dataset)
-    deletion_columns = ["Editor", "Pages", "Format", "POD Publisher", 
+    deletion_columns = ["Editor", "Pages", "Format", "POD Publisher", "Series",
                         "Publ Year", "Subject2", "Subject3", "Subject4", 
                         "List Price"]
     pr.apply_preprocessing_pipeline(testset=False, del_columns=deletion_columns)
-    preproc_testset = pr.get_preprocessed_data
+    preproc_dataset = pr.get_preprocessed_data
 
     print("Start iteration...")
     process_logger.info("Finished reading and preprocessing the complete datafile.")
@@ -178,11 +189,11 @@ def full_pipeline(sim_measure: str, encoding: str) -> None:
         history = [num.replace("\n", "") for num in history]
 
     # start iteration
-    for i, entry in enumerate(preproc_testset.iter_rows(named=True)):
+    for i, entry in enumerate(preproc_dataset.iter_rows(named=True)):
         # logic if proceedings.com entry already has been uploaded!
         current_isbn = entry.get("ISBN")  # isbn as unique identifier for proceedings.com
         if current_isbn in history:
-            process_logger.info("This proceedings.com entry was already used in this pipeline. Moving on to the next...")
+            process_logger.info(f"Proceedings.com event {current_isbn} was already used in this pipeline. Moving on to the next...")
             continue
         else:
             pass
@@ -221,16 +232,86 @@ def full_pipeline(sim_measure: str, encoding: str) -> None:
         # presentation of fit
         process_logger.info("Finding optimal value for the following ProceedingsEvent:")
         process_logger.info(pe)
+        
         process_logger.info("Optimal WikidataEvent for ProceedingsEvent:")
-        process_logger.info(opt_event)
+        try:
+            process_logger.info(opt_event)
+        except UnicodeEncodeError as e:
+            process_logger.info("Visualization of Wikidata event omitted due to {e}.")
 
-        print(f"Finished {i+1}. iteration for entry {current_isbn}.")
+        print(f"Finished {i+1}. iteration for entry {current_isbn}. Went to -> {decision}")
         history_logger.info(current_isbn)
         history.append(current_isbn)
         
-        del pe, loe
+        del pe, loe, co, decision, opt_event, dict_file_pe, current_isbn
 
-    del se_wiki, dataset, preproc_testset
+    del se_wiki, dataset, preproc_dataset
+
+def resolve_unclear_entries():
+    """
+    Start GUI for visualization of unclear entries. 
+    Manual resolving necessary.
+    """
+    # I know this is not how you should do it, but I did not see another way...
+    
+    root = find_root_directory()
+    # chech if venv is downloaded
+    if not os.path.isdir(root / "venv"):
+        raise FileNotFoundError("Virtual environment directory not found.")
+    
+    # get python executable
+    folders_in_venv = os.listdir(root / "venv")
+    if 'bin' in folders_in_venv:
+        scripts_folder = root / "venv" / "bin"
+        executable = scripts_folder / "python"
+        executable3 = scripts_folder / "python3"
+    elif 'Scripts' in folders_in_venv:
+        scripts_folder = root / "venv" / "Scripts"
+        executable = scripts_folder / "python"
+        executable3 = scripts_folder / "python3"
+    else:
+        raise FileExistsError("Could not find executable.")
+
+    # gui file
+    gui_file = root / "source" / "Gui.py"
+
+    # execute program
+    try:
+        subprocess.run([executable3, gui_file])
+    except FileNotFoundError:
+        try:
+            subprocess.run([executable, gui_file])
+        except FileExistsError:
+            raise FileNotFoundError("Executable of python not viable.")
+        except Exception as e:
+            raise Exception(e)
+    except Exception as e:
+        raise Exception(e)
+
+
+def upload_entries(limit: int):
+    """
+    Upload all found and unfound entries that can be found in the json files of
+    \"results/\" to Wikidata. 
+    """
+    
+    wu_found = WikidataUpdater(found=True)
+    try:
+        wu_found.update_all_entries(current_limit=limit)
+    except wbi_exceptions.MWApiError:
+        raise Exception("Iteration stopped due to reached limit!")
+    except Exception as e:
+        raise Exception(f"Error due to: {e}")
+
+    wu_unfound = WikidataUpdater(found=False)
+    try:
+        wu_unfound.update_all_entries(current_limit=limit)
+    except wbi_exceptions.MWApiError:
+        raise Exception("Iteration stopped due to reached limit!")
+    except Exception as e:
+        raise Exception(f"Error due to: {e}")
+
+    del wu_unfound, wu_found
 
 
 def main():
@@ -265,6 +346,19 @@ def main():
     elif args.operation == "full":
         print("Please check the directory results/logs to find your run.")
         full_pipeline(sim_measure=args.s_measure, encoding=args.encoding)
+
+    elif args.operation == "solve":
+        print("Start GUI...")
+        resolve_unclear_entries()
+
+    elif args.operation == "upload":
+        print("Will upload or update the found new entries to Wikidata...")
+        try:
+            upload_entries(limit=int(args.max_limit))
+        except FileNotFoundError:
+            raise FileNotFoundError("First make sure that you generate data using the full_pipeline. \n\"esc full\"")
+        except Exception as e:
+            raise e("Unexpected error due to: ", e)
 
     elif args.operation == "resources":
         print("Downloading all necessary files:")

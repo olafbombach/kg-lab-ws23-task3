@@ -45,7 +45,9 @@ dependencies = [
   # GUI
   "nicegui",
   # Integrator
-  "WikibaseIntegrator == 0.12.5"
+  "WikibaseIntegrator == 0.12.5",
+  "lxml",
+  "bs4"
 ]
 
 [project.optional-dependencies]

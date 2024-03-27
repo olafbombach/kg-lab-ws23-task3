@@ -28,8 +28,8 @@ def get_arg_parser(description: str) -> ArgumentParser:
                             formatter_class=RawTextHelpFormatter)
     # add arguments
     parser.add_argument("operation",
-                        choices=["small_test", "v2", "full", "resources"],
-                        help="Define the operation being performed.")
+                        choices=["small_test", "v2", "full", "solve", "upload", "resources"],
+                        help="Define the operation being performed.\n  small_test: One iteration of testset_v2. \n  v2: Iteration over the full testset_v2. \n  full: Application of the full_pipeline. \n  solve: Application of GUI. \n  upload: Upload to Wikidata. \n  resources: Scrape resources.")
     parser.add_argument("--s_measure",
                         choices=["euc", "cos"],
                         default="euc",
@@ -38,5 +38,8 @@ def get_arg_parser(description: str) -> ArgumentParser:
                         choices=["bert", "glove"],
                         default="bert",
                         help="Determine the encoding technique being applied to the signatures. \n Default: \"bert\"")
+    parser.add_argument("--max_limit",
+                        default=10,
+                        help="Determine the maximum limit to update entries to Wikidata. \n Default: 10") 
 
     return parser

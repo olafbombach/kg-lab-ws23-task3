@@ -33,6 +33,7 @@ class ProceedingsEvent:
     city_name: Optional[str] = None
     city_qid: Optional[str] = None
     year: Optional[str] = None
+    publisher: Optional[str] = None
     start_time: Optional[str] = None
     end_time: Optional[str] = None
 
@@ -53,6 +54,10 @@ class ProceedingsEvent:
         tok = Tokenizer()
         try:
             self.isbn = self.input_info['ISBN']
+        except KeyError:
+            pass  # in case of using the testset, we do not need the isbn
+        try:
+            self.publisher = self.input_info['Publisher']
         except KeyError:
             pass  # in case of using the testset, we do not need the isbn
         

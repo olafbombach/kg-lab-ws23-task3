@@ -2,6 +2,15 @@
 #
 #  Country dictionary
 #
+Albania:
+  type: country
+  value: Q222
+Algeria:
+  type: country
+  value: Q262
+Azerbaijan:
+  type: country
+  value: Q227
 America:
   type: country
   value: Q30
@@ -98,6 +107,9 @@ Czech Republic:
 Denmark:
   type: country
   value: Q35
+Dominican Republic:
+  type: country
+  value: Q786
 Ecuador:
   gpdPerCapita: 6273
   isocode: EC
@@ -215,6 +227,12 @@ Kenya:
   population: 48468138
   type: country
   value: Q114
+Korea:
+  type: country
+  value: Q884
+Kosovo:
+  type: country
+  value: Q1246
 Kuwait:
   gpdPerCapita: 29040
   isocode: KW
@@ -380,6 +398,12 @@ Russia:
   population: 146804372
   type: country
   value: Q159
+Saudi Arabia:
+  type: country
+  value: Q851
+Scotland:
+  type: country
+  value: Q22
 Senegal:
   gpdPerCapita: 1329
   isocode: SN
@@ -416,6 +440,9 @@ Slovenia:
   population: 2066880
   type: country
   value: Q215
+South Africa:
+  type: country
+  value: Q258
 Spain:
   type: country
   value: Q29
@@ -437,6 +464,9 @@ Tanzania:
   population: 57310019
   type: country
   value: Q924
+Taiwan:
+  type: country
+  value: Q865
 Thailand:
   gpdPerCapita: 6595
   isocode: TH
@@ -452,6 +482,9 @@ Tunisia:
 Turkey:
   type: country
   value: Q43
+UAE:
+  type: country
+  value: Q878
 Uganda:
   gpdPerCapita: 606
   isocode: UG
@@ -464,6 +497,9 @@ Ukraine:
   population: 42558328
   type: country
   value: Q212
+United Arab Emirates:
+  type: country
+  value: Q878
 United Kingdom:
   type: country
   value: Q145

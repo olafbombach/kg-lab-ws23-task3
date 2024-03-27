@@ -77,7 +77,7 @@ class Semantifier:
         str(entries_count) + \
         """semi-structured dictionaries into a structured json file with the conference signature elements: 
         -full_title: The full title of the event, often indicating the scope and subject. Please make sure to delete any ordinals or shortnames here.
-        -short_name: The short name of the conference, often in uppercases. If provided closely in the input-dictionary, you can also add the year of the conference in YYYY format. 
+        -short_name: The short name of the conference, often in uppercases. If provided closely in the input-dictionary, you can also add the year of the conference in YYYY format. Please verify that the short_name in general is not longer than 25 characters.
         -ordinal: The instance number of the event (like "18th" or "first"). Give this value with a number and its corresponding ordinal ending (e.g. "12th").
         -part_of_series: The overlying conference-series, often a substring of full_title.
         -country_name: The country in which the conference takes place.
@@ -91,7 +91,7 @@ class Semantifier:
         #individual part for each dataset type
         if self.dataset_name == 'Wikidata':
             query += """
-            {'conf_label': ['Advances in Web Based Learning - ICWL 2007, sixth International Conference, Edinburgh, UK, August 15-17, 2007'], 'title': ['Advances in Web Based Learning - ICWL 2007, 6th International Conference'], 'country': ['United Kingdom'], 'location': ['Edinburgh'], 'main_subject': [None], 'start_time': ['15.08.2007'], 'end_time': ['17.08.2007'], 'series_label': ['International Conference on Advances in Web-Based Learning']}
+            {'conf_label': ['Advances in Web Based Learning - ICWL 2007, sixth International Conference, Edinburgh, UK, August 15-17, 2007'], 'title': ['Advances in Web Based Learning - ICWL 2007, 6th International Conference'], 'country': 'United Kingdom', 'location': 'Edinburgh', 'main_subject': None, 'start_time': '15.08.2007', 'end_time': '17.08.2007', 'series_label': 'International Conference on Advances in Web-Based Learning'}
              would look like
             {full_title: 'International Conference of Advances in Web Based Learning',
             short_name: 'ICWL 2007',
@@ -110,9 +110,9 @@ class Semantifier:
             would look like
             {full_title: 'Annual Meeting American College of Veterinary Pathologists',
             short_name: 'None',
-            ordinal: '63rd',
+            ordinal: '65th',
             part_of_series: 'American College of Veterinary Pathologists',
-            country_name: 'USA',
+            country_name: 'United States of America',
             country_identifier: 'US',
             city_name: 'Seattle',
             year: '2012',
@@ -141,13 +141,15 @@ class Semantifier:
                     max_entries: int  = 0):
         # disambiguate the different datasets and filter the desired columns
         if self.dataset_name == 'Wikidata':
-            # datatype: polars data frame
-            df = {key: conferences[key] for key in ("conf_label","title","country","location","main_subject","start_time","end_time","series_label")}
-            #df = conferences.select("conf_label","title","country","location","main_subject","start_time","end_time","series_label")
+            df = {key: conferences[key] for key in ("conf_label","title","country","location","short_name","start_time","end_time","series_label")}
+            
         elif self.dataset_name == 'proceedings.com':
-            # datatype: dictionary
-            # df= conferences.select("Conference Title","Book Title","Series","Description","Mtg Year")
-            df = {key: conferences[key] for key in ("Conference Title","Book Title","Series","Description","Mtg Year")}
+            try:
+                df = {key: conferences[key] for key in ("Publisher","Conference Title","Book Title","Description")}
+            except KeyError:
+                # for testset
+                df = {key: conferences[key] for key in ("Conference Title","Book Title","Description")}
+                
         # semantify with openai
         data = Semantifier.open_ai_semantification(self,
                                                    df, 

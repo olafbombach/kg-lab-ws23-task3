@@ -1,21 +1,31 @@
 #!/bin/bash
 # ESC
 # create virtual environment and start ESC
+python3_installed=false
 
 git pull
 
-# Check if python command is available
-if ! command -v python &>/dev/null; then
+# Check if python ot python3 command is available
+if command -v python &>/dev/null; then
+    echo "Found Python as command..."
+elif command -v python3 &>/dev/null; then
+    echo "Found Python3 as command..."
+    python3_installed=true
+else
     echo "Python is not installed. Please install Python and try again."
     exit 1
 fi
-echo "Found Python in commands..."
 
 # Create a virtual environment
 if [ -d "venv" ]; then
     echo "Virtual Environment already exists..."
 else
-    python -m venv venv
+    # Create virtual environment based on python version
+    if [ "$python3_installed" = true ]; then
+        python3 -m venv venv
+    else
+        python -m venv venv
+    fi
     echo "Virtual Environment initialized"
 fi
 

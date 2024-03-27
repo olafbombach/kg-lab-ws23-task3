@@ -50,12 +50,11 @@ class WikidataQuery(object):
     def getWDIdfromLabel(name: str):
         """
         Find the entry in Wikidata that has a certain label.
-        Input: The label (string)
+        Input: label (type: str)
         Returns: The QID of the item or None if it does not exist.
         In case of a timeout or a false label, None is returned.
         """
         try: 
-
             s = name.lower()
             text = """
                     SELECT DISTINCT ?item ?label
@@ -77,17 +76,19 @@ class WikidataQuery(object):
                     order by strlen(str(?label)) desc(?item)
                     LIMIT 1
                    """
+            
             result = WikidataQuery.queryWikiData(text)
             WDresults= result.getValues("item")
-            if(len(WDresults) > 0):
+
+            if len(WDresults) > 0:
                 for w in WDresults:
                     uri = w.value
-                    WDid = uri[uri.find("entity")+7:]
-        
+                    WDid = uri[uri.find("entity")+7:]        
             else:
                 WDid = None
             return WDid
-        except  Exception as e:
+        
+        except Exception as e:
           print(e)
           return None   
 
@@ -117,19 +118,20 @@ class WikidataQuery(object):
         It further directly overwrites the dataset-file for wikidata.
         """
         text = '''
-                SELECT ?conferences ?conferencesLabel ?title ?countryLabel ?country ?locationLabel 
+                SELECT ?conferences ?conferencesLabel ?title ?countryLabel ?short_name ?country ?locationLabel 
                 ?location ?main_subjectLabel ?start_time ?end_time ?seriesLabel 
-                ?short_name ?beginnings ?WikiCFP_identifier ?DBLP_identifier
+                ?ser_short_name ?beginnings ?WikiCFP_identifier ?DBLP_identifier
                 
                 WHERE {?conferences wdt:P31 wd:Q2020153.                
                 OPTIONAL { ?conferences wdt:P1476 ?title. }
+                OPTIONAL { ?conferences wdt:P1813 ?short_name. }
                 OPTIONAL { ?conferences wdt:P17 ?country. }
                 OPTIONAL { ?conferences wdt:P276 ?location. }
                 OPTIONAL { ?conferences wdt:P921 ?main_subject. }
                 OPTIONAL { ?conferences wdt:P580 ?start_time. }
                 OPTIONAL { ?conferences wdt:P582 ?end_time. }
                 OPTIONAL { ?conferences wdt:P179 ?series.
-                OPTIONAL { ?series wdt:P1813 ?short_name. }
+                OPTIONAL { ?series wdt:P1813 ?ser_short_name. }
                 OPTIONAL { ?series wdt:P5127 ?WikiCFP_identifier. }
                 OPTIONAL { ?series wdt:P8926 ?DBLP_identifier. }}
                 
@@ -142,6 +144,7 @@ class WikidataQuery(object):
             conf_label = entry.get("conferencesLabel", None)
             conf_qid = entry.get("conferences", None)
             title = entry.get("title", None)
+            short_name = entry.get("short_name", None)
             country = entry.get("countryLabel", None)
             country_qid = entry.get("country", None)
             location = entry.get("locationLabel", None)
@@ -150,7 +153,7 @@ class WikidataQuery(object):
             start_time = entry.get("start_time", None)
             end_time = entry.get("end_time", None)
             series_label = entry.get("seriesLabel", None)
-            series_short_name = entry.get("short_name", None)
+            series_short_name = entry.get("ser_short_name", None)
             WikiCFP_identifier = entry.get("WikiCFP_identifier", None)
             DBLP_identifier = entry.get("DBLP_identifier", None)
             if conf_qid:
@@ -160,12 +163,12 @@ class WikidataQuery(object):
             if location_qid:
                 location_qid = location_qid.replace("http://www.wikidata.org/entity/", "")
 
-            entry_list = [conf_label, conf_qid, title, country, country_qid, location, location_qid, 
+            entry_list = [conf_label, conf_qid, title, short_name, country, country_qid, location, location_qid, 
                           main_subject, start_time, end_time, series_label, series_short_name, 
                           WikiCFP_identifier, DBLP_identifier]
             
-            col_for_df = ['conf_label', 'conf_qid', 'title', 'country', 'country_qid', 'location', 
-                          'location_qid', 'main_subject', 'start_time', 'end_time', 'series_label', 
+            col_for_df = ['conf_label', 'conf_qid', 'title', 'short_name', 'country', 'country_qid', 
+                          'location', 'location_qid', 'main_subject', 'start_time', 'end_time', 'series_label', 
                           'series_short_name', 'WikiCFP_identifier', 'DBLP_identifier']
             result.append(entry_list)
         
