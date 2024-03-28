@@ -122,15 +122,15 @@ class SearchEngine:
             # some kind of logic
             if tup[1] == "Country Identifier":
                 # in 'addition': set all columns expect 4 to False
-                addition[:, np.arange(col_add) != 4] = False 
+                addition[:, np.arange(col_add) != 5] = False 
             if tup[1] == "City Identifier":
                 # in 'addition': set all columns expect 6 to False
-                addition[:, np.arange(col_add) != 6] = False
+                addition[:, np.arange(col_add) != 7] = False
             if tup[1] == "Year":
                 # in 'addition': set all qid columns to False
                 addition[:, 0] = False
-                addition[:, 4] = False
-                addition[:, 6] = False
+                addition[:, 5] = False
+                addition[:, 7] = False
 
             hit_mask = hit_mask + addition * tup[2]
 
